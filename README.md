@@ -1,6 +1,6 @@
 # mpqcli
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat) ![Test Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat&label=test)
+![Build Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat) ![Test Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat&label=test) ![Valgrind](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/valgrind.yml?style=flat&label=valgrind)
 
 ![Release Version](https://img.shields.io/github/v/release/thegraydot/mpqcli?style=flat)
 
