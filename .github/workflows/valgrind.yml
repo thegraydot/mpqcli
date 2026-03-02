@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   valgrind:
@@ -33,17 +34,22 @@ jobs:
             .
 
       - name: Run Valgrind on test suite
-        id: valgrind_tests
         run: |
-          # Run tests with Valgrind using the script inside Docker
-          # The script wraps mpqcli with Valgrind and runs pytest
+          mkdir -p valgrind_logs
           docker run --rm \
-            -v $(pwd):/workspace:rw \
-            -w /workspace \
-            mpqcli-valgrind \
-            bash -c "./scripts/run_valgrind_tests.sh"
-
-          echo "Test execution completed"
+            -v $(pwd)/test:/mpqcli/test:rw \
+            -v $(pwd)/valgrind_logs:/mpqcli/valgrind_logs:rw \
+            mpqcli-valgrind bash -c '
+            cp /mpqcli/build/bin/mpqcli /mpqcli/build/bin/mpqcli.real
+            cat > /mpqcli/build/bin/mpqcli << "EOF"
+          #!/bin/bash
+          exec valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
+            --log-file=/mpqcli/valgrind_logs/valgrind_$$.log \
+            /mpqcli/build/bin/mpqcli.real "$@"
+          EOF
+            chmod +x /mpqcli/build/bin/mpqcli
+            cd /mpqcli && python3 -m pytest test -v --tb=short
+          '
 
       - name: Analyze Valgrind results
         id: analyze
