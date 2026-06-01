@@ -21,8 +21,10 @@ int ExtractFile(HANDLE hArchive, const std::string &output, const std::string &f
                 bool keepFolderStructure, LCID preferredLocale);
 HANDLE CreateMpqArchive(const std::string &outputArchiveName, uint32_t fileCount,
                         const GameRules &gameRules);
-int AddFiles(HANDLE hArchive, const std::string &inputPath, LCID locale, const GameRules &gameRules,
-             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides());
+int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &pathPrefix,
+             LCID locale, const GameRules &gameRules,
+             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
+             bool overwrite = false, bool update = false);
 int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archiveFilePath,
             LCID locale, const GameRules &gameRules,
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),

@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     // CLI: base
     // These are reused in multiple subcommands
     std::string baseTarget;                        // all subcommands
-    std::string baseFile;                          // add, remove, extract, read
+    std::string baseFile;                          // extract, read
     std::optional<std::string> basePath;           // add
     std::optional<std::string> baseLocale;         // create, add, remove, extract, read
     std::optional<std::string> baseNameInArchive;  // add, create
@@ -33,6 +33,10 @@ int main(int argc, char **argv) {
     // CLI: add
     std::optional<std::string> baseDirInArchive;  // add
     bool addOverwrite = false;
+    bool addUpdate = false;
+    std::vector<std::string> addFiles;
+    // CLI: remove
+    std::vector<std::string> removeFiles;
     // CLI: extract
     bool extractKeepFolderStructure = false;
     // CLI: create
@@ -145,17 +149,23 @@ int main(int argc, char **argv) {
         ->group("Game setting overrides");
 
     // Subcommand: Add
-    CLI::App *add = app.add_subcommand("add", "Add a file to an existing MPQ archive");
-    add->add_option("file", baseFile, "File to add")->required()->check(CLI::ExistingFile);
-    add->add_option("target", baseTarget, "Target MPQ archive")
+    CLI::App *add = app.add_subcommand("add", "Add files to an existing MPQ archive");
+    add->add_option("archive", baseTarget, "Target MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
+    add->add_option("files", addFiles,
+                    "Files or directories to add; pass - to read paths from stdin")
+        ->required()
+        ->expected(-1);
     add->add_option("-p,--path", basePath,
-                    "Full path (directory and filename) of the file within MPQ archive");
+                    "Archive path for a single file, or prefix for a directory add");
     add->add_option("-d,--directory-in-archive", baseDirInArchive,
-                    "Directory to put file inside within MPQ archive");
-    add->add_option("-f,--filename-in-archive", baseNameInArchive, "Filename inside MPQ archive");
+                    "Directory to put file inside within MPQ archive (single file only)");
+    add->add_option("-f,--filename-in-archive", baseNameInArchive,
+                    "Filename inside MPQ archive (single file only)");
     add->add_flag("-w,--overwrite", addOverwrite, "Overwrite file if it already is in MPQ archive");
+    add->add_flag("-u,--update", addUpdate,
+                  "Skip files whose archived size matches the on-disk size (directory add only)");
     add->add_option("--locale", baseLocale, "Locale to use for added file")->check(LocaleValid);
     add->add_option("-g,--game", baseGameProfile,
                     "Game profile for compression rules. Valid options:\n" +
@@ -171,11 +181,14 @@ int main(int argc, char **argv) {
         ->group("Game setting overrides");
 
     // Subcommand: Remove
-    CLI::App *remove = app.add_subcommand("remove", "Remove file from an existing MPQ archive");
-    remove->add_option("file", baseFile, "File to remove")->required();
-    remove->add_option("target", baseTarget, "Target MPQ archive")
+    CLI::App *remove = app.add_subcommand("remove", "Remove files from an existing MPQ archive");
+    remove->add_option("archive", baseTarget, "Target MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
+    remove->add_option("files", removeFiles,
+                       "Archive paths of files to remove; pass - to read paths from stdin")
+        ->required()
+        ->expected(-1);
     remove->add_option("--locale", baseLocale, "Locale of file to remove")->check(LocaleValid);
 
     // Subcommand: List
@@ -253,13 +266,35 @@ int main(int argc, char **argv) {
     }
 
     if (app.got_subcommand(add)) {
-        return HandleAdd(baseFile, baseTarget, basePath, baseDirInArchive, baseNameInArchive,
-                         addOverwrite, baseLocale, baseGameProfile, fileDwFlags, fileDwCompression,
-                         fileDwCompressionNext);
+        std::vector<std::string> resolvedAddFiles;
+        for (const auto &f : addFiles) {
+            if (f == "-") {
+                std::string line;
+                while (std::getline(std::cin, line)) {
+                    if (!line.empty()) resolvedAddFiles.push_back(line);
+                }
+            } else {
+                resolvedAddFiles.push_back(f);
+            }
+        }
+        return HandleAdd(resolvedAddFiles, baseTarget, basePath, baseDirInArchive, baseNameInArchive,
+                         addOverwrite, addUpdate, baseLocale, baseGameProfile, fileDwFlags,
+                         fileDwCompression, fileDwCompressionNext);
     }
 
     if (app.got_subcommand(remove)) {
-        return HandleRemove(baseFile, baseTarget, baseLocale);
+        std::vector<std::string> resolvedRemoveFiles;
+        for (const auto &f : removeFiles) {
+            if (f == "-") {
+                std::string line;
+                while (std::getline(std::cin, line)) {
+                    if (!line.empty()) resolvedRemoveFiles.push_back(line);
+                }
+            } else {
+                resolvedRemoveFiles.push_back(f);
+            }
+        }
+        return HandleRemove(resolvedRemoveFiles, baseTarget, baseLocale);
     }
 
     if (app.got_subcommand(list)) {

@@ -120,7 +120,7 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
             }
             AddFile(hArchive, target, archivePath, lcid, gameRules, addOverrides);
         } else {
-            AddFiles(hArchive, target, lcid, gameRules, addOverrides);
+            AddFiles(hArchive, target, "", lcid, gameRules, addOverrides);
         }
         if (signArchive) {
             SignMpqArchive(hArchive);
@@ -134,45 +134,46 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
     return 0;
 }
 
-int HandleAdd(const std::string &file, const std::string &target,
+int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               const std::optional<std::string> &path,
               const std::optional<std::string> &dirInArchive,
-              const std::optional<std::string> &nameInArchive, bool overwrite,
+              const std::optional<std::string> &nameInArchive, bool overwrite, bool update,
               const std::optional<std::string> &locale,
               const std::optional<std::string> &gameProfile, int64_t fileDwFlags,
               int64_t fileDwCompression, int64_t fileDwCompressionNext) {
     HANDLE hArchive;
-    // Open the MPQ archive for writing (this is why we set flag as 0)
     if (!OpenMpqArchive(target, &hArchive, 0)) {
         std::cerr << "[!] Failed to open MPQ archive." << std::endl;
         return 1;
     }
 
-    // Path to file on disk
-    fs::path filePath = fs::path(file);
+    bool hasDirectory = false;
+    for (const auto &f : files) {
+        if (fs::is_directory(f)) {
+            hasDirectory = true;
+            break;
+        }
+    }
+    bool multipleInputs = files.size() > 1;
 
-    std::string archivePath =
-        filePath.filename()
-            .u8string();  // Default: use the filename as path, saves file to root of MPQ
+    if ((hasDirectory || multipleInputs) && (dirInArchive.has_value() || nameInArchive.has_value())) {
+        std::cerr << "[!] --directory-in-archive and --filename-in-archive are only valid when "
+                     "adding a single file."
+                  << std::endl;
+        CloseMpqArchive(hArchive);
+        return 1;
+    }
+    if (multipleInputs && path.has_value()) {
+        std::cerr << "[!] --path is only valid when adding a single file or directory." << std::endl;
+        CloseMpqArchive(hArchive);
+        return 1;
+    }
     if (path.has_value() && (dirInArchive.has_value() || nameInArchive.has_value())) {
-        // Return error since providing --path together with --name-in-archive or
-        // --directory-in-archive makes no sense and is a user error
         std::cerr << "[!] Cannot specify --path together with --name-in-archive or "
                      "--directory-in-archive."
                   << std::endl;
         CloseMpqArchive(hArchive);
         return 1;
-
-    } else if (path.has_value()) {  // Optional: specified whole path inside archive
-        filePath = fs::path(path.value());
-        archivePath = WindowsifyFilePath(filePath);  // Normalise path for MPQ
-
-    } else if (dirInArchive.has_value() ||
-               nameInArchive.has_value()) {  // Optional: specified filename inside archive
-        std::string effectiveDir = dirInArchive.value_or(fs::path(file).parent_path().u8string());
-        std::string effectiveName = nameInArchive.value_or(archivePath);
-        filePath = fs::path(effectiveDir) / fs::path(effectiveName);
-        archivePath = WindowsifyFilePath(filePath);  // Normalise path for MPQ
     }
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : defaultLocale;
@@ -186,31 +187,68 @@ int HandleAdd(const std::string &file, const std::string &target,
     }
     GameRules gameRules(profile);
 
-    // Apply AddFileSettings overrides if provided
     CompressionSettingsOverrides addOverrides;
     if (fileDwFlags >= 0) addOverrides.dwFlags = static_cast<DWORD>(fileDwFlags);
     if (fileDwCompression >= 0) addOverrides.dwCompression = static_cast<DWORD>(fileDwCompression);
     if (fileDwCompressionNext >= 0)
         addOverrides.dwCompressionNext = static_cast<DWORD>(fileDwCompressionNext);
 
-    AddFile(hArchive, file, archivePath, lcid, gameRules, addOverrides, overwrite);
+    if (update && !hasDirectory) {
+        std::cerr << "[!] Warning: --update is only meaningful when adding a directory" << std::endl;
+    }
+
+    for (const auto &f : files) {
+        if (!fs::exists(f)) {
+            std::cerr << "[!] Path does not exist: " << f << std::endl;
+            continue;
+        }
+
+        if (fs::is_directory(f)) {
+            std::string prefix = path.value_or("");
+            AddFiles(hArchive, f, prefix, lcid, gameRules, addOverrides, overwrite, update);
+        } else if (fs::is_regular_file(f)) {
+            fs::path filePath = fs::path(f);
+            std::string archivePath = filePath.filename().u8string();
+
+            if (path.has_value()) {
+                filePath = fs::path(path.value());
+                archivePath = WindowsifyFilePath(filePath);
+            } else if (dirInArchive.has_value() || nameInArchive.has_value()) {
+                std::string effectiveDir =
+                    dirInArchive.value_or(fs::path(f).parent_path().u8string());
+                std::string effectiveName = nameInArchive.value_or(archivePath);
+                filePath = fs::path(effectiveDir) / fs::path(effectiveName);
+                archivePath = WindowsifyFilePath(filePath);
+            }
+
+            AddFile(hArchive, f, archivePath, lcid, gameRules, addOverrides, overwrite);
+        } else {
+            std::cerr << "[!] Not a file or directory: " << f << std::endl;
+        }
+    }
+
     CloseMpqArchive(hArchive);
     return 0;
 }
 
-int HandleRemove(const std::string &file, const std::string &target,
+int HandleRemove(const std::vector<std::string> &files, const std::string &target,
                  const std::optional<std::string> &locale) {
     HANDLE hArchive;
-    // Open the MPQ archive for writing (this is why we set flag as 0)
     if (!OpenMpqArchive(target, &hArchive, 0)) {
         std::cerr << "[!] Failed to open MPQ archive." << std::endl;
         return 1;
     }
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : defaultLocale;
-    int result = RemoveFile(hArchive, file, lcid);
+    int overallResult = 0;
+    for (const auto &f : files) {
+        int result = RemoveFile(hArchive, f, lcid);
+        if (result != 0) {
+            overallResult = result;
+        }
+    }
     CloseMpqArchive(hArchive);
-    return result;
+    return overallResult;
 }
 
 int HandleList(const std::string &target, const std::optional<std::string> &listfileName,
