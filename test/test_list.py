@@ -358,3 +358,152 @@ def test_list_mpq_providing_complete_external_listfile(binary_path, generate_mpq
     assert len(result.stdout.splitlines()) == len(expected_output)
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_mpq_target_does_not_exist(binary_path):
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "does" / "not" / "exist.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "list", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_list_mpq_with_nonexistent_listfile(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    listfile = script_dir / "does" / "not" / "exist.txt"
+
+    result = subprocess.run(
+        [str(binary_path), "list", str(test_file), "--listfile", str(listfile)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_list_mpq_property_file_index(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    expected_output = {
+        "    2  dogs.txt",
+        "    4  (attributes)",
+        "    3  (listfile)",
+        "    1  bytes",
+        "    0  cats.txt",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "file-index"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_mpq_property_byte_offset(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    expected_output = {
+        "      53  dogs.txt",
+        "      99  (attributes)",
+        "      76  (listfile)",
+        "      43  bytes",
+        "      20  cats.txt",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "byte-offset"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_mpq_property_file_time(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    expected_output = {
+        "2025-07-29 14:31:00  dogs.txt",
+        "                     (attributes)",
+        "                     (listfile)",
+        "2025-07-29 14:31:00  bytes",
+        "2025-07-29 14:31:00  cats.txt",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "file-time"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_mpq_property_encryption_key(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    expected_output = {
+        "a073c614  dogs.txt",
+        "50e315dd  (attributes)",
+        "2d2f0b11  (listfile)",
+        "eaa753f9  bytes",
+        "935a7772  cats.txt",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "encryption-key"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_mpq_property_locale(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    expected_output = {
+        "enUS  dogs.txt",
+        "enUS  (attributes)",
+        "enUS  (listfile)",
+        "enUS  bytes",
+        "enUS  cats.txt",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "locale"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"

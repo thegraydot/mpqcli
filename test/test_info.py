@@ -77,6 +77,7 @@ def test_info_v1_properties(binary_path):
         ("header-size", "32"),
         ("archive-size", "1381"),
         ("file-count", "5"),
+        ("max-files", "64"),
         ("signature-type", "None"),
     ]
 
@@ -109,6 +110,7 @@ def test_info_v2_properties(binary_path):
         ("header-size", "44"),
         ("archive-size", "1377"),
         ("file-count", "5"),
+        ("max-files", "64"),
         ("signature-type", "None"),
     ]
 
@@ -142,6 +144,20 @@ def test_info_v1_invalid_property(binary_path):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_info_mpq_target_does_not_exist(binary_path):
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "does" / "not" / "exist.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "info", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"

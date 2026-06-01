@@ -234,3 +234,33 @@ def test_read_file_from_mpq_with_wrong_locale_argument_and_no_default_locale(bin
     assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
     assert stdout_output_lines == expected_stdout_output, f"Unexpected output: {stdout_output_lines}"
     assert stderr_output_lines == expected_stderr_output, f"Unexpected output: {stderr_output_lines}"
+
+
+def test_read_mpq_target_does_not_exist(binary_path):
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "does" / "not" / "exist.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "read", "cats.txt", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_read_file_does_not_exist_in_mpq(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "read", "does-not-exist.txt", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 1, f"Unexpected exit code: {result.returncode}"
+    assert result.stdout == "", f"Unexpected stdout: {result.stdout}"
+    assert "does-not-exist.txt" in result.stderr, f"Unexpected stderr: {result.stderr}"
