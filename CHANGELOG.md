@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.9.10 - 2026-04-27
+## 0.9.10 - 2026-06-02
+
+### Added
+
+- Support passing multiple files to the add and remove subcommands
+- Support reading file paths from stdin in the add and remove subcommands
+- Support adding entire directories with the add subcommand
+- Add an update flag to the add subcommand to skip files whose archived size matches the on-disk size
 
 ### Fixed
 
@@ -11,6 +18,11 @@
 ### Updated
 
 - Docker glibc image updated to ubuntu:24.04
+
+### Changed
+
+- The path flag on add now acts as an archive path prefix when a directory is given
+- The directory-in-archive and filename-in-archive flags are now restricted to single-file add operations
 
 ## 0.9.9 - 2026-04-05
 
