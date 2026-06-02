@@ -15,23 +15,25 @@ int main(int argc, char **argv) {
         "A command line tool to create, add, remove, list, extract, read, and verify MPQ archives "
         "using the StormLib library"};
 
-    // Require at least one subcommand
     app.require_subcommand(1);
 
     // CLI: base
     // These are reused in multiple subcommands
     std::string baseTarget;                        // all subcommands
     std::string baseFile;                          // extract, read
-    std::optional<std::string> baseLocale;         // create, add, remove, extract, read
+    std::optional<std::string> baseLocale;         // add, create, extract, read, remove
     std::optional<std::string> baseNameInArchive;  // add, create
     std::optional<std::string> baseOutput;         // create, extract
-    std::optional<std::string> baseListfileName;   // list, extract
-    std::optional<std::string> baseGameProfile;    // create, add
+    std::optional<std::string> baseListfileName;   // extract, list
+    std::optional<std::string> baseGameProfile;    // add, create
+    int64_t fileDwFlags = -1;                      // add, create
+    int64_t fileDwCompression = -1;                // add, create
+    int64_t fileDwCompressionNext = -1;            // add, create
     // CLI: info
     std::optional<std::string> infoProperty;
     // CLI: add
-    std::optional<std::string> basePath;
-    std::optional<std::string> baseDirInArchive;
+    std::optional<std::string> addBasePath;
+    std::optional<std::string> addBaseDirInArchive;
     bool addOverwrite = false;
     bool addUpdate = false;
     std::vector<std::string> addFiles;
@@ -49,10 +51,6 @@ int main(int argc, char **argv) {
     int64_t createFileFlags2 = -1;
     int64_t createFileFlags3 = -1;
     int64_t createAttrFlags = -1;
-    // CLI: add and create (compression overrides for files being added)
-    int64_t fileDwFlags = -1;
-    int64_t fileDwCompression = -1;
-    int64_t fileDwCompressionNext = -1;
     // CLI: list
     bool listDetailed = false;
     bool listAll = false;
@@ -60,30 +58,15 @@ int main(int argc, char **argv) {
     // CLI: verify
     bool verifyPrintSignature = false;
 
-    // clang-format off: preserve vertical alignment of string set initialisers
+    // clang-format off -- preserve vertical alignment of string set initialisers
     std::set<std::string> validInfoProperties = {
-        "format-version",
-        "header-offset",
-        "header-size",
-        "archive-size",
-        "file-count",
-        "max-files",
-        "signature-type",
+        "format-version", "header-offset", "header-size",    "archive-size",
+        "file-count",     "max-files",     "signature-type",
     };
     std::set<std::string> validFileListProperties = {
-        "hash-index",
-        "name-hash1",
-        "name-hash2",
-        "name-hash3",
-        "locale",
-        "file-index",
-        "byte-offset",
-        "file-time",
-        "file-size",
-        "compressed-size",
-        "flags",
-        "encryption-key",
-        "encryption-key-raw",
+        "hash-index", "name-hash1",     "name-hash2",         "name-hash3", "locale",
+        "file-index", "byte-offset",    "file-time",          "file-size",  "compressed-size",
+        "flags",      "encryption-key", "encryption-key-raw",
     };
     // clang-format on
 
@@ -157,9 +140,9 @@ int main(int argc, char **argv) {
                     "Files or directories to add; pass - to read paths from stdin")
         ->required()
         ->expected(-1);
-    add->add_option("-p,--path", basePath,
+    add->add_option("-p,--path", addBasePath,
                     "Archive path for a single file, or prefix for a directory add");
-    add->add_option("-d,--directory-in-archive", baseDirInArchive,
+    add->add_option("-d,--directory-in-archive", addBaseDirInArchive,
                     "Directory to put file inside within MPQ archive (single file only)");
     add->add_option("-f,--filename-in-archive", baseNameInArchive,
                     "Filename inside MPQ archive (single file only)");
@@ -185,8 +168,9 @@ int main(int argc, char **argv) {
     remove->add_option("archive", baseTarget, "Target MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
-    remove->add_option("files", removeFiles,
-                       "Archive paths of files to remove; pass - to read paths from stdin")
+    remove
+        ->add_option("files", removeFiles,
+                     "Archive paths of files to remove; pass - to read paths from stdin")
         ->required()
         ->expected(-1);
     remove->add_option("--locale", baseLocale, "Locale of file to remove")->check(LocaleValid);
@@ -232,7 +216,6 @@ int main(int argc, char **argv) {
         ->check(CLI::ExistingFile);
     verify->add_flag("-p,--print", verifyPrintSignature, "Print the digital signature (in hex)");
 
-    // Parse command line arguments and handle errors
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
@@ -241,7 +224,6 @@ int main(int argc, char **argv) {
             std::cout << app.help() << std::endl;
             return 0;
         }
-        // For other errors, use the default error handling
         return app.exit(e);
     }
 
@@ -277,9 +259,9 @@ int main(int argc, char **argv) {
                 resolvedAddFiles.push_back(f);
             }
         }
-        return HandleAdd(resolvedAddFiles, baseTarget, basePath, baseDirInArchive, baseNameInArchive,
-                         addOverwrite, addUpdate, baseLocale, baseGameProfile, fileDwFlags,
-                         fileDwCompression, fileDwCompressionNext);
+        return HandleAdd(resolvedAddFiles, baseTarget, addBasePath, addBaseDirInArchive,
+                         baseNameInArchive, addOverwrite, addUpdate, baseLocale, baseGameProfile,
+                         fileDwFlags, fileDwCompression, fileDwCompressionNext);
     }
 
     if (app.got_subcommand(remove)) {
