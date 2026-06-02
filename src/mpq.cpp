@@ -199,7 +199,6 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
     int filesSkipped = 0;
 
     for (const auto &entry : entries) {
-
         fs::path inputFilePath = fs::relative(entry, targetPath);
         std::string archiveFilePath;
 

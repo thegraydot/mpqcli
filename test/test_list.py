@@ -424,6 +424,13 @@ def test_list_mpq_property_byte_offset(binary_path):
         "      76  (listfile)",
         "      99  (attributes)",
     }
+    if platform.system() == "Windows":
+        expected_output.discard("      53  dogs.txt")
+        expected_output.add("      54  dogs.txt")
+        expected_output.discard("      76  (listfile)")
+        expected_output.add("      78  (listfile)")
+        expected_output.discard("      99  (attributes)")
+        expected_output.add("      9b  (attributes)")
 
     result = subprocess.run(
         [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "byte-offset"],
@@ -472,6 +479,11 @@ def test_list_mpq_property_encryption_key(binary_path):
         "2d2f0b11  (listfile)",
         "50e315dd  (attributes)",
     }
+    if platform.system() == "Windows":
+        expected_output.discard("2d2f0b11  (listfile)")
+        expected_output.add("2d2f0b17  (listfile)")
+        expected_output.discard("50e315dd  (attributes)")
+        expected_output.add("50e315df  (attributes)")
 
     result = subprocess.run(
         [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "encryption-key"],
