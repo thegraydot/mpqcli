@@ -24,7 +24,7 @@ int HandleAbout() {
     std::cout << "Version: " << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
     std::cout << "Author: Thomas Laurenson" << std::endl;
     std::cout << "License: MIT" << std::endl;
-    std::cout << "GitHub: https://github.com/TheGrayDot/mpqcli" << std::endl;
+    std::cout << "GitHub: https://github.com/thegraydot/mpqcli" << std::endl;
     std::cout << "Dependencies:" << std::endl;
     std::cout << " - StormLib (https://github.com/ladislav-zezula/StormLib)" << std::endl;
     std::cout << " - CLI11 (https://github.com/CLIUtils/CLI11)" << std::endl;
@@ -157,7 +157,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     }
     bool multipleInputs = files.size() > 1;
 
-    if ((hasDirectory || multipleInputs) && (dirInArchive.has_value() || nameInArchive.has_value())) {
+    if ((hasDirectory || multipleInputs) &&
+        (dirInArchive.has_value() || nameInArchive.has_value())) {
         std::cerr << "[!] --directory-in-archive and --filename-in-archive are only valid when "
                      "adding a single file."
                   << std::endl;
@@ -165,7 +166,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
         return 1;
     }
     if (multipleInputs && path.has_value()) {
-        std::cerr << "[!] --path is only valid when adding a single file or directory." << std::endl;
+        std::cerr << "[!] --path is only valid when adding a single file or directory."
+                  << std::endl;
         CloseMpqArchive(hArchive);
         return 1;
     }
@@ -195,7 +197,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
         addOverrides.dwCompressionNext = static_cast<DWORD>(fileDwCompressionNext);
 
     if (update && !hasDirectory) {
-        std::cerr << "[!] Warning: --update is only meaningful when adding a directory" << std::endl;
+        std::cerr << "[!] Warning: --update is only meaningful when adding a directory"
+                  << std::endl;
     }
 
     for (const auto &f : files) {

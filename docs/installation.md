@@ -16,7 +16,7 @@ Microsoft Windows:
 PS> irm https://raw.githubusercontent.com/thegraydot/mpqcli/main/scripts/install.ps1 | iex
 ```
 
-Check the [latest release with binaries](https://github.com/TheGrayDot/mpqcli/releases).
+Check the [latest release with binaries](https://github.com/thegraydot/mpqcli/releases).
 
 ## Docker Image
 

@@ -13,7 +13,7 @@ If you are unsure whether a feature fits the project, or whether an existing too
 Clone the repository and initialise submodules:
 
 ```
-git clone https://github.com/TheGrayDot/mpqcli.git
+git clone https://github.com/thegraydot/mpqcli.git
 cd mpqcli
 git submodule update --init --recursive
 ```

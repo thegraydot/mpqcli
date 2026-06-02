@@ -1,8 +1,8 @@
 # mpqcli
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/TheGrayDot/mpqcli/tag.yml?style=flat) ![Test Status](https://img.shields.io/github/actions/workflow/status/TheGrayDot/mpqcli/tag.yml?style=flat&label=test)
+![Build Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat) ![Test Status](https://img.shields.io/github/actions/workflow/status/thegraydot/mpqcli/tag.yml?style=flat&label=test)
 
-![Release Version](https://img.shields.io/github/v/release/TheGrayDot/mpqcli?style=flat)
+![Release Version](https://img.shields.io/github/v/release/thegraydot/mpqcli?style=flat)
 
 ![Release downloads](https://img.shields.io/github/downloads/thegraydot/mpqcli/total?label=release_downloads) ![Package downloads](https://img.shields.io/badge/package_downloads-845-green)
 

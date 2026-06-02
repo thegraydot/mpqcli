@@ -10,7 +10,7 @@
 ## Linux
 
 ```bash
-$ git clone --recursive https://github.com/TheGrayDot/mpqcli.git
+$ git clone --recursive https://github.com/thegraydot/mpqcli.git
 $ cd mpqcli
 $ cmake -B build
 $ cmake --build build
@@ -21,7 +21,7 @@ The `mpqcli` binary will be available in: `./build/bin/mpqcli`
 ## Windows
 
 ```bash
-$ git clone --recursive https://github.com/TheGrayDot/mpqcli.git
+$ git clone --recursive https://github.com/thegraydot/mpqcli.git
 $ cd mpqcli
 $ cmake -B build
 $ cmake --build build --config Release
