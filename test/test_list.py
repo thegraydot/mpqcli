@@ -14,9 +14,9 @@ def test_list_mpq_with_output_v1(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
+        "bytes",
         "cats.txt",
         "dogs.txt",
-        "bytes",
     }
 
     result = subprocess.run(
@@ -43,11 +43,11 @@ def test_list_mpq_with_standard_details(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
-        "      27 enUS                      (listfile)",
-        "     149 enUS                      (attributes)",
-        "      27 enUS 2025-07-29 14:31:00  dogs.txt",
         "       8 enUS 2025-07-29 14:31:00  bytes",
         "      27 enUS 2025-07-29 14:31:00  cats.txt",
+        "      27 enUS 2025-07-29 14:31:00  dogs.txt",
+        "      27 enUS                      (listfile)",
+        "     149 enUS                      (attributes)",
     }
 
     # Adjust filesize for Windows
@@ -81,9 +81,9 @@ def test_list_mpq_with_specified_details(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
+        "   35 147178ed c99b9ee2 0000000000000000       16    cexmn eaa753f9  bytes",
         "   44 0fd58937 70ab788e 0000000000000000       35    cexmn 935a7772  cats.txt",
         "    0 eb30456b 48345fbb 0000000000000000       35    cexmn a073c614  dogs.txt",
-        "   35 147178ed c99b9ee2 0000000000000000       16    cexmn eaa753f9  bytes",
         "   25 fd657910 4e9b98a7 0000000000000000       35  ce2xmnf 2d2f0a94  (listfile)",
         "   14 d38437cb 07dfeaec 0000000000000000      124  ce2xmnf 50e314af  (attributes)",
     }
@@ -120,9 +120,9 @@ def test_list_mpq_with_weak_signature(binary_path):
     test_file = script_dir / "data" / "mpq_with_weak_signature.mpq"
 
     expected_output = {
+        "bytes",
         "cats.txt",
         "dogs.txt",
-        "bytes",
         "(listfile)",  # Only included as "-a" specified
         "(signature)",  # Only included as "-a" specified
         "(attributes)",  # Only included as "-a" specified
@@ -302,9 +302,9 @@ def test_list_mpq_providing_complete_external_listfile(binary_path, generate_mpq
 
     ## No flags
     expected_output = {
-        "dogs.txt",
-        "cats.txt",
         "capybaras.txt",
+        "cats.txt",
+        "dogs.txt",
     }
     result = subprocess.run(
         [str(binary_path), "list", str(test_file), "--listfile", str(listfile)],
@@ -319,9 +319,9 @@ def test_list_mpq_providing_complete_external_listfile(binary_path, generate_mpq
 
     ## --all flag
     expected_output = {
-        "dogs.txt",
-        "cats.txt",
         "capybaras.txt",
+        "cats.txt",
+        "dogs.txt",
     }
     result = subprocess.run(
         [str(binary_path), "list", "-a", str(test_file), "--listfile", str(listfile)],
@@ -394,11 +394,11 @@ def test_list_mpq_property_file_index(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
+        "    0  bytes",
+        "    1  cats.txt",
         "    2  dogs.txt",
-        "    4  (attributes)",
         "    3  (listfile)",
-        "    1  bytes",
-        "    0  cats.txt",
+        "    4  (attributes)",
     }
 
     result = subprocess.run(
@@ -418,11 +418,11 @@ def test_list_mpq_property_byte_offset(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
+        "      20  bytes",
+        "      30  cats.txt",
         "      53  dogs.txt",
-        "      99  (attributes)",
         "      76  (listfile)",
-        "      43  bytes",
-        "      20  cats.txt",
+        "      99  (attributes)",
     }
 
     result = subprocess.run(
@@ -442,11 +442,11 @@ def test_list_mpq_property_file_time(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
-        "2025-07-29 14:31:00  dogs.txt",
-        "                     (attributes)",
-        "                     (listfile)",
         "2025-07-29 14:31:00  bytes",
         "2025-07-29 14:31:00  cats.txt",
+        "2025-07-29 14:31:00  dogs.txt",
+        "                     (listfile)",
+        "                     (attributes)",
     }
 
     result = subprocess.run(
@@ -466,11 +466,11 @@ def test_list_mpq_property_encryption_key(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
-        "a073c614  dogs.txt",
-        "50e315dd  (attributes)",
-        "2d2f0b11  (listfile)",
         "eaa753f9  bytes",
         "935a7772  cats.txt",
+        "a073c614  dogs.txt",
+        "2d2f0b11  (listfile)",
+        "50e315dd  (attributes)",
     }
 
     result = subprocess.run(
@@ -490,11 +490,11 @@ def test_list_mpq_property_locale(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
-        "enUS  dogs.txt",
-        "enUS  (attributes)",
-        "enUS  (listfile)",
         "enUS  bytes",
         "enUS  cats.txt",
+        "enUS  dogs.txt",
+        "enUS  (listfile)",
+        "enUS  (attributes)",
     }
 
     result = subprocess.run(

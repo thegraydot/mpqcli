@@ -184,11 +184,21 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
              bool overwrite, bool update) {
     fs::path targetPath = fs::path(inputPath);
 
+    std::vector<fs::directory_entry> entries;
+    for (const auto &entry : fs::recursive_directory_iterator(inputPath)) {
+        if (fs::is_regular_file(entry.path())) {
+            entries.push_back(entry);
+        }
+    }
+    std::sort(entries.begin(), entries.end(),
+              [](const fs::directory_entry &a, const fs::directory_entry &b) {
+                  return a.path() < b.path();
+              });
+
     int filesAdded = 0;
     int filesSkipped = 0;
 
-    for (const auto &entry : fs::recursive_directory_iterator(inputPath)) {
-        if (!fs::is_regular_file(entry.path())) continue;
+    for (const auto &entry : entries) {
 
         fs::path inputFilePath = fs::relative(entry, targetPath);
         std::string archiveFilePath;
