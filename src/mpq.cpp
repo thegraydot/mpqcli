@@ -180,8 +180,8 @@ HANDLE CreateMpqArchive(const std::string &outputArchiveName, const uint32_t fil
 }
 
 int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &pathPrefix,
-             LCID locale, const GameRules &gameRules,
-             const CompressionSettingsOverrides &overrides, bool overwrite, bool update) {
+             LCID locale, const GameRules &gameRules, const CompressionSettingsOverrides &overrides,
+             bool overwrite, bool update) {
     fs::path targetPath = fs::path(inputPath);
 
     int filesAdded = 0;
@@ -215,7 +215,8 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
                     SFileCloseFile(hFile);
                     uintmax_t diskSize = fs::file_size(entry.path());
                     if (diskSize == static_cast<uintmax_t>(archivedSize)) {
-                        std::cout << "[~] Skipping unchanged file: " << archiveFilePath << std::endl;
+                        std::cout << "[~] Skipping unchanged file: " << archiveFilePath
+                                  << std::endl;
                         filesSkipped++;
                         continue;
                     }
@@ -225,8 +226,8 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
             }
         }
 
-        int result =
-            AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules, overrides, overwrite);
+        int result = AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules, overrides,
+                             overwrite);
         if (result == 0) {
             filesAdded++;
         }

@@ -15,11 +15,6 @@ jobs:
       - name: Install clang tools
         run: make install_clang_tools
 
-      - name: Check formatting
-        run: make lint
+      - run: make fmt_check
 
-      - name: Generate compile_commands.json
-        run: make build_lint/compile_commands.json
-
-      - name: Run clang-tidy
-        run: make lint_cpp
+      - run: make lint_cpp
