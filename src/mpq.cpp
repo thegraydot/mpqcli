@@ -179,31 +179,74 @@ HANDLE CreateMpqArchive(const std::string &outputArchiveName, const uint32_t fil
     return hMpq;
 }
 
-int AddFiles(HANDLE hArchive, const std::string &inputPath, LCID locale, const GameRules &gameRules,
-             const CompressionSettingsOverrides &overrides) {
-    // We need to "clean" the target path to ensure it is a valid directory
-    // and to strip any directory structure from the files we add
+int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &pathPrefix,
+             LCID locale, const GameRules &gameRules, const CompressionSettingsOverrides &overrides,
+             bool overwrite, bool update) {
     fs::path targetPath = fs::path(inputPath);
 
+    std::vector<fs::directory_entry> entries;
     for (const auto &entry : fs::recursive_directory_iterator(inputPath)) {
         if (fs::is_regular_file(entry.path())) {
-            // Strip the target path from the file name
-            fs::path inputFilePath = fs::relative(entry, targetPath);
-
-            // Normalise path for MPQ
-            std::string archiveFilePath = WindowsifyFilePath(inputFilePath.u8string());
-
-            // Skip special MPQ files that StormLib manages automatically
-            if (std::find(kSpecialMpqFiles.begin(), kSpecialMpqFiles.end(), archiveFilePath) !=
-                kSpecialMpqFiles.end()) {
-                std::cout << "[*] Skipping special MPQ file: " << archiveFilePath << std::endl;
-                continue;
-            }
-
-            AddFile(hArchive, entry.path().u8string(), archiveFilePath, locale, gameRules,
-                    overrides, false);
+            entries.push_back(entry);
         }
     }
+    std::sort(entries.begin(), entries.end(),
+              [](const fs::directory_entry &a, const fs::directory_entry &b) {
+                  return a.path() < b.path();
+              });
+
+    int filesAdded = 0;
+    int filesSkipped = 0;
+
+    for (const auto &entry : entries) {
+        fs::path inputFilePath = fs::relative(entry, targetPath);
+        std::string archiveFilePath;
+
+        if (pathPrefix.empty()) {
+            archiveFilePath = WindowsifyFilePath(inputFilePath.u8string());
+        } else {
+            archiveFilePath = WindowsifyFilePath((fs::path(pathPrefix) / inputFilePath).u8string());
+        }
+
+        if (std::find(kSpecialMpqFiles.begin(), kSpecialMpqFiles.end(), archiveFilePath) !=
+            kSpecialMpqFiles.end()) {
+            std::cout << "[*] Skipping special MPQ file: " << archiveFilePath << std::endl;
+            continue;
+        }
+
+        if (update) {
+            SFileSetLocale(locale);
+            HANDLE hFile;
+            if (SFileOpenFileEx(hArchive, archiveFilePath.c_str(), SFILE_OPEN_FROM_MPQ, &hFile)) {
+                int32_t fileLocale = GetFileInfo<int32_t>(hFile, SFileInfoLocale);
+                if (fileLocale == locale) {
+                    DWORD archivedSize = SFileGetFileSize(hFile, nullptr);
+                    SFileCloseFile(hFile);
+                    uintmax_t diskSize = fs::file_size(entry.path());
+                    if (diskSize == static_cast<uintmax_t>(archivedSize)) {
+                        std::cout << "[~] Skipping unchanged file: " << archiveFilePath
+                                  << std::endl;
+                        filesSkipped++;
+                        continue;
+                    }
+                } else {
+                    SFileCloseFile(hFile);
+                }
+            }
+        }
+
+        int result = AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules, overrides,
+                             overwrite);
+        if (result == 0) {
+            filesAdded++;
+        }
+    }
+
+    if (update) {
+        std::cout << "[*] " << filesAdded << " files added, " << filesSkipped << " files skipped"
+                  << std::endl;
+    }
+
     return 0;
 }
 

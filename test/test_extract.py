@@ -71,6 +71,23 @@ def test_extract_mpq_default_options(binary_path, generate_test_files):
     assert output_dir.exists(), "Output directory was not created"
     assert output_files == expected_output, f"Unexpected files: {output_files}"
 
+    # Content and file size verification
+    import platform
+    cats_file = output_dir / "cats.txt"
+    dogs_file = output_dir / "dogs.txt"
+    expected_cats_content = "This is a file about cats.\n"
+    expected_dogs_content = "This is a file about dogs.\n"
+    expected_size = 28 if platform.system() == "Windows" else 27
+
+    assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
+        f"Unexpected content in cats.txt"
+    assert dogs_file.read_text(encoding="utf-8") == expected_dogs_content, \
+        f"Unexpected content in dogs.txt"
+    assert cats_file.stat().st_size == expected_size, \
+        f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
+    assert dogs_file.stat().st_size == expected_size, \
+        f"Unexpected size for dogs.txt: {dogs_file.stat().st_size}"
+
 
 def test_extract_mpq_output_directory_specified(binary_path, generate_test_files):
     """
@@ -116,6 +133,23 @@ def test_extract_mpq_output_directory_specified(binary_path, generate_test_files
     assert output_dir.exists(), "Output directory was not created"
     assert output_files == expected_output, f"Unexpected files: {output_files}"
 
+    # Content and file size verification
+    import platform
+    cats_file = output_dir / "cats.txt"
+    dogs_file = output_dir / "dogs.txt"
+    expected_cats_content = "This is a file about cats.\n"
+    expected_dogs_content = "This is a file about dogs.\n"
+    expected_size = 28 if platform.system() == "Windows" else 27
+
+    assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
+        f"Unexpected content in cats.txt"
+    assert dogs_file.read_text(encoding="utf-8") == expected_dogs_content, \
+        f"Unexpected content in dogs.txt"
+    assert cats_file.stat().st_size == expected_size, \
+        f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
+    assert dogs_file.stat().st_size == expected_size, \
+        f"Unexpected size for dogs.txt: {dogs_file.stat().st_size}"
+
 
 def test_extract_file_from_mpq_output_directory_specified(binary_path, generate_test_files):
     """
@@ -157,6 +191,17 @@ def test_extract_file_from_mpq_output_directory_specified(binary_path, generate_
     assert output_lines == expected_lines, f"Unexpected output: {output_lines}"
     assert output_dir.exists(), "Output directory was not created"
     assert output_files == expected_output, f"Unexpected files: {output_files}"
+
+    # Content and file size verification (only cats.txt was extracted)
+    import platform
+    cats_file = output_dir / "cats.txt"
+    expected_cats_content = "This is a file about cats.\n"
+    expected_size = 28 if platform.system() == "Windows" else 27
+
+    assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
+        f"Unexpected content in cats.txt"
+    assert cats_file.stat().st_size == expected_size, \
+        f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
 
 
 def test_extract_file_from_mpq_with_locale(binary_path, generate_locales_mpq_test_files):
@@ -761,3 +806,70 @@ def test_extract_path_traversal_is_blocked(binary_path, generate_path_traversal_
 
     # Confirm no file escaped outside the intended output directory
     assert not (output_dir.parent / "sneaky.txt").exists(), "Path traversal was not blocked: sneaky.txt escaped"
+
+
+def test_extract_mpq_with_nonexistent_listfile(binary_path, generate_test_files):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    listfile = script_dir / "does" / "not" / "exist.txt"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", str(test_file), "--listfile", str(listfile)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    archive_file = script_dir / "data" / "files.mpq"
+    output_dir = script_dir / "data" / "extracted_nested"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+
+    # Create a fresh MPQ archive
+    target_dir = script_dir / "data" / "files"
+    archive_file.unlink(missing_ok=True)
+    result = subprocess.run(
+        [str(binary_path), "create", "--version", "1", str(target_dir), "-o", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    # Add a file at a nested path
+    test_file = script_dir / "data" / "files" / "cats.txt"
+    nested_path = "texts\\cats.txt"
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(test_file), "--path", nested_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to add nested file: {result.stderr}"
+
+    # Extract the nested file
+    result = subprocess.run(
+        [str(binary_path), "extract", "-f", nested_path, "-o", str(output_dir), str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    expected_stdout = {"[*] Extracted: cats.txt"}
+    output_lines = set(result.stdout.splitlines())
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+
+    extracted_file = output_dir / "cats.txt"
+    assert extracted_file.exists(), "Extracted nested file does not exist"
+    assert extracted_file.read_text(encoding="utf-8") == "This is a file about cats.\n", \
+        "Unexpected content in extracted nested file"

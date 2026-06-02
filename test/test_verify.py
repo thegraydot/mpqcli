@@ -120,3 +120,17 @@ def test_verify_strong_signature_patch(binary_path, download_test_files):
 
     assert result.returncode == 0, f"mpqcli failed with error: {stderr_text}"
     assert output_md5 == expected_md5, f"Expected MD5: {expected_md5}, got: {output_md5}"
+
+
+def test_verify_mpq_target_does_not_exist(binary_path):
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "does" / "not" / "exist.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "verify", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"

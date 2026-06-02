@@ -61,6 +61,9 @@ def generate_test_files():
 
     yield created_files
 
+    # Teardown: clean up generated files and directory
+    shutil.rmtree(files_dir, ignore_errors=True)
+
 
 @pytest.fixture(scope="function")
 def generate_locales_mpq_test_files(binary_path):
@@ -102,7 +105,7 @@ def generate_locales_mpq_test_files(binary_path):
 
         else: # Explicit locale - add to existing MPQ file
             result = subprocess.run(
-                [str(binary_path), "add", str(file_path), str(mpq_many_locales_file_name), "--locale", locale],
+                [str(binary_path), "add", str(mpq_many_locales_file_name), str(file_path), "--locale", locale],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -159,7 +162,7 @@ def generate_mpq_without_internal_listfile(binary_path):
 
         else: # Explicit locale - add to existing MPQ file
             result = subprocess.run(
-                [str(binary_path), "add", str(file_path), str(mpq_file_name), "--locale", locale],
+                [str(binary_path), "add", str(mpq_file_name), str(file_path), "--locale", locale],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -195,7 +198,7 @@ def generate_path_traversal_mpq(binary_path):
 
     # Embed a second entry whose archive path traverses above the output directory
     result = subprocess.run(
-        [str(binary_path), "add", str(safe_file), str(mpq_file), "-p", "../../sneaky.txt"],
+        [str(binary_path), "add", str(mpq_file), str(safe_file), "-p", "../../sneaky.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -235,7 +238,7 @@ def download_test_files():
         try:
             urllib.request.urlretrieve(url, file_path)
             downloaded_files.append(file_path)
-        except Exception:
-            exit(1)
+        except Exception as e:
+            pytest.skip(f"Could not download test file '{name}': {e}")
 
     return downloaded_files

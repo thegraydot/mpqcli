@@ -37,7 +37,7 @@ def test_create_mpq_versions(binary_path, generate_test_files):
     script_dir = Path(__file__).parent
     target_dir = script_dir / "data" / "files"
 
-    for version in [1, 2]:
+    for version in [1, 2, 3, 4]:
         target_file = target_dir.with_suffix(".mpq")
         # Remove the target file if it exists
         # Testing creation when file exists is handled:
@@ -53,6 +53,17 @@ def test_create_mpq_versions(binary_path, generate_test_files):
         assert result.returncode == 0, f"mpqcli failed with error (version {version}): {result.stderr}"
         assert target_file.exists(), f"MPQ file was not created (version {version})"
         assert target_file.stat().st_size > 0, f"MPQ file is empty (version {version})"
+
+        # Verify the correct version was written to the archive
+        version_result = subprocess.run(
+            [str(binary_path), "info", "-p", "format-version", str(target_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert version_result.returncode == 0
+        assert version_result.stdout.strip() == str(version), \
+            f"Expected version {version}, got {version_result.stdout.strip()}"
 
 
 def test_create_mpq_with_output(binary_path, generate_test_files):
@@ -140,6 +151,17 @@ def test_create_mpq_with_weak_signature(binary_path, generate_test_files):
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_file.exists(), "MPQ file was not created"
     assert output_file.stat().st_size > 0, "MPQ file is empty"
+
+    # Verify the signature is actually valid
+    verify_result = subprocess.run(
+        [str(binary_path), "verify", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert verify_result.returncode == 0, f"Signature verification failed: {verify_result.stderr}"
+    assert "[*] Verify success" in verify_result.stdout, \
+        f"Unexpected verify output: {verify_result.stdout}"
 
 
 def test_create_mpq_already_exists(binary_path, generate_test_files):
@@ -610,7 +632,7 @@ def test_create_mpq_directory_with_trailing_slash(binary_path, generate_test_fil
     )
     assert expected_output.stat().st_size > 0, "MPQ file is empty"
     assert not malformed_output.exists(), (
-        f"Malformed archive path '{malformed_output}' was created — trailing slash bug is present"
+        f"Malformed archive path '{malformed_output}' was created, trailing slash bug is present"
     )
 
     expected_output.unlink(missing_ok=True)
@@ -645,7 +667,7 @@ def test_create_mpq_skips_special_files(binary_path, tmp_path):
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_file.exists(), "MPQ file was not created"
 
-    # Signature type must be None — (signature) must not have been ingested
+    # Signature type must be None (signature) must not have been ingested
     info = subprocess.run(
         [str(binary_path), "info", "-p", "signature-type", str(output_file)],
         stdout=subprocess.PIPE,
@@ -679,3 +701,42 @@ def verify_archive_file_content(binary_path, test_file, expected_output):
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_create_mpq_from_empty_directory(binary_path, tmp_path):
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    output_file = tmp_path / "empty.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(empty_dir), "-o", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_file.exists(), "MPQ file was not created"
+    assert output_file.stat().st_size > 0, "MPQ file is empty"
+
+    # No user files should be listed
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert list_result.returncode == 0
+    assert list_result.stdout.strip() == "", \
+        f"Expected no files listed, got: {list_result.stdout}"
+
+    # max-files should be 64 (minimum value returned by CalculateMpqMaxFileValue for 0 files)
+    info_result = subprocess.run(
+        [str(binary_path), "info", "-p", "max-files", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert info_result.returncode == 0
+    assert info_result.stdout.strip() == "64", \
+        f"Expected max-files of 64, got: {info_result.stdout.strip()}"

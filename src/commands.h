@@ -16,14 +16,14 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
                  int64_t streamFlags, int64_t sectorSize, int64_t rawChunkSize, int64_t fileFlags1,
                  int64_t fileFlags2, int64_t fileFlags3, int64_t attrFlags, int64_t fileDwFlags,
                  int64_t fileDwCompression, int64_t fileDwCompressionNext);
-int HandleAdd(const std::string &file, const std::string &target,
+int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               const std::optional<std::string> &path,
               const std::optional<std::string> &dirInArchive,
-              const std::optional<std::string> &nameInArchive, bool overwrite,
+              const std::optional<std::string> &nameInArchive, bool overwrite, bool update,
               const std::optional<std::string> &locale,
               const std::optional<std::string> &gameProfile, int64_t fileDwFlags,
               int64_t fileDwCompression, int64_t fileDwCompressionNext);
-int HandleRemove(const std::string &file, const std::string &target,
+int HandleRemove(const std::vector<std::string> &files, const std::string &target,
                  const std::optional<std::string> &locale);
 int HandleList(const std::string &target, const std::optional<std::string> &listfileName,
                bool listAll, bool listDetailed, const std::vector<std::string> &properties);

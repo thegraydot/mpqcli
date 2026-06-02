@@ -15,7 +15,7 @@ def test_remove_target_mpq_does_not_exist(binary_path, generate_locales_mpq_test
     target_file = script_dir / "does" / "not" / "exist.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file)],
+        [str(binary_path), "remove", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -37,7 +37,7 @@ def test_remove_target_file_does_not_exist(binary_path, generate_locales_mpq_tes
     target_file = script_dir / "data" / "mpq_with_many_locales.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file)],
+        [str(binary_path), "remove", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -85,7 +85,7 @@ def test_remove_file_from_mpq_archive_with_wrong_locale_given(
         target_file = script_dir / "data" / target_file_name
 
         result = subprocess.run(
-            [str(binary_path), "remove", str(test_file), str(target_file), "--locale", "ptPT"],
+            [str(binary_path), "remove", str(target_file), str(test_file), "--locale", "ptPT"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -120,7 +120,7 @@ def test_remove_default_locale_file_from_mpq_archive_unique_name(binary_path, ge
     target_file = script_dir / "data" / "mpq_without_internal_listfile.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file)],
+        [str(binary_path), "remove", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -162,7 +162,7 @@ def test_remove_files_from_mpq_archive_shared_name(binary_path, generate_locales
 
     # Removing without specifying locale means removing using locale 0 = enUS
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file)],
+        [str(binary_path), "remove", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -178,7 +178,7 @@ def test_remove_files_from_mpq_archive_shared_name(binary_path, generate_locales
 
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file), "--locale", "esES"],
+        [str(binary_path), "remove", str(target_file), str(test_file), "--locale", "esES"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -193,7 +193,7 @@ def test_remove_files_from_mpq_archive_shared_name(binary_path, generate_locales
 
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file), "--locale", "041D"],
+        [str(binary_path), "remove", str(target_file), str(test_file), "--locale", "041D"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -230,7 +230,7 @@ def test_remove_files_from_mpq_archive_unique_name(binary_path, generate_mpq_wit
 
     # Removing without specifying locale means removing using locale 0 = enUS
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file)],
+        [str(binary_path), "remove", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -246,7 +246,7 @@ def test_remove_files_from_mpq_archive_unique_name(binary_path, generate_mpq_wit
 
 
     result = subprocess.run(
-        [str(binary_path), "remove", str(test_file), str(target_file), "--locale", "041D"],
+        [str(binary_path), "remove", str(target_file), str(test_file), "--locale", "041D"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -258,6 +258,67 @@ def test_remove_files_from_mpq_archive_unique_name(binary_path, generate_mpq_wit
         "deDE  cats.txt",
     }
     verify_archive_content(binary_path, target_file, expected_output, listfile)
+
+
+def test_remove_multiple_files_at_once(binary_path, generate_locales_mpq_test_files):
+    _ = generate_locales_mpq_test_files
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "data" / "mpq_with_many_locales.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "remove", str(target_file), "cats.txt", "--locale", "deDE"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"First remove failed: {result.stderr}"
+
+    expected_output = {
+        "enUS  cats.txt",
+        "esES  cats.txt",
+        "041D  cats.txt",
+    }
+    verify_archive_content(binary_path, target_file, expected_output)
+
+    result = subprocess.run(
+        [str(binary_path), "remove", str(target_file), "cats.txt", "cats.txt", "--locale", "esES"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Second remove failed: {result.stderr}"
+
+    expected_output = {
+        "enUS  cats.txt",
+        "041D  cats.txt",
+    }
+    verify_archive_content(binary_path, target_file, expected_output)
+
+
+def test_remove_files_via_stdin(binary_path, generate_locales_mpq_test_files):
+    _ = generate_locales_mpq_test_files
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "data" / "mpq_with_many_locales.mpq"
+
+    stdin_input = "cats.txt\n"
+
+    result = subprocess.run(
+        [str(binary_path), "remove", str(target_file), "-"],
+        input=stdin_input,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "[-] Removing file: cats.txt" in result.stdout
+
+    expected_output = {
+        "deDE  cats.txt",
+        "esES  cats.txt",
+        "041D  cats.txt",
+    }
+    verify_archive_content(binary_path, target_file, expected_output)
 
 
 def verify_archive_content(binary_path, target_file, expected_output, listfile = Path()):

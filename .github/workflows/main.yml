@@ -6,6 +6,7 @@ on:
       - "main"
     paths:
       - ".github/workflows/**"
+      - "Makefile"
       - ".clang-format"
       - ".clang-tidy"
       - "src/**"
