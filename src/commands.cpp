@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <unordered_set>
 
 #include <StormLib.h>
 
@@ -240,8 +241,12 @@ int HandleRemove(const std::vector<std::string> &files, const std::string &targe
     }
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : defaultLocale;
+    std::unordered_set<std::string> seen;
     int overallResult = 0;
     for (const auto &f : files) {
+        if (!seen.insert(f).second) {
+            continue;
+        }
         int result = RemoveFile(hArchive, f, lcid);
         if (result != 0) {
             overallResult = result;

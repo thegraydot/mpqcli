@@ -660,9 +660,10 @@ def test_add_directory_with_path_prefix(binary_path, generate_test_files):
             stderr=subprocess.PIPE,
             text=True
         )
-        assert "textures\\sub\\a.txt" in list_result.stdout
-        assert "textures\\b.txt" in list_result.stdout
-        assert "sub\\a.txt" not in list_result.stdout
+        output_lines = set(list_result.stdout.splitlines())
+        assert "textures\\sub\\a.txt" in output_lines
+        assert "textures\\b.txt" in output_lines
+        assert "sub\\a.txt" not in output_lines
     finally:
         shutil.rmtree(add_dir, ignore_errors=True)
 

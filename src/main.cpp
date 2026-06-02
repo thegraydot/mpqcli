@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
     // These are reused in multiple subcommands
     std::string baseTarget;                        // all subcommands
     std::string baseFile;                          // extract, read
-    std::optional<std::string> basePath;           // add
     std::optional<std::string> baseLocale;         // create, add, remove, extract, read
     std::optional<std::string> baseNameInArchive;  // add, create
     std::optional<std::string> baseOutput;         // create, extract
@@ -31,7 +30,8 @@ int main(int argc, char **argv) {
     // CLI: info
     std::optional<std::string> infoProperty;
     // CLI: add
-    std::optional<std::string> baseDirInArchive;  // add
+    std::optional<std::string> basePath;
+    std::optional<std::string> baseDirInArchive;
     bool addOverwrite = false;
     bool addUpdate = false;
     std::vector<std::string> addFiles;

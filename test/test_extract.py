@@ -848,7 +848,7 @@ def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
     test_file = script_dir / "data" / "files" / "cats.txt"
     nested_path = "texts\\cats.txt"
     result = subprocess.run(
-        [str(binary_path), "add", str(test_file), str(archive_file), "--path", nested_path],
+        [str(binary_path), "add", str(archive_file), str(test_file), "--path", nested_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
