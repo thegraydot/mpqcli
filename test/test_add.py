@@ -231,7 +231,7 @@ def test_add_existing_file_without_overwrite_should_fail(binary_path, generate_t
     }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
 
     verify_file_in_mpq_has_content(binary_path, target_file, "cats.txt", expected_content)
 
@@ -719,7 +719,7 @@ def test_add_directory_without_overwrite_skips_existing(binary_path, generate_te
             text=True
         )
 
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
         assert "[!] File already exists in MPQ archive: cats.txt - Skipping..." in result.stderr
 
         verify_file_in_mpq_has_content(binary_path, target_mpq, "cats.txt", original_content)
@@ -871,7 +871,7 @@ def test_add_update_single_file_emits_warning(binary_path, generate_test_files):
         text=True
     )
 
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
     assert "--update is only meaningful when adding a directory" in result.stderr
 
 

@@ -99,6 +99,7 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
     uint32_t fileCount = CalculateMpqMaxFileValue(target);
 
     // Create the MPQ archive and add files
+    int result = 0;
     HANDLE hArchive = CreateMpqArchive(outputFile, fileCount, gameRules);
     if (hArchive) {
         LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : defaultLocale;
@@ -119,9 +120,9 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
                 filePath = fs::path(nameInArchive.value());
                 archivePath = WindowsifyFilePath(filePath);  // Normalise path for MPQ
             }
-            AddFile(hArchive, target, archivePath, lcid, gameRules, addOverrides);
+            result |= AddFile(hArchive, target, archivePath, lcid, gameRules, addOverrides);
         } else {
-            AddFiles(hArchive, target, "", lcid, gameRules, addOverrides);
+            result |= AddFiles(hArchive, target, "", lcid, gameRules, addOverrides);
         }
         if (signArchive) {
             SignMpqArchive(hArchive);
@@ -132,7 +133,7 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
         return 1;
     }
 
-    return 0;
+    return result;
 }
 
 int HandleAdd(const std::vector<std::string> &files, const std::string &target,
@@ -201,6 +202,7 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
                   << std::endl;
     }
 
+    int result = 0;
     for (const auto &f : files) {
         if (!fs::exists(f)) {
             std::cerr << "[!] Path does not exist: " << f << std::endl;
@@ -209,7 +211,9 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
 
         if (fs::is_directory(f)) {
             std::string prefix = path.value_or("");
-            AddFiles(hArchive, f, prefix, lcid, gameRules, addOverrides, overwrite, update);
+            result |=
+                AddFiles(hArchive, f, prefix, lcid, gameRules, addOverrides, overwrite, update);
+
         } else if (fs::is_regular_file(f)) {
             fs::path filePath = fs::path(f);
             std::string archivePath = filePath.filename().u8string();
@@ -225,14 +229,15 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
                 archivePath = WindowsifyFilePath(filePath);
             }
 
-            AddFile(hArchive, f, archivePath, lcid, gameRules, addOverrides, overwrite);
+            result |= AddFile(hArchive, f, archivePath, lcid, gameRules, addOverrides, overwrite);
+
         } else {
             std::cerr << "[!] Not a file or directory: " << f << std::endl;
         }
     }
 
     CloseMpqArchive(hArchive);
-    return 0;
+    return result;
 }
 
 int HandleRemove(const std::vector<std::string> &files, const std::string &target,

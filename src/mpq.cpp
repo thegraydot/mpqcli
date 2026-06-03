@@ -197,6 +197,7 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
 
     int filesAdded = 0;
     int filesSkipped = 0;
+    int filesFailed = 0;
 
     for (const auto &entry : entries) {
         fs::path inputFilePath = fs::relative(entry, targetPath);
@@ -235,19 +236,22 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
             }
         }
 
-        int result = AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules, overrides,
-                             overwrite);
+        const int result = AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules,
+                                   overrides, overwrite);
         if (result == 0) {
             filesAdded++;
+        } else {
+            filesFailed++;
         }
     }
 
     if (update) {
-        std::cout << "[*] " << filesAdded << " files added, " << filesSkipped << " files skipped"
+        std::cout << "[*] For " << inputPath << ": " << filesAdded << " files added, "
+                  << filesSkipped << " files skipped, " << filesFailed << " files failed."
                   << std::endl;
     }
 
-    return 0;
+    return filesFailed;
 }
 
 int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archiveFilePath,
@@ -256,7 +260,7 @@ int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archi
     // Return if file doesn't exist on disk
     if (!fs::exists(localFile)) {
         std::cerr << "[!] File doesn't exist on disk: " << localFile << std::endl;
-        return -1;
+        return 1;
     }
 
     // Check if file exists in MPQ archive
@@ -269,7 +273,7 @@ int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archi
             std::cerr << "[!] File" << PrettyPrintLocale(locale, " for locale ")
                       << " already exists in MPQ archive: " << archiveFilePath << " - Skipping..."
                       << std::endl;
-            return -1;
+            return 1;
         } else if (fileLocale == locale) {
             std::cout << "[+] File" << PrettyPrintLocale(locale, " for locale ")
                       << " already exists in MPQ archive: " << archiveFilePath
@@ -290,7 +294,7 @@ int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archi
             int32_t error = SErrGetLastError();
             std::cerr << "[!] Error: " << error
                       << " Failed to increase new max file count to: " << newMaxFiles << std::endl;
-            return -1;
+            return 1;
         }
     }
 
@@ -323,7 +327,7 @@ int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archi
     if (!addedFile) {
         int32_t error = SErrGetLastError();
         std::cerr << "[!] Error: " << error << " Failed to add: " << archiveFilePath << std::endl;
-        return -1;
+        return 1;
     }
 
     return 0;
