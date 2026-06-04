@@ -19,21 +19,21 @@ int main(int argc, char **argv) {
 
     // CLI: base
     // These are reused in multiple subcommands
+    // clang-format off: preserve column-aligned flag-to-char mappings
     std::string baseTarget;                        // all subcommands
     std::string baseFile;                          // extract, read
     std::optional<std::string> baseLocale;         // add, create, extract, read, remove
-    std::optional<std::string> baseNameInArchive;  // add, create
+    std::optional<std::string> basePath;           // add, create
     std::optional<std::string> baseOutput;         // create, extract
     std::optional<std::string> baseListfileName;   // extract, list
     std::optional<std::string> baseGameProfile;    // add, create
     int64_t fileDwFlags = -1;                      // add, create
     int64_t fileDwCompression = -1;                // add, create
     int64_t fileDwCompressionNext = -1;            // add, create
+    // clang-format on
     // CLI: info
     std::optional<std::string> infoProperty;
     // CLI: add
-    std::optional<std::string> addBasePath;
-    std::optional<std::string> addBaseDirInArchive;
     bool addOverwrite = false;
     bool addUpdate = false;
     std::vector<std::string> addFiles;
@@ -90,7 +90,8 @@ int main(int argc, char **argv) {
     create->add_option("target", baseTarget, "Directory or file to put in MPQ archive")
         ->required()
         ->check(CLI::ExistingPath);
-    create->add_option("-n,--name-in-archive", baseNameInArchive, "Filename inside MPQ archive");
+    create->add_option("-p,--path", basePath,
+                       "Archive path for a single file, or prefix for a directory");
     create->add_option("-o,--output", baseOutput, "Output MPQ archive");
     create->add_flag("-s,--sign", createSignArchive, "Sign the MPQ archive (default false)");
     create->add_option("--locale", baseLocale, "Locale to use for added files")->check(LocaleValid);
@@ -140,12 +141,8 @@ int main(int argc, char **argv) {
                     "Files or directories to add; pass - to read paths from stdin")
         ->required()
         ->expected(-1);
-    add->add_option("-p,--path", addBasePath,
-                    "Archive path for a single file, or prefix for a directory add");
-    add->add_option("-d,--directory-in-archive", addBaseDirInArchive,
-                    "Directory to put file inside within MPQ archive (single file only)");
-    add->add_option("-f,--filename-in-archive", baseNameInArchive,
-                    "Filename inside MPQ archive (single file only)");
+    add->add_option("-p,--path", basePath,
+                    "Archive path for a single file, or prefix for a directory");
     add->add_flag("-w,--overwrite", addOverwrite, "Overwrite file if it already is in MPQ archive");
     add->add_flag("-u,--update", addUpdate,
                   "Skip files whose archived size matches the on-disk size (directory add only)");
@@ -240,11 +237,11 @@ int main(int argc, char **argv) {
     }
 
     if (app.got_subcommand(create)) {
-        return HandleCreate(baseTarget, baseNameInArchive, baseOutput, createSignArchive,
-                            baseLocale, baseGameProfile, createMpqVersion, createStreamFlags,
-                            createSectorSize, createRawChunkSize, createFileFlags1,
-                            createFileFlags2, createFileFlags3, createAttrFlags, fileDwFlags,
-                            fileDwCompression, fileDwCompressionNext);
+        return HandleCreate(baseTarget, basePath, baseOutput, createSignArchive, baseLocale,
+                            baseGameProfile, createMpqVersion, createStreamFlags, createSectorSize,
+                            createRawChunkSize, createFileFlags1, createFileFlags2,
+                            createFileFlags3, createAttrFlags, fileDwFlags, fileDwCompression,
+                            fileDwCompressionNext);
     }
 
     if (app.got_subcommand(add)) {
@@ -259,9 +256,9 @@ int main(int argc, char **argv) {
                 resolvedAddFiles.push_back(f);
             }
         }
-        return HandleAdd(resolvedAddFiles, baseTarget, addBasePath, addBaseDirInArchive,
-                         baseNameInArchive, addOverwrite, addUpdate, baseLocale, baseGameProfile,
-                         fileDwFlags, fileDwCompression, fileDwCompressionNext);
+        return HandleAdd(resolvedAddFiles, baseTarget, basePath, addOverwrite, addUpdate,
+                         baseLocale, baseGameProfile, fileDwFlags, fileDwCompression,
+                         fileDwCompressionNext);
     }
 
     if (app.got_subcommand(remove)) {

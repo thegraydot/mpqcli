@@ -14,6 +14,16 @@
 
 namespace fs = std::filesystem;
 
+std::string ResolveArchiveName(const std::string &f, const std::optional<std::string> &path,
+                               const bool treatAsDirectory = false) {
+    fs::path filePath = path.value_or(fs::path(f).filename().u8string());
+    if (treatAsDirectory) {
+        const std::string filename = fs::path(f).filename().u8string();
+        filePath = path.value_or("") / fs::path(filename);
+    }
+    return WindowsifyFilePath(filePath);
+}
+
 int HandleVersion() {
     std::cout << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
     return 0;
@@ -42,18 +52,13 @@ int HandleInfo(const std::string &target, const std::optional<std::string> &prop
     return 0;
 }
 
-int HandleCreate(const std::string &target, const std::optional<std::string> &nameInArchive,
+int HandleCreate(const std::string &target, const std::optional<std::string> &path,
                  const std::optional<std::string> &output, bool signArchive,
                  const std::optional<std::string> &locale,
                  const std::optional<std::string> &gameProfile, int32_t mpqVersion,
                  int64_t streamFlags, int64_t sectorSize, int64_t rawChunkSize, int64_t fileFlags1,
                  int64_t fileFlags2, int64_t fileFlags3, int64_t attrFlags, int64_t fileDwFlags,
                  int64_t fileDwCompression, int64_t fileDwCompressionNext) {
-    if (!fs::is_regular_file(target) && nameInArchive.has_value()) {
-        std::cerr << "[!] Cannot specify --name-in-archive when adding a directory." << std::endl;
-        return 1;
-    }
-
     fs::path outputFilePath;
     if (output.has_value()) {
         outputFilePath = fs::absolute(output.value());
@@ -112,18 +117,19 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
         if (fileDwCompressionNext >= 0)
             addOverrides.dwCompressionNext = static_cast<DWORD>(fileDwCompressionNext);
 
-        if (fs::is_regular_file(target)) {
-            // Default: use the filename as path, saves file to root of MPQ
-            fs::path filePath = fs::path(target);
-            std::string archivePath = filePath.filename().u8string();
-            if (nameInArchive.has_value()) {  // Optional: specified filename inside archive
-                filePath = fs::path(nameInArchive.value());
-                archivePath = WindowsifyFilePath(filePath);  // Normalise path for MPQ
-            }
+        if (fs::is_directory(target)) {
+            const std::string prefix = path.value_or("");
+            result |= AddFiles(hArchive, target, prefix, lcid, gameRules, addOverrides);
+
+        } else if (fs::is_regular_file(target)) {
+            std::string archivePath = ResolveArchiveName(target, path);
             result |= AddFile(hArchive, target, archivePath, lcid, gameRules, addOverrides);
+
         } else {
-            result |= AddFiles(hArchive, target, "", lcid, gameRules, addOverrides);
+            std::cerr << "[!] Not a file or directory: " << target << std::endl;
+            result |= 1;
         }
+
         if (signArchive) {
             SignMpqArchive(hArchive);
         }
@@ -137,46 +143,13 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &na
 }
 
 int HandleAdd(const std::vector<std::string> &files, const std::string &target,
-              const std::optional<std::string> &path,
-              const std::optional<std::string> &dirInArchive,
-              const std::optional<std::string> &nameInArchive, bool overwrite, bool update,
+              const std::optional<std::string> &path, bool overwrite, bool update,
               const std::optional<std::string> &locale,
               const std::optional<std::string> &gameProfile, int64_t fileDwFlags,
               int64_t fileDwCompression, int64_t fileDwCompressionNext) {
     HANDLE hArchive;
     if (!OpenMpqArchive(target, &hArchive, 0)) {
         std::cerr << "[!] Failed to open MPQ archive." << std::endl;
-        return 1;
-    }
-
-    bool hasDirectory = false;
-    for (const auto &f : files) {
-        if (fs::is_directory(f)) {
-            hasDirectory = true;
-            break;
-        }
-    }
-    bool multipleInputs = files.size() > 1;
-
-    if ((hasDirectory || multipleInputs) &&
-        (dirInArchive.has_value() || nameInArchive.has_value())) {
-        std::cerr << "[!] --directory-in-archive and --filename-in-archive are only valid when "
-                     "adding a single file."
-                  << std::endl;
-        CloseMpqArchive(hArchive);
-        return 1;
-    }
-    if (multipleInputs && path.has_value()) {
-        std::cerr << "[!] --path is only valid when adding a single file or directory."
-                  << std::endl;
-        CloseMpqArchive(hArchive);
-        return 1;
-    }
-    if (path.has_value() && (dirInArchive.has_value() || nameInArchive.has_value())) {
-        std::cerr << "[!] Cannot specify --path together with --name-in-archive or "
-                     "--directory-in-archive."
-                  << std::endl;
-        CloseMpqArchive(hArchive);
         return 1;
     }
 
@@ -197,6 +170,14 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     if (fileDwCompressionNext >= 0)
         addOverrides.dwCompressionNext = static_cast<DWORD>(fileDwCompressionNext);
 
+    bool hasDirectory = false;
+    for (const auto &f : files) {
+        if (fs::is_directory(f)) {
+            hasDirectory = true;
+            break;
+        }
+    }
+
     if (update && !hasDirectory) {
         std::cerr << "[!] Warning: --update is only meaningful when adding a directory"
                   << std::endl;
@@ -215,20 +196,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
                 AddFiles(hArchive, f, prefix, lcid, gameRules, addOverrides, overwrite, update);
 
         } else if (fs::is_regular_file(f)) {
-            fs::path filePath = fs::path(f);
-            std::string archivePath = filePath.filename().u8string();
-
-            if (path.has_value()) {
-                filePath = fs::path(path.value());
-                archivePath = WindowsifyFilePath(filePath);
-            } else if (dirInArchive.has_value() || nameInArchive.has_value()) {
-                std::string effectiveDir =
-                    dirInArchive.value_or(fs::path(f).parent_path().u8string());
-                std::string effectiveName = nameInArchive.value_or(archivePath);
-                filePath = fs::path(effectiveDir) / fs::path(effectiveName);
-                archivePath = WindowsifyFilePath(filePath);
-            }
-
+            const bool treatAsDirectory = hasDirectory || files.size() > 1;
+            std::string archivePath = ResolveArchiveName(f, path, treatAsDirectory);
             result |= AddFile(hArchive, f, archivePath, lcid, gameRules, addOverrides, overwrite);
 
         } else {

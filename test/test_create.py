@@ -220,12 +220,12 @@ def test_create_mpq_from_file(binary_path, generate_test_files):
     verify_archive_file_content(binary_path, target_file, {"enUS  test.txt"})
 
 
-def test_create_mpq_from_file_with_nameinarchive_parameter(binary_path, generate_test_files):
+def test_create_mpq_from_file_with_path_parameter(binary_path, generate_test_files):
     """
-    Test MPQ archive creation from a file, with the --name-in-archive parameter.
+    Test MPQ archive creation from a file, with the --path parameter.
     This test checks:
     - MPQ archive creation from a file.
-    - That the --name-in-archive parameter is correctly handled.
+    - That the --path parameter is correctly handled.
     """
     _ = generate_test_files
     script_dir = Path(__file__).parent
@@ -240,7 +240,7 @@ def test_create_mpq_from_file_with_nameinarchive_parameter(binary_path, generate
     # test_create_mpq_already_exists
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", str(test_file), "--output", str(target_file), "--name-in-archive", "messages\\important.txt"],
+        [str(binary_path), "create", str(test_file), "--output", str(target_file), "--path", "messages\\important.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -253,30 +253,44 @@ def test_create_mpq_from_file_with_nameinarchive_parameter(binary_path, generate
     verify_archive_file_content(binary_path, target_file, {"enUS  messages\\important.txt"})
 
 
-def test_create_mpq_from_directory_with_nameinarchive_parameter(binary_path, generate_test_files):
+def test_create_mpq_from_directory_with_path_parameter(binary_path, generate_test_files):
     """
-    Test MPQ archive creation from a directory, with the --name-in-archive parameter.
+    Test MPQ archive creation from a directory, with the --path parameter.
     This test checks:
     - No MPQ archive is created.
     """
     _ = generate_test_files
     script_dir = Path(__file__).parent
-    target_dir = script_dir / "data" / "files"
+    target_dir = script_dir / "data" / "files2"
+    # Create test directory with files
+    target_dir.mkdir(exist_ok=True)
 
-    target_file = target_dir.with_name("files_test").with_suffix(".mpq")
-    # Remove the target file if it exists
-    # Testing creation when file exists is handled:
-    # test_create_mpq_already_exists
-    target_file.unlink(missing_ok=True)
-    result = subprocess.run(
-        [str(binary_path), "create", str(target_dir), "--output", str(target_file), "--name-in-archive", "messages\\important.txt"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
+    # Create a new test file on the fly
+    test_file = script_dir / "data" / "files2" / "important.txt"
+    test_file.write_text("This is a test file for MPQ addition.")
 
-    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
-    assert not target_file.exists(), "MPQ file was created"
+    try:
+        target_file = target_dir.with_name("files_test").with_suffix(".mpq")
+        # Remove the target file if it exists
+        # Testing creation when file exists is handled:
+        # test_create_mpq_already_exists
+        target_file.unlink(missing_ok=True)
+        result = subprocess.run(
+            [str(binary_path), "create", str(target_dir), "--output", str(target_file), "--path", "messages"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert target_file.exists(), "MPQ file was not created"
+        assert target_file.stat().st_size > 0, "MPQ file is empty"
+
+        verify_archive_file_content(binary_path, target_file, {"enUS  messages\\important.txt"})
+    finally:
+        # Clean up
+        if target_dir.exists():
+            shutil.rmtree(target_dir)
 
 
 def test_create_mpq_with_illegal_locale(binary_path, generate_test_files):

@@ -31,7 +31,22 @@ Create an MPQ file from a single file.
 $ mpqcli create --game diablo2 <target_file>
 ```
 
-This will put the given file in the root of the MPQ archive. By optionally providing a path in the `--name-in-archive` parameter, the name that the file has in the MPQ archive can be changed, and it can be put in a directory.
+## Control where files are stored
+
+For single files, one can specify both directory and filename in one step using `-p` or `--path`:
+
+```bash
+$ mpqcli create fts.txt --output archive.mpq --path "texts\swarm.txt"
+[+] Adding file: texts\swarm.txt
+```
+
+For directories, one can specify the base directory using `-p` or `--path`:
+
+```bash
+$ mpqcli create textures/ --output archive.mpq --path textures
+[+] Adding file: textures\Creature\Bear\Bear.blp
+[+] Adding file: textures\Creature\Wolf\Wolf.blp
+```
 
 ## Create and sign an MPQ archive
 

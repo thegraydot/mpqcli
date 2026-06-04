@@ -66,36 +66,29 @@ changed files need to be re-added.
 $ mpqcli add wow-patch.mpq textures/ --update --overwrite
 [~] Skipping unchanged file: Creature\Bear\Bear.blp
 [+] Adding file: Creature\Wolf\Wolf.blp
-[*] 1 files added, 1 files skipped
+[*] For textures: 1 files added, 1 files skipped, 0 files failed.
 ```
 
 Note: the skip check is size-based only. Files with the same size but different content
 are not detected as changed. If precise change detection matters, pass `--overwrite`
 without `--update` to unconditionally replace every file.
 
-## Control where a single file is stored
+## Control where files are stored
 
-These options apply to single-file adds only.
-
-Add a file under a specific name using `-f` or `--filename-in-archive`:
-
-```bash
-$ mpqcli add wow-patch.mpq fta.txt --filename-in-archive "alliance.txt"
-[+] Adding file: alliance.txt
-```
-
-Add a file into a subdirectory using `-d` or `--directory-in-archive`:
-
-```bash
-$ mpqcli add wow-patch.mpq fts.txt --directory-in-archive texts
-[+] Adding file: texts\fts.txt
-```
-
-Specify both directory and filename in one step using `-p` or `--path`:
+For single files, one can specify both directory and filename in one step using `-p` or `--path`:
 
 ```bash
 $ mpqcli add wow-patch.mpq fts.txt --path "texts\swarm.txt"
 [+] Adding file: texts\swarm.txt
+```
+
+For directories, one can specify the base directory using `-p` or `--path`:
+
+```bash
+$ mpqcli add wow-patch.mpq textures/ --path textures
+[+] Adding file: textures\Creature\Bear\Bear.blp
+[+] Adding file: textures\Creature\Wolf\Wolf.blp
+[*] For textures: 2 files added, 0 files skipped, 0 files failed.
 ```
 
 ## Overwrite existing files

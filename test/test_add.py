@@ -108,7 +108,44 @@ def test_add_multiple_files_to_mpq_archive(binary_path, generate_test_files):
     verify_archive_file_content(binary_path, target_file, expected_content)
 
 
-def test_add_file_with_filenameinarchive_and_directoryinarchive_and_path_to_mpq_archive(binary_path, generate_test_files):
+def test_add_file_with_path_to_mpq_archive(binary_path, generate_test_files):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_file = script_dir / "data" / "files.mpq"
+
+    create_mpq_archive_for_test(binary_path, script_dir)
+
+    test_file = script_dir / "data" / "test.txt"
+    test_file.write_text("This is a test file for MPQ addition.")
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(target_file), str(test_file), "--path", "important\\message.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "list", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    output_lines = set(result.stdout.splitlines())
+
+    expected_output = {
+        "cats.txt",
+        "dogs.txt",
+        "bytes",
+        "important\\message.txt",
+    }
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_add_several_files_with_path_to_mpq_archive(binary_path, generate_test_files):
     _ = generate_test_files
     script_dir = Path(__file__).parent
     target_file = script_dir / "data" / "files.mpq"
@@ -119,87 +156,33 @@ def test_add_file_with_filenameinarchive_and_directoryinarchive_and_path_to_mpq_
     test_file0.write_text("This is a test file for MPQ addition.")
     test_file1 = script_dir / "data" / "test1.txt"
     test_file1.write_text("This is another test file for MPQ addition.")
-    test_file2 = script_dir / "data" / "test2.txt"
-    test_file2.write_text("This is yet another test file for MPQ addition.")
-    test_file3 = script_dir / "data" / "test3.txt"
-    test_file3.write_text("This is yet yet another test file for MPQ addition.")
 
-    bin_dir = binary_path.parent
-    test_file1_copy = bin_dir / "test1.txt"
-    shutil.copy(test_file1, test_file1_copy)
+    result = subprocess.run(
+        [str(binary_path), "add", str(target_file), str(test_file0), str(test_file1), "--path", "texts"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
 
-    try:
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), str(test_file0), "--directory-in-archive", "directory", "--path", "important.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    result = subprocess.run(
+        [str(binary_path), "list", str(target_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
 
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), str(test_file0), "--filename-in-archive", "important.txt", "--path", "texts/important.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    output_lines = set(result.stdout.splitlines())
 
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), str(test_file0), "--directory-in-archive", "directory"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), test_file1_copy.name, "--filename-in-archive", "msg.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            cwd=str(bin_dir)
-        )
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), str(test_file2), "--directory-in-archive", "texts", "--filename-in-archive", "info.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_file), str(test_file3), "--path", "important\\message.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-
-        result = subprocess.run(
-            [str(binary_path), "list", str(target_file)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        output_lines = set(result.stdout.splitlines())
-
-        expected_output = {
-            "cats.txt",
-            "dogs.txt",
-            "bytes",
-            "directory\\test0.txt",
-            "msg.txt",
-            "texts\\info.txt",
-            "important\\message.txt",
-        }
-        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert output_lines == expected_output, f"Unexpected output: {output_lines}"
-    finally:
-        test_file1_copy.unlink(missing_ok=True)
+    expected_output = {
+        "cats.txt",
+        "dogs.txt",
+        "bytes",
+        "texts\\test0.txt",
+        "texts\\test1.txt",
+    }
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
 
 def test_add_existing_file_without_overwrite_should_fail(binary_path, generate_test_files):
@@ -723,38 +706,6 @@ def test_add_directory_without_overwrite_skips_existing(binary_path, generate_te
         assert "[!] File already exists in MPQ archive: cats.txt - Skipping..." in result.stderr
 
         verify_file_in_mpq_has_content(binary_path, target_mpq, "cats.txt", original_content)
-    finally:
-        shutil.rmtree(add_dir, ignore_errors=True)
-
-
-def test_add_dir_with_directory_in_archive_flag_errors(binary_path, generate_test_files):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    target_mpq = script_dir / "data" / "files.mpq"
-    add_dir = script_dir / "data" / "add_dir_flag_error"
-
-    create_mpq_archive_for_test(binary_path, script_dir)
-    add_dir.mkdir(parents=True, exist_ok=True)
-    (add_dir / "x.txt").write_text("x")
-
-    try:
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(add_dir), "--directory-in-archive", "subdir"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 1, f"Expected failure but got: {result.returncode}"
-        assert "--directory-in-archive" in result.stderr
-
-        result = subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(add_dir), "--filename-in-archive", "name.txt"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        assert result.returncode == 1, f"Expected failure but got: {result.returncode}"
-        assert "--filename-in-archive" in result.stderr
     finally:
         shutil.rmtree(add_dir, ignore_errors=True)
 
