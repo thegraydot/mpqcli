@@ -21,26 +21,26 @@ git submodule update --init --recursive
 Install the clang lint tools:
 
 ```
-make setup
+make install_clang_tools
 ```
 
 ## Makefile Reference
 
 Run `make help` to list all available targets. Common ones:
 
-| Target | Description |
-|---|---|
-| `make setup` | Install clang-format and clang-tidy via apt |
-| `make build_linux` | Build for Linux using cmake |
-| `make build_windows` | Build for Windows using cmake |
-| `make build_clean` | Remove the cmake build directory |
-| `make test_create_venv` | Create Python venv and install test dependencies (first-time only) |
-| `make test_mpqcli` | Run the pytest test suite |
-| `make lint` | Run all C++ linters (clang-format + clang-tidy) |
-| `make lint_format` | Check formatting only (dry run) |
-| `make lint_format_fix` | Auto-fix formatting in-place |
-| `make lint_cpp` | Run clang-tidy static analysis |
-| `make clean` | Remove all build and test artifacts |
+| Target                     | Description                                                        |
+|----------------------------|--------------------------------------------------------------------|
+| `make install_clang_tools` | Install clang-format and clang-tidy via apt                        |
+| `make build_linux`         | Build for Linux using cmake                                        |
+| `make build_windows`       | Build for Windows using cmake                                      |
+| `make build_clean`         | Remove the cmake build directory                                   |
+| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only) |
+| `make test_mpqcli`         | Run the pytest test suite                                          |
+| `make lint`                | Run all C++ linters (clang-format + clang-tidy)                    |
+| `make fmt_check`           | Check formatting only (dry run)                                    |
+| `make fmt`                 | Auto-fix formatting in-place                                       |
+| `make lint_cpp`            | Run clang-tidy static analysis                                     |
+| `make clean`               | Remove all build and test artifacts                                |
 
 ## Requirements for a Pull Request
 
@@ -81,7 +81,7 @@ make lint
 If there are formatting violations, auto-fix them with:
 
 ```
-make lint_format_fix
+make fmt
 ```
 
 Then re-run `make lint` to confirm everything passes.
