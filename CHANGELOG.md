@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.10 - 2026-06-02
+## 0.9.10 - 2026-06-06
 
 ### Added
 
@@ -16,11 +16,20 @@
 - Crash when reading strong signatures from malformed or truncated archives
 - Docker glibc image updated to ubuntu:24.04
 - Adding files is now ordered and operating system agnostic
+- `add` subcommand now returns non-zero exit codes on failure
+- Error messages now include StormLib error codes
+- Duplicate error messages removed
+- Makefile build targets corrected
 
 ### Changed
 
+- `--filename-in-archive` and `--directory-in-archive` replaced by a unified `--path` flag
 - The path flag on add now acts as an archive path prefix when a directory is given
 - The directory-in-archive and filename-in-archive flags are now restricted to single-file add operations
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
 
 ## 0.9.9 - 2026-04-05
 
