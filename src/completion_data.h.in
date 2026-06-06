@@ -1,0 +1,16 @@
+#ifndef COMPLETION_DATA_H
+#define COMPLETION_DATA_H
+
+// Auto-generated from src/completion/mpqcli.bash, do not edit directly
+static constexpr char BashCompletionScript[] = R"BASH_MPQCLI(@BASH_COMPLETION_SCRIPT@)BASH_MPQCLI";
+
+// Auto-generated from src/completion/mpqcli.zsh, do not edit directly
+static constexpr char ZshCompletionScript[] = R"ZSH_MPQCLI(@ZSH_COMPLETION_SCRIPT@)ZSH_MPQCLI";
+
+// Auto-generated from src/completion/mpqcli.ps1, do not edit directly
+static constexpr char PsCompletionScript[] = R"PS_MPQCLI(@PS_COMPLETION_SCRIPT@)PS_MPQCLI";
+
+// Auto-generated from src/completion/mpqcli.fish, do not edit directly
+static constexpr char FishCompletionScript[] = R"FISH_MPQCLI(@FISH_COMPLETION_SCRIPT@)FISH_MPQCLI";
+
+#endif  // COMPLETION_DATA_H

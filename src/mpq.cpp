@@ -404,7 +404,7 @@ int ListFiles(HANDLE hArchive, const std::optional<std::string> &listfileName, b
             true;  // If the user specified properties, we need to print the detailed output
     }
 
-    // Map of property name to SFileInfoClass — defined once, outside the loop
+    // Map of property name to SFileInfoClass, defined once, outside the loop
     static const std::map<std::string, SFileInfoClass> kPropertyInfoClass = {
         {"hash-index", SFileInfoHashIndex},
         {"name-hash1", SFileInfoNameHash1},
