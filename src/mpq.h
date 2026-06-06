@@ -36,6 +36,7 @@ std::unique_ptr<char[]> ReadFile(HANDLE hArchive, const char *szFileName, unsign
                                  LCID preferredLocale);
 void PrintMpqInfo(HANDLE hArchive, const std::optional<std::string> &infoProperty);
 uint32_t VerifyMpqArchive(HANDLE hArchive);
+int CompactMpqArchive(HANDLE hArchive, const std::optional<std::string> &listfileName);
 int32_t PrintMpqSignature(HANDLE hArchive, const std::string &target);
 
 template <typename T>

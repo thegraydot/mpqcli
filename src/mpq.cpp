@@ -651,6 +651,20 @@ uint32_t VerifyMpqArchive(HANDLE hArchive) {
     return SFileVerifyArchive(hArchive);
 }
 
+int CompactMpqArchive(HANDLE hArchive, const std::optional<std::string> &listfileName) {
+    std::cout << "[*] Compacting archive. This may take some time..." << std::endl;
+    // Check if the user provided a listfile input
+    const char *listfile = listfileName.has_value() ? listfileName->c_str() : nullptr;
+
+    if (!SFileCompactArchive(hArchive, listfile, false)) {
+        const auto error = SErrGetLastError();
+        std::cerr << "[!] Failed to compact archive: (" << error << ") " << StormErrorString(error)
+                  << std::endl;
+        return 1;
+    }
+    return 0;
+}
+
 int32_t PrintMpqSignature(HANDLE hArchive, const std::string &target) {
     // Determine if we have a strong or weak digital signature
     int32_t signatureType = GetFileInfo<int32_t>(hArchive, SFileMpqSignatures);

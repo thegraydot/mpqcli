@@ -338,3 +338,14 @@ int HandleVerify(const std::string &target, bool printSignature) {
     CloseMpqArchive(hArchive);
     return result;
 }
+
+int HandleCompact(const std::string &target, const std::optional<std::string> &listfileName) {
+    HANDLE hArchive;
+    if (!OpenMpqArchive(target, &hArchive, 0)) {
+        return 1;
+    }
+
+    const int result = CompactMpqArchive(hArchive, listfileName);
+    CloseMpqArchive(hArchive);
+    return result;
+}
