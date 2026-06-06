@@ -9,6 +9,7 @@ The `mpqcli` program has the following subcommands:
 |---|---|
 | [`version`](./commands/version.md) | Print the tool version number |
 | [`about`](./commands/about.md) | Print information about the tool |
+| [`completion`](./commands/completion.md) | Print shell completion script to stdout |
 | [`info`](./commands/info.md) | Print information about MPQ archive properties |
 | [`create`](./commands/create.md) | Create an MPQ archive from a target directory or a single file |
 | [`add`](./commands/add.md) | Add a file to an existing MPQ archive |

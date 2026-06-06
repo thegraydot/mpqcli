@@ -5,6 +5,7 @@
 - [Commands](./commands_list.md)
   - [version](./commands/version.md)
   - [about](./commands/about.md)
+  - [completion](./commands/completion.md)
   - [info](./commands/info.md)
   - [create](./commands/create.md)
   - [add](./commands/add.md)
