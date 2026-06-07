@@ -37,7 +37,7 @@ $ mpqcli completion zsh > "${fpath[1]}/_mpqcli"
 Append the completion script to your PowerShell profile so it loads automatically.
 
 ```powershell
-$ mpqcli completion powershell >> $PROFILE
+PS> mpqcli completion powershell >> $PROFILE
 ```
 
 ## Fish

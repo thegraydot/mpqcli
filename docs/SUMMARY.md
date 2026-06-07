@@ -14,6 +14,7 @@
   - [extract](./commands/extract.md)
   - [read](./commands/read.md)
   - [verify](./commands/verify.md)
+  - [compact](./commands/compact.md)
 - [Advanced Examples](./advanced.md)
 - [Building](./building.md)
 - [Contributing](./contributing.md)

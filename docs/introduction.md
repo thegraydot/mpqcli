@@ -1,6 +1,6 @@
 # Introduction
 
-A command-line tool to create, add, remove, list, extract, read, and verify MPQ archives using the [StormLib library](https://github.com/ladislav-zezula/StormLib).
+A command-line tool to create, add, remove, list, extract, read, verify, and compact MPQ archives using the [StormLib library](https://github.com/ladislav-zezula/StormLib).
 
 > ⚠️ **Warning:** This project is under active development and will change functionality between released versions until version 1.0.0.
 

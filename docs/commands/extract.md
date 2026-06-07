@@ -25,6 +25,16 @@ Extract files to a specific target directory, which will be created if it doesn'
 $ mpqcli extract -o patch-1.10 wow-patch.mpq
 ```
 
+## Extract all files keeping the folder structure
+
+Use the `-k` or `--keep` flag to preserve the directory structure from the archive when extracting. Without this flag, all files are placed flat in the output directory, with only the filename retained.
+
+```bash
+$ mpqcli extract -k wow-patch.mpq
+[*] Extracted: Interface/FrameXML/BlizzardFrameXML.lua
+[*] Extracted: Interface/FrameXML/BlizzardFrameXML.xml
+```
+
 ## Extract all files with an external listfile
 
 Older MPQ archives do not contain (complete) file paths of their content. By providing an external listfile that lists the content of the MPQ archive, the extracted files will have the correct names and paths. Listfiles can be downloaded on [Ladislav Zezula's site](http://www.zezula.net/en/mpq/download.html).

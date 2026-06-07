@@ -18,3 +18,4 @@ The `mpqcli` program has the following subcommands:
 | [`extract`](./commands/extract.md) | Extract one or all files from a target MPQ archive |
 | [`read`](./commands/read.md) | Read a specific file to stdout |
 | [`verify`](./commands/verify.md) | Verify a target MPQ archive signature |
+| [`compact`](./commands/compact.md) | Compact (defragment) an MPQ archive |

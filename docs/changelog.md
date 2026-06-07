@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.10.0 - 2026-06-07
+
+### Added
+
+- Compact subcommand to compress MPQ archive after creation/editing
+- Support passing multiple files to the `add` and `remove` subcommands
+- Support reading file paths from stdin in the `add` and `remove` subcommands
+- Support adding entire directories with the `add` subcommand
+- Add an update flag to the `add` subcommand to skip files whose archived size matches the on-disk size
+
+### Fixed
+
+- `extract` command now reports an error when the output directory cannot be created
+- Path traversal guard in `extract` uses fully resolved paths, closing a potential bypass
+- Crash when reading strong signatures from malformed or truncated archives
+- Docker glibc image updated to ubuntu:24.04
+- Adding files is now ordered and operating system agnostic
+- `add` subcommand now returns non-zero exit codes on failure
+- Error messages now include StormLib error codes
+- Duplicate error messages removed
+- Makefile build targets corrected in `CONTRIBUTING.md`
+
+### Changed
+
+- `--filename-in-archive` and `--directory-in-archive` replaced by a unified `--path` flag
+- The path flag on add now acts as an archive path prefix when a directory is given
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
+
 ## 0.9.9 - 2026-04-05
 
 ### Fixed
