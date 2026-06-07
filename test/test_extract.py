@@ -80,9 +80,9 @@ def test_extract_mpq_default_options(binary_path, generate_test_files):
     expected_size = 28 if platform.system() == "Windows" else 27
 
     assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
-        f"Unexpected content in cats.txt"
+        "Unexpected content in cats.txt"
     assert dogs_file.read_text(encoding="utf-8") == expected_dogs_content, \
-        f"Unexpected content in dogs.txt"
+        "Unexpected content in dogs.txt"
     assert cats_file.stat().st_size == expected_size, \
         f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
     assert dogs_file.stat().st_size == expected_size, \
@@ -142,9 +142,9 @@ def test_extract_mpq_output_directory_specified(binary_path, generate_test_files
     expected_size = 28 if platform.system() == "Windows" else 27
 
     assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
-        f"Unexpected content in cats.txt"
+        "Unexpected content in cats.txt"
     assert dogs_file.read_text(encoding="utf-8") == expected_dogs_content, \
-        f"Unexpected content in dogs.txt"
+        "Unexpected content in dogs.txt"
     assert cats_file.stat().st_size == expected_size, \
         f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
     assert dogs_file.stat().st_size == expected_size, \
@@ -199,7 +199,7 @@ def test_extract_file_from_mpq_output_directory_specified(binary_path, generate_
     expected_size = 28 if platform.system() == "Windows" else 27
 
     assert cats_file.read_text(encoding="utf-8") == expected_cats_content, \
-        f"Unexpected content in cats.txt"
+        "Unexpected content in cats.txt"
     assert cats_file.stat().st_size == expected_size, \
         f"Unexpected size for cats.txt: {cats_file.stat().st_size}"
 

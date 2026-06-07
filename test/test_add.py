@@ -575,8 +575,6 @@ def test_add_file_after_all_locale_variants_removed(binary_path, generate_locale
     )
 
 
-# ---- Directory add tests ----
-
 def test_add_directory_to_mpq_archive(binary_path, generate_test_files):
     _ = generate_test_files
     script_dir = Path(__file__).parent
@@ -710,8 +708,6 @@ def test_add_directory_without_overwrite_skips_existing(binary_path, generate_te
         shutil.rmtree(add_dir, ignore_errors=True)
 
 
-# ---- --update flag tests ----
-
 def test_add_update_skips_unchanged_files(binary_path, generate_test_files):
     _ = generate_test_files
     script_dir = Path(__file__).parent
@@ -826,8 +822,6 @@ def test_add_update_single_file_emits_warning(binary_path, generate_test_files):
     assert "--update is only meaningful when adding a directory" in result.stderr
 
 
-# ---- stdin tests ----
-
 def test_add_files_via_stdin(binary_path, generate_test_files):
     _ = generate_test_files
     script_dir = Path(__file__).parent
@@ -861,8 +855,6 @@ def test_add_files_via_stdin(binary_path, generate_test_files):
     assert "stdin_a.txt" in list_result.stdout
     assert "stdin_b.txt" in list_result.stdout
 
-
-# ---- Helpers ----
 
 def create_mpq_archive_for_test(binary_path, script_dir):
     target_dir = script_dir / "data" / "files"
