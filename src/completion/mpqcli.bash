@@ -35,9 +35,21 @@ _mpqcli() {
         jaJP koKR nlNL plPL ptBR ruRU zhCN enGB esMX ptPT
     )
     local -a games=(
-        generic diablo1 lordsofmagic starcraft1 warcraft2 diablo2
-        warcraft3 warcraft3-map wow-vanilla wow-tbc wow-wotlk
-        wow-cataclysm wow-mop starcraft2 diablo3
+        generic
+        diablo1 diablo d1
+        lordsofmagic lomse
+        starcraft starcraft1 sc1
+        warcraft2 wc2 war2
+        diablo2 d2
+        warcraft3 wc3 war3
+        warcraft3-map wc3-map war3-map
+        wow1 wow-vanilla
+        wow2 wow-tbc
+        wow3 wow-wotlk
+        wow4 wow-cataclysm
+        wow5 wow-mop
+        starcraft2 sc2
+        diablo3 d3
     )
     local -a info_properties=(
         format-version header-offset header-size archive-size
