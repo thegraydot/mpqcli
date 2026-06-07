@@ -32,5 +32,6 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
 int HandleRead(const std::string &file, const std::string &target,
                const std::optional<std::string> &locale);
 int HandleVerify(const std::string &target, bool printSignature);
+int HandleCompact(const std::string &target, const std::optional<std::string> &listfileName);
 
 #endif  // COMMANDS_H

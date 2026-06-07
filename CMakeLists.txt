@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MPQCLI VERSION 0.9.10)
+project(MPQCLI VERSION 0.10.0)
 
 # Options
 option(BUILD_MPQCLI "Build the mpqcli CLI app" ON)

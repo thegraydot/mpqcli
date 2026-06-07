@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     std::optional<std::string> baseLocale;         // add, create, extract, read, remove
     std::optional<std::string> basePath;           // add, create
     std::optional<std::string> baseOutput;         // create, extract
-    std::optional<std::string> baseListfileName;   // extract, list
+    std::optional<std::string> baseListfileName;   // extract, list, compact
     std::optional<std::string> baseGameProfile;    // add, create
     int64_t fileDwFlags = -1;                      // add, create
     int64_t fileDwCompression = -1;                // add, create
@@ -214,6 +214,14 @@ int main(int argc, char **argv) {
         ->check(CLI::ExistingFile);
     verify->add_flag("-p,--print", verifyPrintSignature, "Print the digital signature (in hex)");
 
+    // Subcommand: Compact
+    CLI::App *compact = app.add_subcommand("compact", "Compact the MPQ archive");
+    compact->add_option("target", baseTarget, "Target MPQ archive")
+        ->required()
+        ->check(CLI::ExistingFile);
+    compact->add_option("-l,--listfile", baseListfileName, "File listing content of an MPQ archive")
+        ->check(CLI::ExistingFile);
+
     // Subcommand: Completion
     CLI::App *completion = app.add_subcommand("completion", "Generate shell completion script");
     CLI::App *completionBash =
@@ -304,6 +312,10 @@ int main(int argc, char **argv) {
 
     if (app.got_subcommand(verify)) {
         return HandleVerify(baseTarget, verifyPrintSignature);
+    }
+
+    if (app.got_subcommand(compact)) {
+        return HandleCompact(baseTarget, baseListfileName);
     }
 
     if (app.got_subcommand(completion)) {

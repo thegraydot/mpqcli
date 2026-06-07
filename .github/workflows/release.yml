@@ -51,7 +51,7 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} \
             --title "${{ github.ref_name }}" \
-            --notes "${{ steps.changelog.outputs.content }}" \
+            --notes "$CHANGELOG_CONTENT" \
             mpqcli-linux-amd64-glibc \
             mpqcli-linux-amd64-musl \
             mpqcli-linux-arm64-glibc \
@@ -59,6 +59,7 @@ jobs:
             mpqcli-windows-amd64.exe
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG_CONTENT: ${{ steps.changelog.outputs.content }}
 
   release_docker:
     needs: release_binaries
