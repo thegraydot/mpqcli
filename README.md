@@ -4,7 +4,7 @@
 
 ![Release Version](https://img.shields.io/github/v/release/thegraydot/mpqcli?style=flat)
 
-![Release downloads](https://img.shields.io/github/downloads/thegraydot/mpqcli/total?label=release_downloads) ![Package downloads](https://img.shields.io/badge/package_downloads-845-green)
+![Release downloads](https://img.shields.io/github/downloads/thegraydot/mpqcli/total?label=release_downloads) ![Package downloads](https://img.shields.io/badge/package_downloads-894-green)
 
 A command-line tool to create, add, remove, list, extract, read, and verify MPQ archives using the [StormLib library](https://github.com/ladislav-zezula/StormLib).
 
@@ -19,7 +19,7 @@ A command-line tool to create, add, remove, list, extract, read, and verify MPQ 
 - Pipe the output to `grep` or other tools to search, filter, or process files
 - Redirect output to files or other commands for further automation
 
-If you require an MPQ tool with a graphical interface (GUI) and explicit support for more MPQ archive versions — I would recommend using [Ladik's MPQ Editor](http://www.zezula.net/en/mpq/download.html).
+If you require an MPQ tool with a graphical interface (GUI) and explicit support for more MPQ archive versions, I would recommend using [Ladik's MPQ Editor](http://www.zezula.net/en/mpq/download.html).
 
 ## Releases
 
