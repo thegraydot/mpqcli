@@ -104,8 +104,10 @@ fmt: ## Auto-fix C++ formatting with clang-format
 
 .PHONY: lint_cpp
 lint_cpp: ## Run clang-tidy static analysis (requires: make configure)
-	clang-tidy-$(CLANG_VERSION) \
-	--quiet -p build --header-filter="$(CURDIR)/src/.*" src/*.cpp
+	clang-tidy-$(CLANG_VERSION) --quiet -p build \
+	--header-filter="$(CURDIR)/src/.*" src/*.cpp 2>&1 \
+	| grep -v " warnings generated"; \
+	exit $${PIPESTATUS[0]}
 
 .PHONY: lint
 lint: fmt_check lint_cpp ## Run all C++ linters

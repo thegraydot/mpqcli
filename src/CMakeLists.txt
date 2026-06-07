@@ -40,8 +40,10 @@ add_executable(mpqcli
 add_dependencies(mpqcli storm)
 
 # Include directories
-target_include_directories(mpqcli PRIVATE 
+target_include_directories(mpqcli SYSTEM PRIVATE
     "${CMAKE_SOURCE_DIR}/extern/StormLib/src"
+)
+target_include_directories(mpqcli PRIVATE
     "${CMAKE_BINARY_DIR}"
 )
 

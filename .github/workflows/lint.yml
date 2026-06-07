@@ -12,8 +12,9 @@ jobs:
         with:
           submodules: true
 
-      - name: Install clang tools
-        run: make install_clang_tools
+      - run: make install_clang_tools
+
+      - run: make configure
 
       - run: make fmt_check
 
