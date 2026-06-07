@@ -32,6 +32,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'extract'    = 'Extract files from the MPQ archive'
         'read'       = 'Read a file from an MPQ archive'
         'verify'     = 'Verify the MPQ archive'
+        'compact'    = 'Compact the MPQ archive'
         'completion' = 'Generate shell completion script'
     }
 
@@ -143,6 +144,10 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'verify' = @{
             '-p'      = 'Print the digital signature (in hex)'
             '--print' = 'Print the digital signature (in hex)'
+        }
+        'compact' = @{
+            '-l'         = 'File listing content of an MPQ archive'
+            '--listfile' = 'File listing content of an MPQ archive'
         }
         'version'    = @{}
         'about'      = @{}

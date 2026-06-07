@@ -29,7 +29,7 @@ _mpqcli() {
         cword=$COMP_CWORD
     fi
 
-    local subcommands="version about info create add remove list extract read verify completion"
+    local subcommands="version about info create add remove list extract read verify compact completion"
     local -a locales=(
         default enUS zhTW csCZ deDE esES frFR itIT
         jaJP koKR nlNL plPL ptBR ruRU zhCN enGB esMX ptPT
@@ -184,6 +184,19 @@ _mpqcli() {
         verify)
             if [[ "$cur" == -* ]]; then
                 mapfile -t COMPREPLY < <(compgen -W "-p --print" -- "$cur")
+            else
+                _mpqcli_filedir mpq
+            fi
+            ;;
+
+        compact)
+            case "$prev" in
+                -l|--listfile)
+                    _mpqcli_filedir
+                    return ;;
+            esac
+            if [[ "$cur" == -* ]]; then
+                mapfile -t COMPREPLY < <(compgen -W "-l --listfile" -- "$cur")
             else
                 _mpqcli_filedir mpq
             fi

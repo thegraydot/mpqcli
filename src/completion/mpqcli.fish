@@ -40,27 +40,29 @@ set -l __mpqcli_list_properties \
     flags encryption-key encryption-key-raw
 
 # Top-level subcommands (no subcommand active yet)
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a version   -d 'Print program version'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a about     -d 'Print program information'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a info      -d 'Print info about an MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a create    -d 'Create an MPQ archive from a file or directory'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a add       -d 'Add files to an existing MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a remove    -d 'Remove files from an existing MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a list      -d 'List files in an MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a extract   -d 'Extract files from an MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a read      -d 'Read a file from an MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a verify      -d 'Verify an MPQ archive'
-complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify completion' \
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
+    -a compact     -d 'Compact the MPQ archive'
+complete -c mpqcli -n 'not __fish_seen_subcommand_from version about info create add remove list extract read verify compact completion' \
     -a completion  -d 'Generate shell completion script'
 
 # info
@@ -195,6 +197,13 @@ complete -c mpqcli -n '__fish_seen_subcommand_from verify' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from verify' \
     -s p -l print   -d 'Print the digital signature (in hex)'
+
+# compact
+#   compact <target.mpq> [-l/--listfile]
+complete -c mpqcli -n '__fish_seen_subcommand_from compact' -F
+
+complete -c mpqcli -n '__fish_seen_subcommand_from compact' \
+    -s l -l listfile    -d 'External file listing content of the archive' -r -F
 
 # completion
 #   completion <shell>

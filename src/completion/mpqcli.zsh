@@ -41,6 +41,7 @@ _mpqcli() {
                 extract)    _mpqcli_extract ;;
                 read)       _mpqcli_read ;;
                 verify)     _mpqcli_verify ;;
+                compact)    _mpqcli_compact ;;
                 completion) _mpqcli_completion ;;
             esac
             ;;
@@ -59,6 +60,7 @@ _mpqcli_cmds() {
         'extract:Extract files from the MPQ archive'
         'read:Read a file from an MPQ archive'
         'verify:Verify the MPQ archive'
+        'compact:Compact the MPQ archive'
         'completion:Generate shell completion script'
     )
     _describe 'subcommand' cmds
@@ -144,6 +146,12 @@ _mpqcli_verify() {
     _arguments \
         '1:archive:_files' \
         '(-p --print)'{-p,--print}'[print the digital signature in hex]'
+}
+
+_mpqcli_compact() {
+    _arguments \
+        '1:archive:_files' \
+        '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files'
 }
 
 _mpqcli_completion() {
