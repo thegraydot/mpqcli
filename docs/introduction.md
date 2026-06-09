@@ -13,4 +13,4 @@ A command-line tool to create, add, remove, list, extract, read, verify, and com
 - Pipe the output to `grep` or other tools to search, filter, or process files
 - Redirect output to files or other commands for further automation
 
-If you require an MPQ tool with a graphical interface (GUI) and explicit support for more MPQ archive versions - I would recommend using [Ladik's MPQ Editor](http://www.zezula.net/en/mpq/download.html).
+If you require an MPQ tool with a graphical interface (GUI), I would recommend using [Ladik's MPQ Editor](http://www.zezula.net/en/mpq/download.html).
