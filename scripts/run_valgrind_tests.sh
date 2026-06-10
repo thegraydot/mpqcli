@@ -64,21 +64,22 @@ if [ "$USE_DOCKER" = true ]; then
     # Run tests in Docker with Valgrind wrapper
     echo -e "${YELLOW}Running pytest with Valgrind...${NC}"
     docker run --rm -v "$VALGRIND_LOG_DIR":/mpqcli/valgrind_logs mpqcli-valgrind bash -c "
-        # Create Valgrind wrapper script
-        cat > /tmp/mpqcli_wrapper.sh << 'EOF'
+        # Replace the binary in place with a Valgrind wrapper
+        mv /mpqcli/build/bin/mpqcli /mpqcli/build/bin/mpqcli.real
+        cat > /mpqcli/build/bin/mpqcli << 'EOF'
 #!/bin/bash
 valgrind --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
          --log-file=/mpqcli/valgrind_logs/valgrind_%p.log \
-         /mpqcli/build/bin/mpqcli \"\$@\"
+         /mpqcli/build/bin/mpqcli.real \"\$@\"
 EOF
-        chmod +x /tmp/mpqcli_wrapper.sh
+        chmod +x /mpqcli/build/bin/mpqcli
 
-        # Run tests with wrapper
+        # Run tests
         cd /mpqcli
         . test/venv/bin/activate
-        MPQCLI_BIN=/tmp/mpqcli_wrapper.sh python3 -m pytest test -s
+        python3 -m pytest test -s
     "
 else
     echo -e "${GREEN}Running tests with Valgrind locally...${NC}"
@@ -108,25 +109,27 @@ else
         . "$PROJECT_DIR/test/venv/bin/activate"
     fi
 
-    # Create Valgrind wrapper script
-    WRAPPER_SCRIPT="/tmp/mpqcli_valgrind_wrapper_$$.sh"
-    cat > "$WRAPPER_SCRIPT" << EOF
+    # Replace the binary in place with a Valgrind wrapper
+    BIN="$PROJECT_DIR/$BUILD_DIR/bin/mpqcli"
+    REAL_BIN="$BIN.real"
+    mv "$BIN" "$REAL_BIN"
+    cat > "$BIN" << EOF
 #!/bin/bash
 valgrind --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
          --log-file=$VALGRIND_LOG_DIR/valgrind_\$\$.log \
-         "$PROJECT_DIR/$BUILD_DIR/bin/mpqcli" "\$@"
+         "$REAL_BIN" "\$@"
 EOF
-    chmod +x "$WRAPPER_SCRIPT"
+    chmod +x "$BIN"
 
-    # Run tests with wrapper
+    # Restore the real binary on exit
+    trap 'mv "$REAL_BIN" "$BIN"' EXIT
+
+    # Run tests
     echo -e "${YELLOW}Running pytest with Valgrind wrapper...${NC}"
     cd "$PROJECT_DIR"
-    MPQCLI_BIN="$WRAPPER_SCRIPT" python3 -m pytest test -s
-
-    # Cleanup wrapper
-    rm -f "$WRAPPER_SCRIPT"
+    python3 -m pytest test -s
 fi
 
 echo -e "${GREEN}Tests complete!${NC}"
