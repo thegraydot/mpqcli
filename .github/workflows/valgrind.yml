@@ -1,0 +1,146 @@
+name: Valgrind Memory Leak Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'extern/**'
+      - 'test/**'
+      - 'Dockerfile.valgrind'
+      - 'CMakeLists.txt'
+      - '.github/workflows/valgrind.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: valgrind-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Build Valgrind Docker image
+        run: |
+          docker build \
+            --build-arg USER_ID=$(id -u) \
+            --build-arg GROUP_ID=$(id -g) \
+            -t mpqcli-valgrind \
+            -f Dockerfile.valgrind \
+            .
+
+      - name: Run Valgrind on test suite
+        run: |
+          mkdir -p valgrind_logs
+          docker run --rm \
+            -v "$(pwd)/valgrind_logs:/mpqcli/valgrind_logs:rw" \
+            mpqcli-valgrind bash -c '
+            mv /mpqcli/build/bin/mpqcli /mpqcli/build/bin/mpqcli.real
+            cat > /mpqcli/build/bin/mpqcli << "EOF"
+          #!/bin/bash
+          exec valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
+            --log-file=/mpqcli/valgrind_logs/valgrind_$$.log \
+            /mpqcli/build/bin/mpqcli.real "$@"
+          EOF
+            chmod +x /mpqcli/build/bin/mpqcli
+            cd /mpqcli && test/venv/bin/python -m pytest test -v --tb=short
+          '
+
+      - name: Analyze Valgrind results
+        id: analyze
+        run: |
+          total_logs=$(find valgrind_logs -maxdepth 1 -type f -name '*.log' 2>/dev/null | wc -l)
+          logs_with_errors=$(grep -lE "ERROR SUMMARY: [1-9][0-9]* errors" valgrind_logs/*.log 2>/dev/null | wc -l)
+          logs_with_leaks=$(grep -lE "(definitely|indirectly) lost: [1-9][0-9,]* bytes" valgrind_logs/*.log 2>/dev/null | wc -l)
+
+          echo "Total logs analyzed: $total_logs"
+          echo "Logs with errors:    $logs_with_errors"
+          echo "Logs with leaks:     $logs_with_leaks"
+
+          echo "## Valgrind Memory Leak Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$logs_with_errors" -eq 0 ] && [ "$logs_with_leaks" -eq 0 ]; then
+            echo "✅ **No memory leaks detected.**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Logs analyzed: $total_logs" >> $GITHUB_STEP_SUMMARY
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ **Potential memory issues detected**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Logs analyzed:    $total_logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Logs with errors: $logs_with_errors" >> $GITHUB_STEP_SUMMARY
+            echo "- Logs with leaks:  $logs_with_leaks" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "#### Logs with leaks" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -lE "(definitely|indirectly) lost: [1-9][0-9,]* bytes" valgrind_logs/*.log 2>/dev/null >> $GITHUB_STEP_SUMMARY || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please review the Valgrind logs for details." >> $GITHUB_STEP_SUMMARY
+            echo "status=warning" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Valgrind logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: valgrind-logs
+          path: |
+            valgrind_logs/
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const marker = '<!-- valgrind-leak-check -->';
+            const status = '${{ steps.analyze.outputs.status }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body && c.body.startsWith(marker));
+
+            if (status === 'warning') {
+              const body = `${marker}\n⚠️ **Valgrind detected potential memory leaks**\n\nPlease review the [Valgrind logs](${runUrl}) for details.\n\n*Note: This check is informational and does not block merging.*`;
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } else if (existing) {
+              const body = `${marker}\n✅ **No Valgrind memory leaks detected.**\n\nIssues reported by an earlier run on this PR have been resolved. See the latest [Valgrind logs](${runUrl}).`;
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            }
