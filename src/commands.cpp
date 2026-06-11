@@ -301,6 +301,7 @@ int HandleRead(const std::string &file, const std::string &target,
     uint32_t fileSize;
     auto fileContent = ReadFile(hArchive, file.c_str(), &fileSize, lcid);
     if (!fileContent) {
+        CloseMpqArchive(hArchive);
         return 1;
     }
 
