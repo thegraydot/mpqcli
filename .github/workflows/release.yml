@@ -10,9 +10,15 @@ permissions:
 jobs:
   release_binaries:
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Resolve release version
+        id: version
+        run: echo "version=$(make get_project_version)" >> "$GITHUB_OUTPUT"
 
       - name: Download Linux GLIBC binary
         uses: actions/download-artifact@v8
@@ -39,13 +45,14 @@ jobs:
         with:
           name: mpqcli-windows-amd64.exe
 
-      - name: Extract latest changelog section
+      - name: Extract changelog for this tag
         id: changelog
         run: |
-          CHANGELOG_CONTENT=$(awk '/^## /{i++} i==1{print}' CHANGELOG.md | tail -n +2)
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "content<<EOF"
+            make get_changelog TAG="${{ steps.version.outputs.version }}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Release package
         run: |
@@ -74,17 +81,13 @@ jobs:
         run: |
           docker load -i mpqcli-docker.tar
 
-      - name: Extract version without "v"
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-
       - name: Tag Docker image with version
         run: |
-          docker tag mpqcli ghcr.io/thegraydot/mpqcli:${{ env.VERSION }}
+          docker tag mpqcli ghcr.io/thegraydot/mpqcli:${{ needs.release_binaries.outputs.version }}
           docker tag mpqcli ghcr.io/thegraydot/mpqcli:latest
 
       - name: Push Docker image to GitHub Container Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/thegraydot/mpqcli:${{ env.VERSION }}
+          docker push ghcr.io/thegraydot/mpqcli:${{ needs.release_binaries.outputs.version }}
           docker push ghcr.io/thegraydot/mpqcli:latest
