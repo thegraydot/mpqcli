@@ -26,11 +26,11 @@ int main(int argc, char **argv) {
     std::optional<std::string> base_locale;         // add, create, extract, read, remove
     std::optional<std::string> base_path;           // add, create
     std::optional<std::string> base_output;         // create, extract
-    std::optional<std::string> base_listfile_name;   // extract, list, compact
-    std::optional<std::string> base_game_profile;    // add, create
-    int64_t file_flags = -1;                      // add, create
-    int64_t file_compression = -1;                // add, create
-    int64_t file_compression_next = -1;            // add, create
+    std::optional<std::string> base_listfile_name;  // extract, list, compact
+    std::optional<std::string> base_game_profile;   // add, create
+    int64_t file_flags = -1;                        // add, create
+    int64_t file_compression = -1;                  // add, create
+    int64_t file_compression_next = -1;             // add, create
     // clang-format on
     // CLI: info
     std::optional<std::string> info_property;
@@ -59,7 +59,8 @@ int main(int argc, char **argv) {
     // CLI: verify
     bool verify_print_signature = false;
 
-    // clang-format off - preserve vertical alignment of string set initialisers
+    // Preserve vertical alignment of string set initialisers
+    // clang-format off
     std::set<std::string> valid_info_properties = {
         "format-version",
         "header-offset",

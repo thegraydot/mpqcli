@@ -367,7 +367,8 @@ int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale
 std::string GetFlagString(uint32_t flags) {
     std::string result;
 
-    // clang-format off: preserve column-aligned flag-to-char mappings
+    // Preserve column-aligned flag-to-char mappings
+    // clang-format off
     if (flags & MPQ_FILE_IMPLODE)            result += 'i';
     if (flags & MPQ_FILE_COMPRESS)           result += 'c';
     if (flags & MPQ_FILE_ENCRYPTED)          result += 'e';

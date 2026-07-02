@@ -309,10 +309,10 @@ int HandleRead(const std::string &file, const std::string &target,
                   << "' is unknown. Will use default locale instead." << std::endl;
     }
 
-    uint32_t fileSize;
-    auto fileContent = ReadFile(hArchive, file.c_str(), &fileSize, lcid);
-    if (!fileContent) {
-        CloseMpqArchive(hArchive);
+    uint32_t file_size;
+    auto file_content = ReadFile(archive, file.c_str(), &file_size, lcid);
+    if (!file_content) {
+        CloseMpqArchive(archive);
         return 1;
     }
 
