@@ -6,4 +6,4 @@ void HandleCompletionZsh();
 void HandleCompletionPs();
 void HandleCompletionFish();
 
-#endif  // COMPLETION_H
+#endif // COMPLETION_H

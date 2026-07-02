@@ -88,7 +88,7 @@ Then re-run `make lint` to confirm everything passes.
 
 ### 5. Match the existing code style
 
-C++ formatting is enforced by `.clang-format` (Google style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. Python tests should follow the style of the existing test files.
+C++ formatting is enforced by `.clang-format` (LLVM style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. Python tests should follow the style of the existing test files.
 
 #### Suppression policy
 

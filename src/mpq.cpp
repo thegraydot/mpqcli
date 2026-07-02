@@ -18,11 +18,11 @@
 
 namespace fs = std::filesystem;
 
-static const std::vector<std::string> kSpecialMpqFiles = {"(listfile)", "(signature)",
-                                                          "(attributes)"};
+static const std::vector<std::string> special_mpq_files = {"(listfile)", "(signature)",
+                                                           "(attributes)"};
 
-bool OpenMpqArchive(const std::string &filename, HANDLE *hArchive, int32_t flags) {
-    if (!SFileOpenArchive(filename.c_str(), 0, flags, hArchive)) {
+bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags) {
+    if (!SFileOpenArchive(filename.c_str(), 0, flags, archive)) {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed to open MPQ archive: " << filename << ": (" << error << ") "
                   << StormErrorString(error) << std::endl;
@@ -31,8 +31,8 @@ bool OpenMpqArchive(const std::string &filename, HANDLE *hArchive, int32_t flags
     return true;
 }
 
-bool CloseMpqArchive(HANDLE hArchive) {
-    if (!SFileCloseArchive(hArchive)) {
+bool CloseMpqArchive(HANDLE archive) {
+    if (!SFileCloseArchive(archive)) {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed to close MPQ archive: (" << error << ") "
                   << StormErrorString(error) << std::endl;
@@ -41,23 +41,23 @@ bool CloseMpqArchive(HANDLE hArchive) {
     return true;
 }
 
-bool FileExistsInArchiveForLocale(const HANDLE hArchive, const std::string &filePath,
+bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_path,
                                   const LCID locale) {
-    bool fileExists = false;
+    bool file_exists = false;
     SFileSetLocale(locale);
-    HANDLE hFile;
-    if (SFileOpenFileEx(hArchive, filePath.c_str(), SFILE_OPEN_FROM_MPQ, &hFile)) {
-        const auto fileLocale = GetFileInfo<int32_t>(hFile, SFileInfoLocale);
-        if (fileLocale == locale) {
-            fileExists = true;
+    HANDLE file;
+    if (SFileOpenFileEx(archive, file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
+        const auto file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+        if (file_locale == locale) {
+            file_exists = true;
         }
-        SFileCloseFile(hFile);
+        SFileCloseFile(file);
     }
-    return fileExists;
+    return file_exists;
 }
 
-bool SignMpqArchive(HANDLE hArchive) {
-    if (!SFileSignArchive(hArchive, SIGNATURE_TYPE_WEAK)) {
+bool SignMpqArchive(HANDLE archive) {
+    if (!SFileSignArchive(archive, SIGNATURE_TYPE_WEAK)) {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed to sign MPQ archive: (" << error << ") " << StormErrorString(error)
                   << std::endl;
@@ -66,132 +66,133 @@ bool SignMpqArchive(HANDLE hArchive) {
     return true;
 }
 
-int ExtractFiles(HANDLE hArchive, const std::string &output,
-                 const std::optional<std::string> &listfileName, LCID preferredLocale) {
-    SFileSetLocale(preferredLocale);
+int ExtractFiles(HANDLE archive, const std::string &output,
+                 const std::optional<std::string> &listfile_name, LCID preferred_locale) {
+    SFileSetLocale(preferred_locale);
     // Check if the user provided a listfile input
-    const char *listfile = listfileName.has_value() ? listfileName->c_str() : nullptr;
+    const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
-    SFILE_FIND_DATA findData;
-    HANDLE findHandle = SFileFindFirstFile(hArchive, "*", &findData, listfile);
-    if (findHandle == nullptr) {
+    SFILE_FIND_DATA find_data;
+    HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
+    if (find_handle == nullptr) {
         std::cerr << "[!] Failed to find first file in MPQ archive." << std::endl;
         return 1;
     }
 
     int32_t result = 0;
     do {
-        result |= ExtractFile(hArchive, output, findData.cFileName,
-                              true,  // Keep folder structure
-                              preferredLocale);
-    } while (SFileFindNextFile(findHandle, &findData));
+        result |= ExtractFile(archive, output, find_data.cFileName,
+                              true, // Keep folder structure
+                              preferred_locale);
+    } while (SFileFindNextFile(find_handle, &find_data));
 
-    SFileFindClose(findHandle);
+    SFileFindClose(find_handle);
     return result;
 }
 
-int ExtractFile(HANDLE hArchive, const std::string &output, const std::string &fileName,
-                bool keepFolderStructure, LCID preferredLocale) {
-    SFileSetLocale(preferredLocale);
-    const char *szFileName = fileName.c_str();
-    if (!FileExistsInArchiveForLocale(hArchive, szFileName, preferredLocale) &&
-        !FileExistsInArchiveForLocale(hArchive, szFileName, defaultLocale)) {
+int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
+                bool keep_folder_structure, LCID preferred_locale) {
+    SFileSetLocale(preferred_locale);
+    if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
+        !FileExistsInArchiveForLocale(archive, file_name.c_str(), default_locale)) {
         std::cerr << "[!] Failed: File doesn't exist"
-                  << PrettyPrintLocale(preferredLocale, " for locale ", true) << ": " << szFileName
+                  << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << file_name
                   << std::endl;
         return 1;
     }
 
     // Change forward slashes on non-Windows systems
-    fs::path fileNamePath(fileName);
-    std::string fileNameString = NormalizeFilePath(fileNamePath);
+    fs::path file_name_path(file_name);
+    std::string file_name_string = NormalizeFilePath(file_name_path);
 
     // Remove folder structure if keepFolderStructure is false
-    if (!keepFolderStructure) {
-        fileNamePath = fs::path(fileNameString);
-        fileNameString = fileNamePath.filename().u8string();
+    if (!keep_folder_structure) {
+        file_name_path = fs::path(file_name_string);
+        file_name_string = file_name_path.filename().u8string();
     }
 
     // Create output directory
-    fs::path outputPathAbsolute = fs::canonical(output);
-    fs::path outputPathBase = outputPathAbsolute.parent_path() / outputPathAbsolute.filename();
-    std::filesystem::create_directories(fs::path(outputPathBase).parent_path());
+    fs::path output_path_absolute = fs::canonical(output);
+    fs::path output_path_base =
+        output_path_absolute.parent_path() / output_path_absolute.filename();
+    std::filesystem::create_directories(fs::path(output_path_base).parent_path());
 
     // Ensure sub-directories for folder-nested files exist before calling canonical
-    fs::path outputFilePathName = outputPathBase / fileNameString;
-    std::filesystem::create_directories(outputFilePathName.parent_path());
+    fs::path output_file_path_name = output_path_base / file_name_string;
+    std::filesystem::create_directories(output_file_path_name.parent_path());
 
     // Guard against path traversal attacks: resolve symlinks and ".." with canonical
     // (requires path to exist, hence create_directories above)
-    fs::path resolvedOutput =
-        fs::canonical(outputFilePathName.parent_path()) / outputFilePathName.filename();
-    if (std::mismatch(outputPathBase.begin(), outputPathBase.end(), resolvedOutput.begin(),
-                      resolvedOutput.end())
-            .first != outputPathBase.end()) {
-        std::cerr << "[!] Blocked: path traversal attempt detected: " << fileNameString
+    fs::path resolved_output =
+        fs::canonical(output_file_path_name.parent_path()) / output_file_path_name.filename();
+    if (std::mismatch(output_path_base.begin(), output_path_base.end(), resolved_output.begin(),
+                      resolved_output.end())
+            .first != output_path_base.end()) {
+        std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
                   << std::endl;
         return 1;
     }
 
-    std::string outputFileName{resolvedOutput.u8string()};
+    std::string output_file_name{resolved_output.u8string()};
 
-    if (SFileExtractFile(hArchive, szFileName, outputFileName.c_str(), 0)) {
-        std::cout << "[*] Extracted: " << fileNameString << std::endl;
+    if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
+        std::cout << "[*] Extracted: " << file_name_string << std::endl;
     } else {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed: (" << error << ") " << StormErrorString(error) << ": "
-                  << szFileName << std::endl;
+                  << file_name << std::endl;
         return 1;
     }
 
     return 0;
 }
 
-HANDLE CreateMpqArchive(const std::string &outputArchiveName, const uint32_t fileCount,
-                        const GameRules &gameRules) {
+HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t file_count,
+                        const GameRules &game_rules) {
     // Check if file already exists
-    if (fs::exists(outputArchiveName)) {
-        std::cerr << "[!] File already exists: " << outputArchiveName << " Exiting..." << std::endl;
+    if (fs::exists(output_archive_name)) {
+        std::cerr << "[!] File already exists: " << output_archive_name << " Exiting..."
+                  << std::endl;
         return nullptr;
     }
 
-    HANDLE hMpq;
+    HANDLE archive;
 
     // Use game-specific create settings
-    const MpqCreateSettings &settings = gameRules.GetCreateSettings();
+    const MpqCreateSettings &settings = game_rules.GetCreateSettings();
 
-    SFILE_CREATE_MPQ createInfo = {};
+    SFILE_CREATE_MPQ create_info = {};
     // All logic for defaults and dependencies is handled in GameRules::OverrideCreateSettings
-    createInfo.cbSize = sizeof(SFILE_CREATE_MPQ);
-    createInfo.dwMpqVersion = settings.mpqVersion;
-    createInfo.dwStreamFlags = settings.streamFlags;
-    createInfo.dwFileFlags1 = settings.fileFlags1;
-    createInfo.dwFileFlags2 = settings.fileFlags2;
-    createInfo.dwFileFlags3 = settings.fileFlags3;
-    createInfo.dwAttrFlags = settings.attrFlags;
-    createInfo.dwSectorSize = settings.sectorSize;
-    createInfo.dwRawChunkSize = settings.rawChunkSize;
-    createInfo.dwMaxFileCount = fileCount;
+    create_info.cbSize = sizeof(SFILE_CREATE_MPQ);
+    create_info.dwMpqVersion = settings.mpq_version;
+    create_info.dwStreamFlags = settings.stream_flags;
+    create_info.dwFileFlags1 = settings.file_flags1;
+    create_info.dwFileFlags2 = settings.file_flags2;
+    create_info.dwFileFlags3 = settings.file_flags3;
+    create_info.dwAttrFlags = settings.attr_flags;
+    create_info.dwSectorSize = settings.sector_size;
+    create_info.dwRawChunkSize = settings.raw_chunk_size;
+    create_info.dwMaxFileCount = file_count;
 
-    const bool result = SFileCreateArchive2(outputArchiveName.c_str(), &createInfo, &hMpq);
+    const bool result = SFileCreateArchive2(output_archive_name.c_str(), &create_info, &archive);
 
     if (!result) {
         const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to create MPQ archive: " << outputArchiveName << ": (" << error
+        std::cerr << "[!] Failed to create MPQ archive: " << output_archive_name << ": (" << error
                   << ") " << StormErrorString(error) << std::endl;
         return nullptr;
     }
 
-    return hMpq;
+    return archive;
 }
 
-int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &pathPrefix,
-             LCID locale, const GameRules &gameRules, const CompressionSettingsOverrides &overrides,
-             bool overwrite, bool update) {
-    fs::path targetPath = fs::path(inputPath);
+int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
+             LCID locale, const GameRules &game_rules,
+             const CompressionSettingsOverrides &overrides, bool overwrite, bool update) {
+    fs::path target_path = fs::path(input_path);
 
     std::vector<fs::directory_entry> entries;
-    for (const auto &entry : fs::recursive_directory_iterator(inputPath)) {
+    for (const auto &entry : fs::recursive_directory_iterator(input_path)) {
         if (fs::is_regular_file(entry.path())) {
             entries.push_back(entry);
         }
@@ -201,138 +202,139 @@ int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &p
                   return a.path() < b.path();
               });
 
-    int filesAdded = 0;
-    int filesSkipped = 0;
-    int filesFailed = 0;
+    int files_added = 0;
+    int files_skipped = 0;
+    int files_failed = 0;
 
     for (const auto &entry : entries) {
-        fs::path inputFilePath = fs::relative(entry, targetPath);
-        std::string archiveFilePath;
+        fs::path input_file_path = fs::relative(entry, target_path);
+        std::string archive_file_path;
 
-        if (pathPrefix.empty()) {
-            archiveFilePath = WindowsifyFilePath(inputFilePath.u8string());
+        if (path_prefix.empty()) {
+            archive_file_path = WindowsifyFilePath(input_file_path.u8string());
         } else {
-            archiveFilePath = WindowsifyFilePath((fs::path(pathPrefix) / inputFilePath).u8string());
+            archive_file_path =
+                WindowsifyFilePath((fs::path(path_prefix) / input_file_path).u8string());
         }
 
-        if (std::find(kSpecialMpqFiles.begin(), kSpecialMpqFiles.end(), archiveFilePath) !=
-            kSpecialMpqFiles.end()) {
-            std::cout << "[*] Skipping special MPQ file: " << archiveFilePath << std::endl;
+        if (std::find(special_mpq_files.begin(), special_mpq_files.end(), archive_file_path) !=
+            special_mpq_files.end()) {
+            std::cout << "[*] Skipping special MPQ file: " << archive_file_path << std::endl;
             continue;
         }
 
         if (update) {
             SFileSetLocale(locale);
-            HANDLE hFile;
-            if (SFileOpenFileEx(hArchive, archiveFilePath.c_str(), SFILE_OPEN_FROM_MPQ, &hFile)) {
-                int32_t fileLocale = GetFileInfo<int32_t>(hFile, SFileInfoLocale);
-                if (fileLocale == locale) {
-                    DWORD archivedSize = SFileGetFileSize(hFile, nullptr);
-                    SFileCloseFile(hFile);
-                    uintmax_t diskSize = fs::file_size(entry.path());
-                    if (diskSize == static_cast<uintmax_t>(archivedSize)) {
-                        std::cout << "[~] Skipping unchanged file: " << archiveFilePath
+            HANDLE file;
+            if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
+                int32_t file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+                if (file_locale == locale) {
+                    DWORD archived_size = SFileGetFileSize(file, nullptr);
+                    SFileCloseFile(file);
+                    uintmax_t disk_size = fs::file_size(entry.path());
+                    if (disk_size == static_cast<uintmax_t>(archived_size)) {
+                        std::cout << "[~] Skipping unchanged file: " << archive_file_path
                                   << std::endl;
-                        filesSkipped++;
+                        files_skipped++;
                         continue;
                     }
                 } else {
-                    SFileCloseFile(hFile);
+                    SFileCloseFile(file);
                 }
             }
         }
 
-        const int result = AddFile(hArchive, entry.path(), archiveFilePath, locale, gameRules,
+        const int result = AddFile(archive, entry.path(), archive_file_path, locale, game_rules,
                                    overrides, overwrite);
         if (result == 0) {
-            filesAdded++;
+            files_added++;
         } else {
-            filesFailed++;
+            files_failed++;
         }
     }
 
     if (update) {
-        std::cout << "[*] For " << inputPath << ": " << filesAdded << " files added, "
-                  << filesSkipped << " files skipped, " << filesFailed << " files failed."
+        std::cout << "[*] For " << input_path << ": " << files_added << " files added, "
+                  << files_skipped << " files skipped, " << files_failed << " files failed."
                   << std::endl;
     }
 
-    return filesFailed;
+    return files_failed;
 }
 
-int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archiveFilePath,
-            const LCID locale, const GameRules &gameRules,
+int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
+            const LCID locale, const GameRules &game_rules,
             const CompressionSettingsOverrides &overrides, bool overwrite) {
     // Return if file doesn't exist on disk
-    if (!fs::exists(localFile)) {
-        std::cerr << "[!] File doesn't exist on disk: " << localFile << std::endl;
+    if (!fs::exists(local_file)) {
+        std::cerr << "[!] File doesn't exist on disk: " << local_file << std::endl;
         return 1;
     }
 
     // Check if file exists in MPQ archive
     SFileSetLocale(locale);
-    HANDLE hFile;
-    if (SFileOpenFileEx(hArchive, archiveFilePath.c_str(), SFILE_OPEN_FROM_MPQ, &hFile)) {
-        int32_t fileLocale = GetFileInfo<int32_t>(hFile, SFileInfoLocale);
-        SFileCloseFile(hFile);
-        if (fileLocale == locale && !overwrite) {
+    HANDLE file;
+    if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
+        int32_t file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+        SFileCloseFile(file);
+        if (file_locale == locale && !overwrite) {
             std::cerr << "[!] File" << PrettyPrintLocale(locale, " for locale ")
-                      << " already exists in MPQ archive: " << archiveFilePath << " - Skipping..."
+                      << " already exists in MPQ archive: " << archive_file_path << " - Skipping..."
                       << std::endl;
             return 1;
-        } else if (fileLocale == locale) {
+        } else if (file_locale == locale) {
             std::cout << "[+] File" << PrettyPrintLocale(locale, " for locale ")
-                      << " already exists in MPQ archive: " << archiveFilePath
+                      << " already exists in MPQ archive: " << archive_file_path
                       << " - Overwriting..." << std::endl;
         }
     }
     std::cout << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
-              << archiveFilePath << std::endl;
+              << archive_file_path << std::endl;
 
     // Verify that we are not exceeding maxFile size of the archive, and if we do, increase it
-    int32_t numberOfFiles = GetFileInfo<int32_t>(hArchive, SFileMpqNumberOfFiles);
-    int32_t maxFiles = GetFileInfo<int32_t>(hArchive, SFileMpqMaxFileCount);
+    int32_t number_of_files = GetFileInfo<int32_t>(archive, SFileMpqNumberOfFiles);
+    int32_t max_files = GetFileInfo<int32_t>(archive, SFileMpqMaxFileCount);
 
-    if (numberOfFiles + 1 > maxFiles) {
-        uint32_t newMaxFiles = NextPowerOfTwo(static_cast<uint32_t>(numberOfFiles + 1));
-        bool setMaxFileCount = SFileSetMaxFileCount(hArchive, newMaxFiles);
-        if (!setMaxFileCount) {
+    if (number_of_files + 1 > max_files) {
+        uint32_t new_max_files = NextPowerOfTwo(static_cast<uint32_t>(number_of_files + 1));
+        bool set_max_file_count = SFileSetMaxFileCount(archive, new_max_files);
+        if (!set_max_file_count) {
             const auto error = SErrGetLastError();
-            std::cerr << "[!] Failed to increase new max file count to " << newMaxFiles << ": ("
+            std::cerr << "[!] Failed to increase new max file count to " << new_max_files << ": ("
                       << error << ") " << StormErrorString(error) << std::endl;
             return 1;
         }
     }
 
     // Get file size for rule matching
-    const std::uintmax_t rawFileSize = fs::file_size(localFile);
-    if (rawFileSize > std::numeric_limits<DWORD>::max()) {
+    const std::uintmax_t raw_file_size = fs::file_size(local_file);
+    if (raw_file_size > std::numeric_limits<DWORD>::max()) {
         std::cerr << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
                      "correctly: "
-                  << localFile << std::endl;
+                  << local_file << std::endl;
     }
-    const DWORD fileSize = static_cast<DWORD>(
-        std::min(rawFileSize, static_cast<std::uintmax_t>(std::numeric_limits<DWORD>::max())));
+    const DWORD file_size = static_cast<DWORD>(
+        std::min(raw_file_size, static_cast<std::uintmax_t>(std::numeric_limits<DWORD>::max())));
 
     // Get game-specific rules
-    auto [flags, compressionFirst, compressionNext] =
-        gameRules.GetCompressionSettings(archiveFilePath, fileSize);
+    const auto settings = game_rules.GetCompressionSettings(archive_file_path, file_size);
 
     // Apply overrides where specified, otherwise use game rules
-    DWORD dwFlags = overrides.dwFlags.value_or(flags);
-    DWORD dwCompression = overrides.dwCompression.value_or(compressionFirst);
-    DWORD dwCompressionNext = overrides.dwCompressionNext.value_or(compressionNext);
+    DWORD flags = overrides.flags.value_or(settings.mpq_flags);
+    DWORD compression = overrides.compression.value_or(settings.compression_first);
+    DWORD compression_next = overrides.compression_next.value_or(settings.compression_next);
 
     if (overwrite) {
-        dwFlags += MPQ_FILE_REPLACEEXISTING;
+        flags += MPQ_FILE_REPLACEEXISTING;
     }
 
-    bool addedFile = SFileAddFileEx(hArchive, localFile.u8string().c_str(), archiveFilePath.c_str(),
-                                    dwFlags, dwCompression, dwCompressionNext);
+    bool added_file =
+        SFileAddFileEx(archive, local_file.u8string().c_str(), archive_file_path.c_str(), flags,
+                       compression, compression_next);
 
-    if (!addedFile) {
+    if (!added_file) {
         const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to add: " << archiveFilePath << ": (" << error << ") "
+        std::cerr << "[!] Failed to add: " << archive_file_path << ": (" << error << ") "
                   << StormErrorString(error) << std::endl;
         return 1;
     }
@@ -340,21 +342,21 @@ int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archi
     return 0;
 }
 
-int RemoveFile(HANDLE hArchive, const std::string &archiveFilePath, LCID locale) {
+int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale) {
     SFileSetLocale(locale);
     std::cout << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": "
-              << archiveFilePath << std::endl;
+              << archive_file_path << std::endl;
 
-    if (!FileExistsInArchiveForLocale(hArchive, archiveFilePath, locale)) {
+    if (!FileExistsInArchiveForLocale(archive, archive_file_path, locale)) {
         std::cerr << "[!] Failed: File doesn't exist"
-                  << PrettyPrintLocale(locale, " for locale ", true) << ": " << archiveFilePath
+                  << PrettyPrintLocale(locale, " for locale ", true) << ": " << archive_file_path
                   << std::endl;
         return 1;
     }
 
-    if (!SFileRemoveFile(hArchive, archiveFilePath.c_str(), 0)) {
+    if (!SFileRemoveFile(archive, archive_file_path.c_str(), 0)) {
         std::cerr << "[!] Failed: File cannot be removed"
-                  << PrettyPrintLocale(locale, " for locale ", true) << ": " << archiveFilePath
+                  << PrettyPrintLocale(locale, " for locale ", true) << ": " << archive_file_path
                   << std::endl;
         return 1;
     }
@@ -384,28 +386,28 @@ std::string GetFlagString(uint32_t flags) {
     return result;
 }
 
-int ListFiles(HANDLE hArchive, const std::optional<std::string> &listfileName, bool listAll,
-              bool listDetailed, const std::vector<std::string> &properties) {
+int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
+              bool list_detailed, const std::vector<std::string> &properties) {
     // Check if the user provided a listfile input
-    const char *listfile = listfileName.has_value() ? listfileName->c_str() : nullptr;
+    const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
-    SFILE_FIND_DATA findData;
-    HANDLE findHandle = SFileFindFirstFile(hArchive, "*", &findData, listfile);
-    if (findHandle == nullptr) {
+    SFILE_FIND_DATA find_data;
+    HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
+    if (find_handle == nullptr) {
         std::cerr << "[!] Failed to find first file in MPQ archive." << std::endl;
         return -1;
     }
 
-    std::vector<std::string> propertiesToPrint =
+    std::vector<std::string> properties_to_print =
         properties.empty() ? std::vector<std::string>{"file-size", "locale", "file-time"}
                            : properties;
     if (!properties.empty()) {
-        listDetailed =
-            true;  // If the user specified properties, we need to print the detailed output
+        list_detailed =
+            true; // If the user specified properties, we need to print the detailed output
     }
 
     // Map of property name to SFileInfoClass, defined once, outside the loop
-    static const std::map<std::string, SFileInfoClass> kPropertyInfoClass = {
+    static const std::map<std::string, SFileInfoClass> property_info_class = {
         {"hash-index", SFileInfoHashIndex},
         {"name-hash1", SFileInfoNameHash1},
         {"name-hash2", SFileInfoNameHash2},
@@ -422,241 +424,242 @@ int ListFiles(HANDLE hArchive, const std::optional<std::string> &listfileName, b
     };
 
     std::set<std::string>
-        seenFileNames;  // Used to prevent printing the same file name multiple times
+        seen_file_names; // Used to prevent printing the same file name multiple times
     // Loop through all files in the MPQ archive
     do {
         // Skip special files unless user wants to list all (like ls -a)
-        if (!listAll && std::find(kSpecialMpqFiles.begin(), kSpecialMpqFiles.end(),
-                                  findData.cFileName) != kSpecialMpqFiles.end()) {
+        if (!list_all && std::find(special_mpq_files.begin(), special_mpq_files.end(),
+                                   find_data.cFileName) != special_mpq_files.end()) {
             continue;
         }
 
         // Print the detailed (long) file listing (like ls -l)
-        if (listDetailed) {
-            if (seenFileNames.find(findData.cFileName) != seenFileNames.end()) {
+        if (list_detailed) {
+            if (seen_file_names.find(find_data.cFileName) != seen_file_names.end()) {
                 // Filename has been seen before, and thus printed before. Skip over it.
                 continue;
             }
-            seenFileNames.insert(findData.cFileName);
+            seen_file_names.insert(find_data.cFileName);
 
             // Multiple files can be stored with identical filenames under different locales.
             // Loop over all locales and print the file details for each locale.
-            DWORD maxLocales = 32;  // This will be updated in the call to SFileEnumLocales
-            std::vector<LCID> fileLocaleVec(maxLocales);
-            LCID *fileLocales = fileLocaleVec.data();
+            DWORD max_locales = 32; // This will be updated in the call to SFileEnumLocales
+            std::vector<LCID> file_locale_vec(max_locales);
+            LCID *file_locales = file_locale_vec.data();
 
             DWORD result =
-                SFileEnumLocales(hArchive, findData.cFileName, fileLocales, &maxLocales, 0);
+                SFileEnumLocales(archive, find_data.cFileName, file_locales, &max_locales, 0);
 
             if (result == ERROR_INVALID_PARAMETER) {
                 // This ought to mean that the file name is unknown, whereupon `SFileEnumLocales`
                 // exits early since its check for `IsPseudoFileName` returns true. If that is the
                 // case, it will not have populated `fileLocales` or have updated `maxLocales`. Just
                 // set the maxLocales to 1 and list the file with the unknown name once.
-                maxLocales = 1;
-                fileLocales[0] = defaultLocale;
+                max_locales = 1;
+                file_locales[0] = default_locale;
 
             } else if (result == ERROR_INVALID_HANDLE || result == ERROR_NOT_SUPPORTED) {
-                std::cerr << "[!] Internal error for file: " << findData.cFileName << std::endl;
+                std::cerr << "[!] Internal error for file: " << find_data.cFileName << std::endl;
                 continue;
 
             } else if (result == ERROR_INSUFFICIENT_BUFFER) {
-                std::cerr << "[!] There are more than " << maxLocales
-                          << " locales for the file: " << findData.cFileName
-                          << ". Will only list the " << maxLocales << " first files." << std::endl;
+                std::cerr << "[!] There are more than " << max_locales
+                          << " locales for the file: " << find_data.cFileName
+                          << ". Will only list the " << max_locales << " first files." << std::endl;
             }
 
             // Loop through all found locales
-            for (DWORD i = 0; i < maxLocales; i++) {
-                LCID locale = fileLocales[i];
+            for (DWORD i = 0; i < max_locales; i++) {
+                LCID locale = file_locales[i];
                 SFileSetLocale(locale);
-                HANDLE hFile;
+                HANDLE file;
 
                 // We need to open the file to get detailed information
                 // Use our custom GetFileInfo function
-                if (!SFileOpenFileEx(hArchive, findData.cFileName, SFILE_OPEN_FROM_MPQ, &hFile)) {
-                    std::cerr << "[!] Failed to open file: " << findData.cFileName << std::endl;
-                    continue;  // Skip to the next file
+                if (!SFileOpenFileEx(archive, find_data.cFileName, SFILE_OPEN_FROM_MPQ, &file)) {
+                    std::cerr << "[!] Failed to open file: " << find_data.cFileName << std::endl;
+                    continue; // Skip to the next file
                 }
 
-                for (const auto &prop : propertiesToPrint) {
-                    auto it = kPropertyInfoClass.find(prop);
-                    if (it == kPropertyInfoClass.end()) continue;
+                for (const auto &prop : properties_to_print) {
+                    auto it = property_info_class.find(prop);
+                    if (it == property_info_class.end())
+                        continue;
 
                     if (prop == "hash-index" || prop == "file-index") {
-                        std::cout << std::setw(5) << GetFileInfo<int32_t>(hFile, it->second) << " ";
+                        std::cout << std::setw(5) << GetFileInfo<int32_t>(file, it->second) << " ";
                     } else if (prop == "name-hash1" || prop == "name-hash2") {
                         std::cout << std::setfill('0') << std::hex << std::setw(8)
-                                  << GetFileInfo<int32_t>(hFile, it->second) << std::setfill(' ')
+                                  << GetFileInfo<int32_t>(file, it->second) << std::setfill(' ')
                                   << std::dec << " ";
                     } else if (prop == "name-hash3") {
                         std::cout << std::setfill('0') << std::hex << std::setw(16)
-                                  << GetFileInfo<int64_t>(hFile, it->second) << std::setfill(' ')
+                                  << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
                                   << std::dec << " ";
                     } else if (prop == "locale") {
                         std::cout << std::setw(4)
-                                  << LocaleToLang(GetFileInfo<int32_t>(hFile, it->second)) << " ";
+                                  << LocaleToLang(GetFileInfo<int32_t>(file, it->second)) << " ";
                     } else if (prop == "byte-offset") {
                         std::cout << std::hex << std::setw(8)
-                                  << GetFileInfo<int64_t>(hFile, it->second) << std::dec << " ";
+                                  << GetFileInfo<int64_t>(file, it->second) << std::dec << " ";
                     } else if (prop == "file-time") {
                         std::cout << std::setw(19)
-                                  << FileTimeToLsTime(GetFileInfo<int64_t>(hFile, it->second))
+                                  << FileTimeToLsTime(GetFileInfo<int64_t>(file, it->second))
                                   << " ";
                     } else if (prop == "file-size" || prop == "compressed-size") {
-                        std::cout << std::setw(8) << GetFileInfo<int32_t>(hFile, it->second) << " ";
+                        std::cout << std::setw(8) << GetFileInfo<int32_t>(file, it->second) << " ";
                     } else if (prop == "flags") {
                         std::cout << std::setw(8)
-                                  << GetFlagString(GetFileInfo<int32_t>(hFile, it->second)) << " ";
+                                  << GetFlagString(GetFileInfo<int32_t>(file, it->second)) << " ";
                     } else if (prop == "encryption-key" || prop == "encryption-key-raw") {
                         std::cout << std::setfill('0') << std::hex << std::setw(8)
-                                  << GetFileInfo<int64_t>(hFile, it->second) << std::setfill(' ')
+                                  << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
                                   << std::dec << " ";
                     }
                 }
 
-                std::cout << " " << findData.cFileName << std::endl;
-                SFileCloseFile(hFile);
+                std::cout << " " << find_data.cFileName << std::endl;
+                SFileCloseFile(file);
             }
-            SFileSetLocale(defaultLocale);  // Reset locale to default after changing it
+            SFileSetLocale(default_locale); // Reset locale to default after changing it
         } else {
             // Print just the filename (like default ls command output)
-            std::cout << findData.cFileName << std::endl;
+            std::cout << find_data.cFileName << std::endl;
         }
 
-    } while (SFileFindNextFile(findHandle, &findData));
+    } while (SFileFindNextFile(find_handle, &find_data));
 
-    SFileFindClose(findHandle);
+    SFileFindClose(find_handle);
     return 0;
 }
 
-std::unique_ptr<char[]> ReadFile(HANDLE hArchive, const char *szFileName, unsigned int *fileSize,
-                                 LCID preferredLocale) {
-    SFileSetLocale(preferredLocale);
-    if (!FileExistsInArchiveForLocale(hArchive, szFileName, preferredLocale) &&
-        !FileExistsInArchiveForLocale(hArchive, szFileName, defaultLocale)) {
+std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned int *file_size,
+                                 LCID preferred_locale) {
+    SFileSetLocale(preferred_locale);
+    if (!FileExistsInArchiveForLocale(archive, file_name, preferred_locale) &&
+        !FileExistsInArchiveForLocale(archive, file_name, default_locale)) {
         std::cerr << "[!] Failed: File doesn't exist"
-                  << PrettyPrintLocale(preferredLocale, " for locale ", true) << ": " << szFileName
+                  << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << file_name
                   << std::endl;
         return nullptr;
     }
 
-    HANDLE hFile;
-    if (!SFileOpenFileEx(hArchive, szFileName, SFILE_OPEN_FROM_MPQ, &hFile)) {
-        std::cerr << "[!] Failed: File cannot be opened: " << szFileName << std::endl;
+    HANDLE file;
+    if (!SFileOpenFileEx(archive, file_name, SFILE_OPEN_FROM_MPQ, &file)) {
+        std::cerr << "[!] Failed: File cannot be opened: " << file_name << std::endl;
         return nullptr;
     }
 
-    *fileSize = SFileGetFileSize(hFile, nullptr);
-    if (*fileSize == SFILE_INVALID_SIZE) {
-        std::cerr << "[!] Failed: Invalid file size for: " << szFileName << std::endl;
-        SFileCloseFile(hFile);
+    *file_size = SFileGetFileSize(file, nullptr);
+    if (*file_size == SFILE_INVALID_SIZE) {
+        std::cerr << "[!] Failed: Invalid file size for: " << file_name << std::endl;
+        SFileCloseFile(file);
         return nullptr;
     }
 
-    auto fileContent = std::make_unique<char[]>(*fileSize);
-    DWORD dwBytesRead;
-    if (!SFileReadFile(hFile, fileContent.get(), *fileSize, &dwBytesRead, nullptr)) {
-        std::cerr << "[!] Failed: Cannot read file contents for: " << szFileName << std::endl;
-        SFileCloseFile(hFile);
+    auto file_content = std::make_unique<char[]>(*file_size);
+    DWORD bytes_read;
+    if (!SFileReadFile(file, file_content.get(), *file_size, &bytes_read, nullptr)) {
+        std::cerr << "[!] Failed: Cannot read file contents for: " << file_name << std::endl;
+        SFileCloseFile(file);
         return nullptr;
     }
 
-    SFileCloseFile(hFile);
-    return fileContent;
+    SFileCloseFile(file);
+    return file_content;
 }
 
-void PrintMpqInfo(HANDLE hArchive, const std::optional<std::string> &infoProperty) {
+void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_property) {
     // Map of property names to their corresponding actions
-    std::map<std::string, std::function<void(bool)>> propertyActions = {
+    std::map<std::string, std::function<void(bool)>> property_actions = {
         {"format-version",
-         [&](bool printName) {
-             TMPQHeader header = GetFileInfo<TMPQHeader>(hArchive, SFileMpqHeader);
-             uint16_t formatVersion =
-                 header.wFormatVersion + 1;  // Add +1 because StormLib starts at 0
-             if (printName) {
+         [&](bool print_name) {
+             TMPQHeader header = GetFileInfo<TMPQHeader>(archive, SFileMpqHeader);
+             uint16_t format_version =
+                 header.wFormatVersion + 1; // Add +1 because StormLib starts at 0
+             if (print_name) {
                  std::cout << "Format version: ";
              }
-             std::cout << formatVersion << std::endl;
+             std::cout << format_version << std::endl;
          }},
         {"header-offset",
-         [&](bool printName) {
-             int64_t headerOffset = GetFileInfo<int64_t>(hArchive, SFileMpqHeaderOffset);
-             if (printName) {
+         [&](bool print_name) {
+             int64_t header_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
+             if (print_name) {
                  std::cout << "Header offset: ";
              }
-             std::cout << headerOffset << std::endl;
+             std::cout << header_offset << std::endl;
          }},
         {"header-size",
-         [&](bool printName) {
-             int64_t headerSize = GetFileInfo<int64_t>(hArchive, SFileMpqHeaderSize);
-             if (printName) {
+         [&](bool print_name) {
+             int64_t header_size = GetFileInfo<int64_t>(archive, SFileMpqHeaderSize);
+             if (print_name) {
                  std::cout << "Header size: ";
              }
-             std::cout << headerSize << std::endl;
+             std::cout << header_size << std::endl;
          }},
         {"archive-size",
-         [&](bool printName) {
-             int32_t archiveSize = GetFileInfo<int32_t>(hArchive, SFileMpqArchiveSize);
-             if (printName) {
+         [&](bool print_name) {
+             int32_t archive_size = GetFileInfo<int32_t>(archive, SFileMpqArchiveSize);
+             if (print_name) {
                  std::cout << "Archive size: ";
              }
-             std::cout << archiveSize << std::endl;
+             std::cout << archive_size << std::endl;
          }},
         {"file-count",
-         [&](bool printName) {
-             int32_t numberOfFiles = GetFileInfo<int32_t>(hArchive, SFileMpqNumberOfFiles);
-             if (printName) {
+         [&](bool print_name) {
+             int32_t number_of_files = GetFileInfo<int32_t>(archive, SFileMpqNumberOfFiles);
+             if (print_name) {
                  std::cout << "File count: ";
              }
-             std::cout << numberOfFiles << std::endl;
+             std::cout << number_of_files << std::endl;
          }},
         {"max-files",
-         [&](bool printName) {
-             int32_t maxFiles = GetFileInfo<int32_t>(hArchive, SFileMpqMaxFileCount);
-             if (printName) {
+         [&](bool print_name) {
+             int32_t max_files = GetFileInfo<int32_t>(archive, SFileMpqMaxFileCount);
+             if (print_name) {
                  std::cout << "Max files: ";
              }
-             std::cout << maxFiles << std::endl;
+             std::cout << max_files << std::endl;
          }},
-        {"signature-type", [&](bool printName) {
-             int32_t signatureType = GetFileInfo<int32_t>(hArchive, SFileMpqSignatures);
-             if (printName) {
+        {"signature-type", [&](bool print_name) {
+             int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
+             if (print_name) {
                  std::cout << "Signature type: ";
              }
-             if (signatureType == SIGNATURE_TYPE_NONE) {
+             if (signature_type == SIGNATURE_TYPE_NONE) {
                  std::cout << "None" << std::endl;
-             } else if (signatureType == SIGNATURE_TYPE_WEAK) {
+             } else if (signature_type == SIGNATURE_TYPE_WEAK) {
                  std::cout << "Weak" << std::endl;
-             } else if (signatureType == SIGNATURE_TYPE_STRONG) {
+             } else if (signature_type == SIGNATURE_TYPE_STRONG) {
                  std::cout << "Strong" << std::endl;
              }
          }}};
 
     // If infoProperty is not set, print all properties with their names (key)
     // Otherwise, print only the specified property value
-    if (!infoProperty.has_value()) {
-        for (const auto &[key, action] : propertyActions) {
-            action(true);  // Print property name and value
+    if (!info_property.has_value()) {
+        for (const auto &[key, action] : property_actions) {
+            action(true); // Print property name and value
         }
     } else {
-        auto it = propertyActions.find(infoProperty.value());
-        if (it != propertyActions.end()) {
-            it->second(false);  // Print only the value
+        auto it = property_actions.find(info_property.value());
+        if (it != property_actions.end()) {
+            it->second(false); // Print only the value
         }
     }
 }
 
-uint32_t VerifyMpqArchive(HANDLE hArchive) {
-    return SFileVerifyArchive(hArchive);
+uint32_t VerifyMpqArchive(HANDLE archive) {
+    return SFileVerifyArchive(archive);
 }
 
-int CompactMpqArchive(HANDLE hArchive, const std::optional<std::string> &listfileName) {
+int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name) {
     std::cout << "[*] Compacting archive. This may take some time..." << std::endl;
     // Check if the user provided a listfile input
-    const char *listfile = listfileName.has_value() ? listfileName->c_str() : nullptr;
+    const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
-    if (!SFileCompactArchive(hArchive, listfile, false)) {
+    if (!SFileCompactArchive(archive, listfile, false)) {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed to compact archive: (" << error << ") " << StormErrorString(error)
                   << std::endl;
@@ -665,50 +668,51 @@ int CompactMpqArchive(HANDLE hArchive, const std::optional<std::string> &listfil
     return 0;
 }
 
-int32_t PrintMpqSignature(HANDLE hArchive, const std::string &target) {
+int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
     // Determine if we have a strong or weak digital signature
-    int32_t signatureType = GetFileInfo<int32_t>(hArchive, SFileMpqSignatures);
+    int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
 
-    std::vector<char> signatureContent;
+    std::vector<char> signature_content;
 
-    if (signatureType == SIGNATURE_TYPE_NONE) {
+    if (signature_type == SIGNATURE_TYPE_NONE) {
         return 1;
-    } else if (signatureType == SIGNATURE_TYPE_WEAK) {
-        const char *szFileName = "(signature)";
-        uint32_t fileSize;
-        auto fileContent = ReadFile(hArchive, szFileName, &fileSize, defaultLocale);
+    } else if (signature_type == SIGNATURE_TYPE_WEAK) {
+        const char *file_name = "(signature)";
+        uint32_t file_size;
+        auto file_content = ReadFile(archive, file_name, &file_size, default_locale);
 
-        if (!fileContent) {
+        if (!file_content) {
             std::cerr << "[!] Failed to read weak signature file." << std::endl;
             return -1;
         }
-        signatureContent.resize(fileSize);
-        std::copy(fileContent.get(), fileContent.get() + fileSize, signatureContent.begin());
+        signature_content.resize(file_size);
+        std::copy(file_content.get(), file_content.get() + file_size, signature_content.begin());
 
-        PrintAsBinary(fileContent.get(), fileSize);
+        PrintAsBinary(file_content.get(), file_size);
 
-    } else if (signatureType == SIGNATURE_TYPE_STRONG) {
-        signatureContent = GetFileInfo<std::vector<char>>(hArchive, SFileMpqStrongSignature);
-        if (signatureContent.empty()) {
-            int64_t archiveSize = GetFileInfo<int64_t>(hArchive, SFileMpqArchiveSize64);
-            int64_t archiveOffset = GetFileInfo<int64_t>(hArchive, SFileMpqHeaderOffset);
+    } else if (signature_type == SIGNATURE_TYPE_STRONG) {
+        signature_content = GetFileInfo<std::vector<char>>(archive, SFileMpqStrongSignature);
+        if (signature_content.empty()) {
+            int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
+            int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
 
-            const fs::path archivePath = fs::canonical(target);
-            std::uintmax_t fileSize = fs::file_size(archivePath);
-            int64_t signatureLength = fileSize - archiveOffset - archiveSize;
+            const fs::path archive_path = fs::canonical(target);
+            std::uintmax_t file_size = fs::file_size(archive_path);
+            int64_t signature_length = file_size - archive_offset - archive_size;
 
-            if (signatureLength <= 0) {
-                std::cerr << "[!] Invalid signature length: " << signatureLength << std::endl;
+            if (signature_length <= 0) {
+                std::cerr << "[!] Invalid signature length: " << signature_length << std::endl;
                 return -1;
             }
 
-            std::ifstream file_mpq(archivePath, std::ios::binary);
-            file_mpq.seekg(archiveOffset + archiveSize, std::ios::beg);
-            signatureContent.resize(static_cast<size_t>(signatureLength));
-            file_mpq.read(signatureContent.data(), signatureContent.size());
+            std::ifstream file_mpq(archive_path, std::ios::binary);
+            file_mpq.seekg(archive_offset + archive_size, std::ios::beg);
+            signature_content.resize(static_cast<size_t>(signature_length));
+            file_mpq.read(signature_content.data(), signature_content.size());
             file_mpq.close();
 
-            PrintAsBinary(signatureContent.data(), static_cast<uint32_t>(signatureContent.size()));
+            PrintAsBinary(signature_content.data(),
+                          static_cast<uint32_t>(signature_content.size()));
         }
     }
 

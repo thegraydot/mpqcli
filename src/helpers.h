@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-std::string FileTimeToLsTime(int64_t fileTime);
+std::string FileTimeToLsTime(int64_t file_time);
 std::string NormalizeFilePath(const fs::path &path);
 std::string WindowsifyFilePath(const fs::path &path);
 std::string StormErrorString(uint32_t err);

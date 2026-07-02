@@ -15,42 +15,42 @@
 
 namespace fs = std::filesystem;
 
-std::string FileTimeToLsTime(int64_t fileTime) {
-    if (fileTime == 0) {
+std::string FileTimeToLsTime(int64_t file_time) {
+    if (file_time == 0) {
         return "";
     }
-    constexpr int64_t EPOCH_DIFF = 11644473600LL;
-    int64_t unixTime = (fileTime / 10000000) - EPOCH_DIFF;
+    constexpr int64_t epoch_diff = 11644473600LL;
+    int64_t unix_time = (file_time / 10000000) - epoch_diff;
     char buf[20];
     struct tm tm_buf;
 #ifdef _WIN32
     localtime_s(&tm_buf, &unixTime);
 #else
-    localtime_r(&unixTime, &tm_buf);
+    localtime_r(&unix_time, &tm_buf);
 #endif
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf);
     return std::string(buf);
 }
 
 std::string NormalizeFilePath(const fs::path &path) {
-    std::string filePath = path.u8string();
+    std::string file_path = path.u8string();
 #ifndef _WIN32
-    std::replace(filePath.begin(), filePath.end(), '\\', '/');
-    return filePath;
+    std::replace(file_path.begin(), file_path.end(), '\\', '/');
+    return file_path;
 #else
     return filePath;
 #endif
 }
 
 std::string WindowsifyFilePath(const fs::path &path) {
-    std::string filePath = path.u8string();
-    std::replace(filePath.begin(), filePath.end(), '/', '\\');
-    return filePath;
+    std::string file_path = path.u8string();
+    std::replace(file_path.begin(), file_path.end(), '/', '\\');
+    return file_path;
 }
 
 std::string StormErrorString(uint32_t err) {
     switch (err) {
-            // clang-format off
+        // clang-format off
         case ERROR_SUCCESS:                return "Success";
         case ERROR_FILE_NOT_FOUND:         return "File not found";
         case ERROR_ACCESS_DENIED:          return "Access denied (archive may be read-only or have open files)";
@@ -81,35 +81,35 @@ std::string StormErrorString(uint32_t err) {
         case ERROR_FAKE_MPQ_HEADER:        return "Fake MPQ header at this position";
         case ERROR_FILE_DELETED:           return "File contains delete marker";
         default:                           return std::strerror(static_cast<int>(err));
-            // clang-format on
+        // clang-format on
     }
 }
 
 uint32_t CalculateMpqMaxFileValue(const std::string &path) {
-    uint32_t fileCount = 0;
+    uint32_t file_count = 0;
 
     // Determine the number of files in the target directory, recusively
     if (!fs::is_regular_file(path)) {
         for (const auto &entry : fs::recursive_directory_iterator(path)) {
             if (fs::is_regular_file(entry.path())) {
-                ++fileCount;
+                ++file_count;
             }
         }
     }
 
     // Always add 3 for "special" files
-    fileCount += 3;
+    file_count += 3;
 
     // Based on file count, determine the max number of files an MPQ archive can hold
     // We always have a minimum of 32
     // Anything over is rounded up to the closest power of 2
     // For example: 64, 128, 256
     // This is examples behavior of WoW MPQ archives (patches and installs)
-    if (fileCount <= 32) {
+    if (file_count <= 32) {
         return 32;
     }
 
-    return NextPowerOfTwo(fileCount);
+    return NextPowerOfTwo(file_count);
 }
 
 uint32_t NextPowerOfTwo(uint32_t n) {
