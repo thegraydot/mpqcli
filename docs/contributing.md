@@ -21,26 +21,27 @@ git submodule update --init --recursive
 Install the clang lint tools:
 
 ```
-make setup
+make install_clang_tools
 ```
 
 ## Makefile Reference
 
 Run `make help` to list all available targets. Common ones:
 
-| Target | Description |
-|---|---|
-| `make setup` | Install clang-format and clang-tidy via apt |
-| `make build_linux` | Build for Linux using cmake |
-| `make build_windows` | Build for Windows using cmake |
-| `make build_clean` | Remove the cmake build directory |
-| `make test_create_venv` | Create Python venv and install test dependencies (first-time only) |
-| `make test_mpqcli` | Run the pytest test suite |
-| `make lint` | Run all C++ linters (clang-format + clang-tidy) |
-| `make lint_format` | Check formatting only (dry run) |
-| `make lint_format_fix` | Auto-fix formatting in-place |
-| `make lint_cpp` | Run clang-tidy static analysis |
-| `make clean` | Remove all build and test artifacts |
+| Target                     | Description                                                        |
+|----------------------------|--------------------------------------------------------------------|
+| `make install_clang_tools` | Install clang-format and clang-tidy via apt                        |
+| `make configure`           | Configure cmake build with clang (required before `make lint`)     |
+| `make build_linux`         | Build for Linux using cmake                                        |
+| `make build_windows`       | Build for Windows using cmake                                      |
+| `make build_clean`         | Remove the cmake build directory                                   |
+| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only) |
+| `make test_mpqcli`         | Run the pytest test suite                                          |
+| `make lint`                | Run all C++ linters (clang-format + clang-tidy)                    |
+| `make fmt_check`           | Check formatting only (dry run)                                    |
+| `make fmt`                 | Auto-fix formatting in-place                                       |
+| `make lint_cpp`            | Run clang-tidy static analysis                                     |
+| `make clean`               | Remove all build and test artifacts                                |
 
 ## Requirements for a Pull Request
 
@@ -72,16 +73,17 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 ### 4. Linting must pass
 
-All C++ code is formatted with clang-format and analysed with clang-tidy. Run the full suite before submitting:
+All C++ code is formatted with clang-format and analysed with clang-tidy. `clang-tidy` needs a compile database generated with clang, so run `make configure` first (`make build_linux`/`make build_windows` alone will not work, since they don't set up the compiler flags clang-tidy needs):
 
 ```
+make configure
 make lint
 ```
 
 If there are formatting violations, auto-fix them with:
 
 ```
-make lint_format_fix
+make fmt
 ```
 
 Then re-run `make lint` to confirm everything passes.
@@ -106,11 +108,25 @@ Suppressions are occasionally necessary for third-party code or intentional patt
 Use `// clang-format off` / `// clang-format on` only when the default formatting genuinely hurts readability (e.g. column-aligned tables). Add a brief comment explaining the intent:
 
 ```cpp
-// clang-format off: preserve column-aligned flag-to-char mappings for readability
+// Preserve column-aligned flag-to-char mappings for readability
+// clang-format off
 if (flags & MPQ_FILE_IMPLODE)   result += 'i';
 if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 // clang-format on
 ```
+
+## Known Design Constraints
+
+### StormLib locale state is global and not thread-safe
+
+`SFileSetLocale` sets a process-wide locale variable (`g_lcFileLocale`) inside StormLib. All locale-sensitive operations in `mpq.cpp` - file open, add, remove, read, extract, and list - call `SFileSetLocale` immediately before the relevant StormLib call. There is no locale-explicit alternative in StormLib's public API (`SFileOpenFileEx`, `SFileAddFileEx`, etc. all read `g_lcFileLocale` internally).
+
+This means:
+
+- The `SFileSetLocale` + StormLib-call sequence is **not atomic** and would be unsafe under concurrency
+- mpqcli is intentionally **single-threaded**; do not introduce threads or async I/O without auditing every locale-sensitive call site in `mpq.cpp`
+
+If you add a new StormLib call that is locale-sensitive, follow the existing pattern: call `SFileSetLocale` immediately before it, with no intervening calls between the two.
 
 ## Workflow Summary
 
@@ -118,6 +134,6 @@ if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 2. Run `git submodule update --init --recursive` after cloning
 3. Run `make install_clang_tools` to install lint dependencies
 4. Make your changes and verify they build: `make build_linux`
-5. Run `make lint` and fix any issues
+5. Run `make configure` and then `make lint`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why
