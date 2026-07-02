@@ -25,11 +25,17 @@ if(BUILD_STATIC)
 endif()
 
 # Determine git commit hash
-execute_process (
+execute_process(
     COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE GIT_COMMIT_HASH
+    RESULT_VARIABLE GIT_COMMIT_RESULT
+    ERROR_QUIET
 )
+if(NOT GIT_COMMIT_RESULT EQUAL 0 OR NOT GIT_COMMIT_HASH)
+    set(GIT_COMMIT_HASH "unknown")
+endif()
 
 # Handle StormLib dependency
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
