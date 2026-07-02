@@ -24,7 +24,7 @@ std::string FileTimeToLsTime(int64_t file_time) {
     char buf[20];
     struct tm tm_buf;
 #ifdef _WIN32
-    localtime_s(&tm_buf, &unixTime);
+    localtime_s(&tm_buf, &unix_time);
 #else
     localtime_r(&unix_time, &tm_buf);
 #endif
@@ -38,7 +38,7 @@ std::string NormalizeFilePath(const fs::path &path) {
     std::replace(file_path.begin(), file_path.end(), '\\', '/');
     return file_path;
 #else
-    return filePath;
+    return file_path;
 #endif
 }
 
