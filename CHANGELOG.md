@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.1 - 2026-07-03
+
+### Added
+
+- Command completion for common shells (bash, zsh, fish and powershell)
+
+### Fixed
+
+- Memory leak in read subcommand
+- Inconsistencies in documentation
+
+### Updated
+
+- Code style to conform to Google CPP style with slight variations
+- StormLib dependency for a variety of fixes
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
+
 ## 0.10.0 - 2026-06-07
 
 ### Added
