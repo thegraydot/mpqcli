@@ -21,7 +21,7 @@ $ source ~/.bash_completion.d/mpqcli
 Alternatively, write the script to a system-wide completions directory (requires root):
 
 ```bash
-$ mpqcli completion bash > /etc/bash_completion.d/mpqcli
+$ mpqcli completion bash | sudo tee /etc/bash_completion.d/mpqcli > /dev/null
 ```
 
 ## Zsh
@@ -32,18 +32,18 @@ Write the completion script to a directory that is on your `$fpath`.
 $ mpqcli completion zsh > "${fpath[1]}/_mpqcli"
 ```
 
-## PowerShell
-
-Append the completion script to your PowerShell profile so it loads automatically.
-
-```powershell
-PS> mpqcli completion powershell >> $PROFILE
-```
-
 ## Fish
 
 Write the completion script to the fish completions directory.
 
 ```fish
 $ mpqcli completion fish > ~/.config/fish/completions/mpqcli.fish
+```
+
+## PowerShell
+
+Append the completion script to your PowerShell profile so it loads automatically.
+
+```powershell
+PS> mpqcli completion powershell >> $PROFILE
 ```

@@ -12,37 +12,36 @@
 
 namespace fs = std::filesystem;
 
-bool OpenMpqArchive(const std::string &filename, HANDLE *hArchive, int32_t flags);
-bool CloseMpqArchive(HANDLE hArchive);
-bool SignMpqArchive(HANDLE hArchive);
-int ExtractFiles(HANDLE hArchive, const std::string &output,
-                 const std::optional<std::string> &listfileName, LCID preferredLocale);
-int ExtractFile(HANDLE hArchive, const std::string &output, const std::string &fileName,
-                bool keepFolderStructure, LCID preferredLocale);
-HANDLE CreateMpqArchive(const std::string &outputArchiveName, uint32_t fileCount,
-                        const GameRules &gameRules);
-int AddFiles(HANDLE hArchive, const std::string &inputPath, const std::string &pathPrefix,
-             LCID locale, const GameRules &gameRules,
+bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags);
+bool CloseMpqArchive(HANDLE archive);
+bool SignMpqArchive(HANDLE archive);
+int ExtractFiles(HANDLE archive, const std::string &output,
+                 const std::optional<std::string> &listfile_name, LCID preferred_locale);
+int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
+                bool keep_folder_structure, LCID preferred_locale);
+HANDLE CreateMpqArchive(const std::string &output_archive_name, uint32_t file_count,
+                        const GameRules &game_rules);
+int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
+             LCID locale, const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
              bool overwrite = false, bool update = false);
-int AddFile(HANDLE hArchive, const fs::path &localFile, const std::string &archiveFilePath,
-            LCID locale, const GameRules &gameRules,
+int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
+            LCID locale, const GameRules &game_rules,
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
             bool overwrite = false);
-int RemoveFile(HANDLE hArchive, const std::string &archiveFilePath, LCID locale);
-int ListFiles(HANDLE hArchive, const std::optional<std::string> &listfileName, bool listAll,
-              bool listDetailed, const std::vector<std::string> &properties);
-std::unique_ptr<char[]> ReadFile(HANDLE hArchive, const char *szFileName, unsigned int *fileSize,
-                                 LCID preferredLocale);
-void PrintMpqInfo(HANDLE hArchive, const std::optional<std::string> &infoProperty);
-uint32_t VerifyMpqArchive(HANDLE hArchive);
-int CompactMpqArchive(HANDLE hArchive, const std::optional<std::string> &listfileName);
-int32_t PrintMpqSignature(HANDLE hArchive, const std::string &target);
+int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale);
+int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
+              bool list_detailed, const std::vector<std::string> &properties);
+std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned int *file_size,
+                                 LCID preferred_locale);
+void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_property);
+uint32_t VerifyMpqArchive(HANDLE archive);
+int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name);
+int32_t PrintMpqSignature(HANDLE archive, const std::string &target);
 
-template <typename T>
-T GetFileInfo(HANDLE hFile, SFileInfoClass infoClass) {
+template <typename T> T GetFileInfo(HANDLE file, SFileInfoClass info_class) {
     T value{};
-    if (!SFileGetFileInfo(hFile, infoClass, &value, sizeof(T), nullptr)) {
+    if (!SFileGetFileInfo(file, info_class, &value, sizeof(T), nullptr)) {
         return T{};
     }
     return value;

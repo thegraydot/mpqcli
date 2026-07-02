@@ -31,6 +31,7 @@ Run `make help` to list all available targets. Common ones:
 | Target                     | Description                                                        |
 |----------------------------|--------------------------------------------------------------------|
 | `make install_clang_tools` | Install clang-format and clang-tidy via apt                        |
+| `make configure`           | Configure cmake build with clang (required before `make lint`)     |
 | `make build_linux`         | Build for Linux using cmake                                        |
 | `make build_windows`       | Build for Windows using cmake                                      |
 | `make build_clean`         | Remove the cmake build directory                                   |
@@ -72,9 +73,10 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 ### 4. Linting must pass
 
-All C++ code is formatted with clang-format and analysed with clang-tidy. Run the full suite before submitting:
+All C++ code is formatted with clang-format and analysed with clang-tidy. `clang-tidy` needs a compile database generated with clang, so run `make configure` first (`make build_linux`/`make build_windows` alone will not work, since they don't set up the compiler flags clang-tidy needs):
 
 ```
+make configure
 make lint
 ```
 
@@ -88,7 +90,7 @@ Then re-run `make lint` to confirm everything passes.
 
 ### 5. Match the existing code style
 
-C++ formatting is enforced by `.clang-format` (Google style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. Python tests should follow the style of the existing test files.
+C++ formatting is enforced by `.clang-format` (LLVM style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. Python tests should follow the style of the existing test files.
 
 #### Suppression policy
 
@@ -106,7 +108,8 @@ Suppressions are occasionally necessary for third-party code or intentional patt
 Use `// clang-format off` / `// clang-format on` only when the default formatting genuinely hurts readability (e.g. column-aligned tables). Add a brief comment explaining the intent:
 
 ```cpp
-// clang-format off: preserve column-aligned flag-to-char mappings for readability
+// Preserve column-aligned flag-to-char mappings for readability
+// clang-format off
 if (flags & MPQ_FILE_IMPLODE)   result += 'i';
 if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 // clang-format on
@@ -131,6 +134,6 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 2. Run `git submodule update --init --recursive` after cloning
 3. Run `make install_clang_tools` to install lint dependencies
 4. Make your changes and verify they build: `make build_linux`
-5. Run `make lint` and fix any issues
+5. Run `make configure` and then `make lint`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why
