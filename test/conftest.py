@@ -208,6 +208,74 @@ def generate_path_traversal_mpq(binary_path):
     yield mpq_file
 
 
+@pytest.fixture(scope="function")
+def generate_tampered_signature_mpq(binary_path):
+    """
+    Build a signed MPQ archive, then flip a single byte inside the file's
+    compressed data (well past the leading sector-offset-table bytes, which
+    are sensitive to corruption in ways unrelated to the signature).
+
+    This produces an archive whose "(signature)" entry is present but no
+    longer matches the archive content, i.e. StormLib's
+    ERROR_WEAK_SIGNATURE_ERROR case.
+    """
+    script_dir = Path(__file__).parent
+
+    data_dir = script_dir / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    tamper_files_dir = data_dir / "tamper_files"
+    shutil.rmtree(tamper_files_dir, ignore_errors=True)
+    tamper_files_dir.mkdir(parents=True, exist_ok=True)
+
+    mpq_file = data_dir / "mpq_with_tampered_signature.mpq"
+    mpq_file.unlink(missing_ok=True)
+
+    text_file = tamper_files_dir / "cats.txt"
+    text_file.write_text(
+        "This is a longer file about cats, with enough content to give us "
+        "several bytes of compressed data to safely flip a bit in.\n",
+        newline="\n",
+    )
+
+    result = subprocess.run(
+        [str(binary_path), "create", "-s", "-o", str(mpq_file), str(tamper_files_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    offset_result = subprocess.run(
+        [str(binary_path), "list", "-p", "byte-offset", str(mpq_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert offset_result.returncode == 0, f"mpqcli failed with error: {offset_result.stderr}"
+    byte_offset = int(offset_result.stdout.split()[0])
+
+    size_result = subprocess.run(
+        [str(binary_path), "list", "-p", "compressed-size", str(mpq_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert size_result.returncode == 0, f"mpqcli failed with error: {size_result.stderr}"
+    compressed_size = int(size_result.stdout.split()[0])
+
+    # Flip a byte at the midpoint of the compressed data, away from the
+    # sector-offset-table bytes at the start of the blob
+    flip_offset = byte_offset + compressed_size // 2
+    with open(mpq_file, "r+b") as f:
+        f.seek(flip_offset)
+        original_byte = f.read(1)
+        f.seek(flip_offset)
+        f.write(bytes([original_byte[0] ^ 0xFF]))
+
+    yield mpq_file
+
+
 @pytest.fixture(scope="session")
 def download_test_files():
     script_dir = Path(__file__).parent
