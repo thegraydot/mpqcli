@@ -9,12 +9,13 @@ def test_verify_no_signature(binary_path):
 
     This test checks:
     - If the application exits correctly when the MPQ file has no signature.
+    - If the failure message distinguishes "no signature" from other failures.
     """
     script_dir = Path(__file__).parent
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     expected_output = {
-        "[!] Verify failed",
+        "[!] Verify failed: archive has no signature",
     }
 
     result = subprocess.run(
@@ -24,10 +25,44 @@ def test_verify_no_signature(binary_path):
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    stdout_lines = set(result.stdout.splitlines())
+    stderr_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+    assert stdout_lines == set(), f"Unexpected stdout: {stdout_lines}"
+    assert stderr_lines == expected_output, f"Unexpected stderr: {stderr_lines}"
+
+
+def test_verify_tampered_signature(binary_path, generate_tampered_signature_mpq):
+    """
+    Test MPQ file verification with a signature that is present but invalid.
+
+    This test checks:
+    - If the application detects an archive that was modified after signing
+      (signature present, but no longer valid for the current content).
+    - If the application exits with a non-zero code.
+    - If the failure message distinguishes "invalid signature" from the
+      "no signature" case, instead of printing the same generic failure.
+    """
+    test_file = generate_tampered_signature_mpq
+
+    expected_output = {
+        "[!] Verify failed: signature is present but invalid",
+    }
+
+    result = subprocess.run(
+        [str(binary_path), "verify", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    stdout_lines = set(result.stdout.splitlines())
+    stderr_lines = set(result.stderr.splitlines())
+
+    assert result.returncode == 1, f"mpqcli unexpectedly succeeded: {result.stdout}"
+    assert stdout_lines == set(), f"Unexpected stdout: {stdout_lines}"
+    assert stderr_lines == expected_output, f"Unexpected stderr: {stderr_lines}"
 
 
 def test_verify_weak_signature(binary_path):
