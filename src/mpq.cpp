@@ -692,29 +692,28 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         PrintAsBinary(file_content.get(), file_size);
 
     } else if (signature_type == SIGNATURE_TYPE_STRONG) {
-        signature_content = GetFileInfo<std::vector<char>>(archive, SFileMpqStrongSignature);
-        if (signature_content.empty()) {
-            int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
-            int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
+        // StormLib does not expose the strong signature via SFileGetFileInfo into a
+        // growable buffer (SFileMpqStrongSignature's advertised size always exceeds
+        // sizeof(std::vector<char>)), so read it directly from the archive file instead.
+        int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
+        int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
 
-            const fs::path archive_path = fs::canonical(target);
-            std::uintmax_t file_size = fs::file_size(archive_path);
-            int64_t signature_length = file_size - archive_offset - archive_size;
+        const fs::path archive_path = fs::canonical(target);
+        std::uintmax_t file_size = fs::file_size(archive_path);
+        int64_t signature_length = file_size - archive_offset - archive_size;
 
-            if (signature_length <= 0) {
-                std::cerr << "[!] Invalid signature length: " << signature_length << std::endl;
-                return -1;
-            }
-
-            std::ifstream file_mpq(archive_path, std::ios::binary);
-            file_mpq.seekg(archive_offset + archive_size, std::ios::beg);
-            signature_content.resize(static_cast<size_t>(signature_length));
-            file_mpq.read(signature_content.data(), signature_content.size());
-            file_mpq.close();
-
-            PrintAsBinary(signature_content.data(),
-                          static_cast<uint32_t>(signature_content.size()));
+        if (signature_length <= 0) {
+            std::cerr << "[!] Invalid signature length: " << signature_length << std::endl;
+            return -1;
         }
+
+        std::ifstream file_mpq(archive_path, std::ios::binary);
+        file_mpq.seekg(archive_offset + archive_size, std::ios::beg);
+        signature_content.resize(static_cast<size_t>(signature_length));
+        file_mpq.read(signature_content.data(), signature_content.size());
+        file_mpq.close();
+
+        PrintAsBinary(signature_content.data(), static_cast<uint32_t>(signature_content.size()));
     }
 
     return 0;
