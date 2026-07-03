@@ -325,7 +325,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     DWORD compression_next = overrides.compression_next.value_or(settings.compression_next);
 
     if (overwrite) {
-        flags += MPQ_FILE_REPLACEEXISTING;
+        flags |= MPQ_FILE_REPLACEEXISTING;
     }
 
     bool added_file =
@@ -508,7 +508,7 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
                                   << FileTimeToLsTime(GetFileInfo<int64_t>(file, it->second))
                                   << " ";
                     } else if (prop == "file-size" || prop == "compressed-size") {
-                        std::cout << std::setw(8) << GetFileInfo<int32_t>(file, it->second) << " ";
+                        std::cout << std::setw(8) << GetFileInfo<uint32_t>(file, it->second) << " ";
                     } else if (prop == "flags") {
                         std::cout << std::setw(8)
                                   << GetFlagString(GetFileInfo<int32_t>(file, it->second)) << " ";
@@ -601,7 +601,7 @@ void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_propert
          }},
         {"archive-size",
          [&](bool print_name) {
-             int32_t archive_size = GetFileInfo<int32_t>(archive, SFileMpqArchiveSize);
+             int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
              if (print_name) {
                  std::cout << "Archive size: ";
              }
