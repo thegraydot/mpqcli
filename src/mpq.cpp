@@ -1,6 +1,7 @@
 #include "mpq.h"
 
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -230,11 +231,55 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                 int32_t file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
                 if (file_locale == locale) {
                     DWORD archived_size = SFileGetFileSize(file, nullptr);
-                    SFileCloseFile(file);
                     uintmax_t disk_size = fs::file_size(entry.path());
+                    bool skip = false;
+                    std::string skip_reason;
                     if (disk_size == static_cast<uintmax_t>(archived_size)) {
+                        const DWORD attr_flags = SFileGetAttributes(archive);
+                        if (attr_flags & MPQ_ATTRIBUTE_MD5) {
+                            // Retrieve the MD5 stored in (attributes) via TFileEntry.
+                            // Buffer must accommodate the struct plus the trailing filename.
+                            constexpr DWORD kEntryBufSize = sizeof(TFileEntry) + 1024;
+                            uint8_t fe_buf[kEntryBufSize]{};
+                            if (SFileGetFileInfo(file, SFileInfoFileEntry, fe_buf,
+                                                 kEntryBufSize, nullptr)) {
+                                const auto *fe =
+                                    reinterpret_cast<const TFileEntry *>(fe_buf);
+                                const uint8_t zero_md5[MD5_DIGEST_SIZE]{};
+                                if (std::memcmp(fe->md5, zero_md5, MD5_DIGEST_SIZE) != 0) {
+                                    uint8_t local_md5[MD5_DIGEST_SIZE]{};
+                                    if (ComputeFileMd5(entry.path(), local_md5)) {
+                                        skip = (std::memcmp(local_md5, fe->md5,
+                                                            MD5_DIGEST_SIZE) == 0);
+                                        if (skip) skip_reason = "MD5 matches";
+                                    }
+                                }
+                            }
+                        } else if (attr_flags & MPQ_ATTRIBUTE_CRC32) {
+                            const DWORD archived_crc32 =
+                                GetFileInfo<DWORD>(file, SFileInfoCRC32);
+                            if (archived_crc32 != 0) {
+                                if (auto local_crc32 = ComputeFileCrc32(entry.path())) {
+                                    skip = (*local_crc32 == archived_crc32);
+                                    if (skip) skip_reason = "CRC32 matches";
+                                }
+                            }
+                        } else if (attr_flags & MPQ_ATTRIBUTE_FILETIME) {
+                            const uint64_t archived_time =
+                                GetFileInfo<uint64_t>(file, SFileInfoFileTime);
+                            const uint64_t local_time = LocalFileTimestamp(entry.path());
+                            // Compare at second resolution: stat() has only second precision.
+                            if (archived_time != 0 && local_time != 0) {
+                                skip = (archived_time / 10000000u == local_time / 10000000u);
+                                if (skip) skip_reason = "Timestamp matches";
+                            }
+                        }
+                        // If no attributes are present, always add the file.
+                    }
+                    SFileCloseFile(file);
+                    if (skip) {
                         std::cout << "[~] Skipping unchanged file: " << archive_file_path
-                                  << std::endl;
+                                  << " (" << skip_reason << ")" << std::endl;
                         files_skipped++;
                         continue;
                     }

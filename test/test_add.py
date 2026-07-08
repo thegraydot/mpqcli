@@ -714,7 +714,7 @@ def test_add_update_skips_unchanged_files(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_unchanged"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This is a file about cats.\n")
@@ -743,7 +743,7 @@ def test_add_update_adds_changed_files(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_changed"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This cat content is completely different and longer now.")
@@ -777,7 +777,7 @@ def test_add_update_second_run_skips_all(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_idempotent"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This is a file about cats.\n")
@@ -862,6 +862,25 @@ def create_mpq_archive_for_test(binary_path, script_dir):
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
         [str(binary_path), "create", "--version", "1", str(target_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert target_file.exists(), "MPQ file was not created"
+    assert target_file.stat().st_size > 0, "MPQ file is empty"
+
+
+def create_mpq_archive_with_attrs_for_test(binary_path, script_dir):
+    """Like create_mpq_archive_for_test but uses the wow1 game profile so that
+    the archive includes a (attributes) file with CRC32, MD5, and FILETIME
+    checksums.  Required by --update tests that rely on checksum comparison."""
+    target_dir = script_dir / "data" / "files"
+    target_file = target_dir.with_suffix(".mpq")
+    target_file.unlink(missing_ok=True)
+    result = subprocess.run(
+        [str(binary_path), "create", "--game", "wow1", str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

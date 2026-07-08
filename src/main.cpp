@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
     add->add_flag("-w,--overwrite", add_overwrite,
                   "Overwrite file if it already is in MPQ archive");
     add->add_flag("-u,--update", add_update,
-                  "Skip files whose archived size matches the on-disk size (directory add only)");
+                  "Skip unchanged files when adding a directory. Compares size, then MD5/CRC32/timestamp");
     add->add_option("--locale", base_locale, "Locale to use for added file")->check(locale_valid);
     add->add_option("-g,--game", base_game_profile,
                     "Game profile for compression rules. Valid options:\n" +

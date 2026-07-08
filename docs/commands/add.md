@@ -58,9 +58,22 @@ $ mpqcli add wow-patch.mpq textures/ --path textures
 
 ## Skip unchanged files with --update
 
-When adding a directory, the `--update` flag skips any file whose on-disk size matches the
-size already stored in the archive. This is useful for incremental updates where only
-changed files need to be re-added.
+When adding a directory, the `--update` flag skips files that have not changed since they
+were last added to the archive. This is useful for incremental updates where only changed
+files need to be re-added.
+
+The skip decision is made in two steps:
+
+1. **File size** must match. If the sizes differ the file is always re-added.
+2. If the sizes match, the archive's `(attributes)` file is consulted for a stronger
+   check. The most reliable attribute available wins:
+   - **MD5** – if the archive stores MD5 checksums, the MD5 of the local file is computed
+     and compared. A match skips the file; a mismatch re-adds it.
+   - **CRC32** – used when MD5 is absent. Same logic.
+   - **Timestamp** – used when neither MD5 nor CRC32 is present. The file's
+     last-modification time is compared at one-second resolution.
+   - **No attributes** – if the archive has no `(attributes)` file, the file is always
+     re-added even when sizes match, because no reliable content check is possible.
 
 ```bash
 $ mpqcli add wow-patch.mpq textures/ --update --overwrite
@@ -68,10 +81,6 @@ $ mpqcli add wow-patch.mpq textures/ --update --overwrite
 [+] Adding file: Creature\Wolf\Wolf.blp
 [*] For textures: 1 files added, 1 files skipped, 0 files failed.
 ```
-
-Note: the skip check is size-based only. Files with the same size but different content
-are not detected as changed. If precise change detection matters, pass `--overwrite`
-without `--update` to unconditionally replace every file.
 
 ## Control where files are stored
 
