@@ -135,7 +135,7 @@ void PrintAsBinary(const char *buffer, uint32_t size) {
 // ---- CRC32 --------------------------------------------------------------
 // Standard ZIP/gzip CRC32 (polynomial 0xEDB88320, reflected bit order).
 
-static const std::array<uint32_t, 256> kCrc32Table = []() {
+static const std::array<uint32_t, 256> crc32_table = []() {
     std::array<uint32_t, 256> t{};
     for (uint32_t i = 0; i < 256; ++i) {
         uint32_t c = i;
@@ -155,7 +155,7 @@ std::optional<uint32_t> ComputeFileCrc32(const fs::path &path) {
     char buf[65536];
     while (f.read(buf, sizeof(buf)) || f.gcount() > 0) {
         for (std::streamsize i = 0; i < f.gcount(); ++i)
-            crc = (crc >> 8) ^ kCrc32Table[(crc ^ static_cast<uint8_t>(buf[i])) & 0xFFu];
+            crc = (crc >> 8) ^ crc32_table[(crc ^ static_cast<uint8_t>(buf[i])) & 0xFFu];
     }
     return crc ^ 0xFFFFFFFFu;
 }
@@ -165,7 +165,8 @@ std::optional<uint32_t> ComputeFileCrc32(const fs::path &path) {
 
 namespace {
 
-constexpr uint32_t kMd5K[64] = {
+// clang-format off
+constexpr uint32_t md5_k[64] = {
     // Round 1
     0xd76aa478u, 0xe8c7b756u, 0x242070dbu, 0xc1bdceeeu,
     0xf57c0fafu, 0x4787c62au, 0xa8304613u, 0xfd469501u,
@@ -188,12 +189,13 @@ constexpr uint32_t kMd5K[64] = {
     0xf7537e82u, 0xbd3af235u, 0x2ad7d2bbu, 0xeb86d391u,
 };
 
-constexpr uint8_t kMd5S[64] = {
+constexpr uint8_t md5_s[64] = {
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
     5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20,
     4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
     6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 };
+// clang-format on
 
 struct Md5State {
     uint32_t a{0x67452301u};
@@ -201,19 +203,24 @@ struct Md5State {
     uint32_t c{0x98BADCFEu};
     uint32_t d{0x10325476u};
     uint64_t count{0};
-    uint8_t  buf[64]{};
+    uint8_t buf[64]{};
 };
 
-static uint32_t RotLeft32(uint32_t x, uint8_t n) { return (x << n) | (x >> (32u - n)); }
+static uint32_t RotLeft32(uint32_t x, uint8_t n) {
+    return (x << n) | (x >> (32u - n));
+}
 
 static void Md5Block(Md5State &s, const uint8_t *blk) {
     uint32_t w[16];
+    // clang-format off
     for (int i = 0; i < 16; ++i) {
-        w[i] =  static_cast<uint32_t>(blk[4 * i])
-             | (static_cast<uint32_t>(blk[4 * i + 1]) << 8u)
-             | (static_cast<uint32_t>(blk[4 * i + 2]) << 16u)
-             | (static_cast<uint32_t>(blk[4 * i + 3]) << 24u);
+        const auto off = 4 * static_cast<ptrdiff_t>(i);
+        w[i] =  static_cast<uint32_t>(blk[off])
+             | (static_cast<uint32_t>(blk[off + 1]) << 8u)
+             | (static_cast<uint32_t>(blk[off + 2]) << 16u)
+             | (static_cast<uint32_t>(blk[off + 3]) << 24u);
     }
+    // clang-format on
     uint32_t a = s.a, b = s.b, c = s.c, d = s.d;
     for (int i = 0; i < 64; ++i) {
         uint32_t f = 0;
@@ -231,11 +238,11 @@ static void Md5Block(Md5State &s, const uint8_t *blk) {
             f = c ^ (b | ~d);
             g = static_cast<uint32_t>(7 * i) % 16u;
         }
-        f += a + kMd5K[i] + w[g];
+        f += a + md5_k[i] + w[g];
         a = d;
         d = c;
         c = b;
-        b += RotLeft32(f, kMd5S[i]);
+        b += RotLeft32(f, md5_s[i]);
     }
     s.a += a;
     s.b += b;
@@ -264,21 +271,23 @@ static void Md5Final(Md5State &s, uint8_t *digest) {
     uint8_t pad = 0x80u;
     Md5Update(s, &pad, 1);
     pad = 0;
-    while ((s.count & 63u) != 56u) Md5Update(s, &pad, 1);
+    while ((s.count & 63u) != 56u)
+        Md5Update(s, &pad, 1);
     uint8_t bits_le[8];
     for (int i = 0; i < 8; ++i)
         bits_le[i] = static_cast<uint8_t>(bits >> (8u * static_cast<unsigned>(i)));
     Md5Update(s, bits_le, 8);
     const uint32_t parts[4] = {s.a, s.b, s.c, s.d};
     for (int i = 0; i < 4; ++i) {
-        digest[4 * i]     = static_cast<uint8_t>(parts[i]);
-        digest[4 * i + 1] = static_cast<uint8_t>(parts[i] >> 8u);
-        digest[4 * i + 2] = static_cast<uint8_t>(parts[i] >> 16u);
-        digest[4 * i + 3] = static_cast<uint8_t>(parts[i] >> 24u);
+        const auto off = 4 * static_cast<ptrdiff_t>(i);
+        digest[off] = static_cast<uint8_t>(parts[i]);
+        digest[off + 1] = static_cast<uint8_t>(parts[i] >> 8u);
+        digest[off + 2] = static_cast<uint8_t>(parts[i] >> 16u);
+        digest[off + 3] = static_cast<uint8_t>(parts[i] >> 24u);
     }
 }
 
-}  // namespace
+} // namespace
 
 bool ComputeFileMd5(const fs::path &path, uint8_t *md5_out) {
     std::ifstream f(path, std::ios::binary);
@@ -302,6 +311,6 @@ uint64_t LocalFileTimestamp(const fs::path &path) {
     if (stat(path.string().c_str(), &st) != 0) {
         return 0;
     }
-    constexpr int64_t kEpochDiff = 11644473600LL;
-    return static_cast<uint64_t>((static_cast<int64_t>(st.st_mtime) + kEpochDiff) * 10000000LL);
+    constexpr int64_t epoch_diff = 11644473600LL;
+    return static_cast<uint64_t>((static_cast<int64_t>(st.st_mtime) + epoch_diff) * 10000000LL);
 }

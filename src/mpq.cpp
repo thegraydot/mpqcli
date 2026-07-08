@@ -239,29 +239,29 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                         if (attr_flags & MPQ_ATTRIBUTE_MD5) {
                             // Retrieve the MD5 stored in (attributes) via TFileEntry.
                             // Buffer must accommodate the struct plus the trailing filename.
-                            constexpr DWORD kEntryBufSize = sizeof(TFileEntry) + 1024;
-                            uint8_t fe_buf[kEntryBufSize]{};
-                            if (SFileGetFileInfo(file, SFileInfoFileEntry, fe_buf,
-                                                 kEntryBufSize, nullptr)) {
-                                const auto *fe =
-                                    reinterpret_cast<const TFileEntry *>(fe_buf);
+                            constexpr DWORD entry_buf_size = sizeof(TFileEntry) + 1024;
+                            uint8_t fe_buf[entry_buf_size]{};
+                            if (SFileGetFileInfo(file, SFileInfoFileEntry, fe_buf, entry_buf_size,
+                                                 nullptr)) {
+                                const auto *fe = reinterpret_cast<const TFileEntry *>(fe_buf);
                                 const uint8_t zero_md5[MD5_DIGEST_SIZE]{};
                                 if (std::memcmp(fe->md5, zero_md5, MD5_DIGEST_SIZE) != 0) {
                                     uint8_t local_md5[MD5_DIGEST_SIZE]{};
                                     if (ComputeFileMd5(entry.path(), local_md5)) {
-                                        skip = (std::memcmp(local_md5, fe->md5,
-                                                            MD5_DIGEST_SIZE) == 0);
-                                        if (skip) skip_reason = "MD5 matches";
+                                        skip =
+                                            (std::memcmp(local_md5, fe->md5, MD5_DIGEST_SIZE) == 0);
+                                        if (skip)
+                                            skip_reason = "MD5 matches";
                                     }
                                 }
                             }
                         } else if (attr_flags & MPQ_ATTRIBUTE_CRC32) {
-                            const DWORD archived_crc32 =
-                                GetFileInfo<DWORD>(file, SFileInfoCRC32);
+                            const DWORD archived_crc32 = GetFileInfo<DWORD>(file, SFileInfoCRC32);
                             if (archived_crc32 != 0) {
                                 if (auto local_crc32 = ComputeFileCrc32(entry.path())) {
                                     skip = (*local_crc32 == archived_crc32);
-                                    if (skip) skip_reason = "CRC32 matches";
+                                    if (skip)
+                                        skip_reason = "CRC32 matches";
                                 }
                             }
                         } else if (attr_flags & MPQ_ATTRIBUTE_FILETIME) {
@@ -271,15 +271,16 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                             // Compare at second resolution: stat() has only second precision.
                             if (archived_time != 0 && local_time != 0) {
                                 skip = (archived_time / 10000000u == local_time / 10000000u);
-                                if (skip) skip_reason = "Timestamp matches";
+                                if (skip)
+                                    skip_reason = "Timestamp matches";
                             }
                         }
                         // If no attributes are present, always add the file.
                     }
                     SFileCloseFile(file);
                     if (skip) {
-                        std::cout << "[~] Skipping unchanged file: " << archive_file_path
-                                  << " (" << skip_reason << ")" << std::endl;
+                        std::cout << "[~] Skipping unchanged file: " << archive_file_path << " ("
+                                  << skip_reason << ")" << std::endl;
                         files_skipped++;
                         continue;
                     }
