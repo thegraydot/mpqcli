@@ -129,7 +129,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from add' \
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -s w -l overwrite       -d 'Overwrite file if it already exists in the archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
-    -s u -l update          -d 'Skip files whose archived size matches on-disk size'
+    -s u -l update          -d 'Skip unchanged files when adding a directory'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -l locale               -d 'Locale to use for added file' \
     -r -a "$__mpqcli_locales"
