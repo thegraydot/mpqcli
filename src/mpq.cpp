@@ -236,7 +236,22 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                     std::string skip_reason;
                     if (disk_size == static_cast<uintmax_t>(archived_size)) {
                         const DWORD attr_flags = SFileGetAttributes(archive);
-                        if (attr_flags & MPQ_ATTRIBUTE_MD5) {
+
+                        // Step 1: Timestamp — cheapest check, no local file I/O.
+                        if (!skip && (attr_flags & MPQ_ATTRIBUTE_FILETIME)) {
+                            const uint64_t archived_time =
+                                GetFileInfo<uint64_t>(file, SFileInfoFileTime);
+                            const uint64_t local_time = LocalFileTimestamp(entry.path());
+                            // Compare at second resolution: stat() has only second precision.
+                            if (archived_time != 0 && local_time != 0 &&
+                                archived_time / 10000000u == local_time / 10000000u) {
+                                skip = true;
+                                skip_reason = "Timestamp matches";
+                            }
+                        }
+
+                        // Step 2: MD5 — if timestamp did not match or was unavailable.
+                        if (!skip && (attr_flags & MPQ_ATTRIBUTE_MD5)) {
                             // Retrieve the MD5 stored in (attributes) via TFileEntry.
                             // Buffer must accommodate the struct plus the trailing filename.
                             constexpr DWORD entry_buf_size = sizeof(TFileEntry) + 1024;
@@ -255,7 +270,10 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                                     }
                                 }
                             }
-                        } else if (attr_flags & MPQ_ATTRIBUTE_CRC32) {
+                        }
+
+                        // Step 3: CRC32 — if neither timestamp nor MD5 matched or was available.
+                        if (!skip && (attr_flags & MPQ_ATTRIBUTE_CRC32)) {
                             const DWORD archived_crc32 = GetFileInfo<DWORD>(file, SFileInfoCRC32);
                             if (archived_crc32 != 0) {
                                 if (auto local_crc32 = ComputeFileCrc32(entry.path())) {
@@ -264,18 +282,8 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                                         skip_reason = "CRC32 matches";
                                 }
                             }
-                        } else if (attr_flags & MPQ_ATTRIBUTE_FILETIME) {
-                            const uint64_t archived_time =
-                                GetFileInfo<uint64_t>(file, SFileInfoFileTime);
-                            const uint64_t local_time = LocalFileTimestamp(entry.path());
-                            // Compare at second resolution: stat() has only second precision.
-                            if (archived_time != 0 && local_time != 0) {
-                                skip = (archived_time / 10000000u == local_time / 10000000u);
-                                if (skip)
-                                    skip_reason = "Timestamp matches";
-                            }
                         }
-                        // If no attributes are present, always add the file.
+                        // If no attributes are present or none matched, always add the file.
                     }
                     SFileCloseFile(file);
                     if (skip) {

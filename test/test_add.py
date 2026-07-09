@@ -825,7 +825,9 @@ def test_add_update_single_file_emits_warning(binary_path, generate_test_files):
 
 def test_add_update_skips_unchanged_files_via_crc32(binary_path, generate_test_files):
     """CRC32 branch: archive has CRC32+FILETIME but no MD5 (wc3 profile).
-    Unchanged file must be skipped with reason 'CRC32 matches'."""
+    Unchanged file must be skipped with reason 'CRC32 matches'.
+    The file is written fresh (new mtime) so the timestamp check fails first,
+    forcing the code to fall through to the CRC32 comparison."""
     _ = generate_test_files
     script_dir = Path(__file__).parent
     target_mpq = script_dir / "data" / "files.mpq"
@@ -834,8 +836,7 @@ def test_add_update_skips_unchanged_files_via_crc32(binary_path, generate_test_f
     create_mpq_archive_with_crc32_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
-    dst = update_dir / "cats.txt"
-    shutil.copy2(script_dir / "data" / "files" / "cats.txt", dst)
+    (update_dir / "cats.txt").write_text("This is a file about cats.\n")
 
     try:
         result = subprocess.run(

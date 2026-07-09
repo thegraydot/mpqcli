@@ -62,16 +62,16 @@ When adding a directory, the `--update` flag skips files that have not changed s
 were last added to the archive. This is useful for incremental updates where only changed
 files need to be re-added.
 
-The skip decision is made in two steps:
+The skip decision follows this chain:
 
 1. **File size** must match. If the sizes differ the file is always re-added.
-2. If the sizes match, the archive's `(attributes)` file is consulted for a stronger
-   check. The most reliable attribute available wins:
-   - **MD5** – if the archive stores MD5 checksums, the MD5 of the local file is computed
-     and compared. A match skips the file; a mismatch re-adds it.
-   - **CRC32** – used when MD5 is absent. Same logic.
-   - **Timestamp** – used when neither MD5 nor CRC32 is present. The file's
-     last-modification time is compared at one-second resolution.
+2. If the sizes match, the archive's `(attributes)` file is consulted:
+   - **Timestamp** – if the archive stores file timestamps, the local file's
+     last-modification time is compared at one-second resolution. A match skips the file.
+   - **MD5** – if the timestamp did not match or is unavailable, and the archive stores MD5
+     checksums, the MD5 of the local file is computed and compared. A match skips the file.
+   - **CRC32** – if neither timestamp nor MD5 produced a match or was available, and the
+     archive stores CRC32 checksums, those are compared. A match skips the file.
    - **No attributes** – if the archive has no `(attributes)` file, the file is always
      re-added even when sizes match, because no reliable content check is possible.
 
