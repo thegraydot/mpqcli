@@ -1,5 +1,7 @@
 # CUSTOM
+/book
 /build_lint
+/mermaid*.js
 /test/data
 
 # C++

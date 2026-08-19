@@ -119,7 +119,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -l compression-next -d 'Override compression for subsequent sectors of added files' -r
 
 # add
-#   add <archive.mpq> <files...> [-p/--path] [-w/--overwrite] [-u/--update]
+#   add <archive.mpq> <files...> [-p/--path] [-w/--overwrite | -u/--update]
 #       [--locale] [-g/--game]
 #       [--flags] [--compression] [--compression-next]
 complete -c mpqcli -n '__fish_seen_subcommand_from add' -F
@@ -127,9 +127,9 @@ complete -c mpqcli -n '__fish_seen_subcommand_from add' -F
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -s p -l path            -d 'Archive path for a single file, or prefix for a directory' -r
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
-    -s w -l overwrite       -d 'Overwrite file if it already exists in the archive'
+    -s w -l overwrite       -d 'Replace every file that already exists in the archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
-    -s u -l update          -d 'Skip files whose archived size matches on-disk size'
+    -s u -l update          -d 'Replace only files that changed'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -l locale               -d 'Locale to use for added file' \
     -r -a "$__mpqcli_locales"

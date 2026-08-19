@@ -1,3 +1,4 @@
+import os
 import subprocess
 import shutil
 from pathlib import Path
@@ -33,7 +34,9 @@ def test_add_target_file_does_not_exist(binary_path, generate_test_files):
         text=True
     )
 
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    # A path that does not exist is a real failure, even though the run continues
+    # on to any remaining inputs.
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
     assert "[!] Path does not exist:" in result.stderr
 
 
@@ -185,7 +188,7 @@ def test_add_several_files_with_path_to_mpq_archive(binary_path, generate_test_f
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
 
-def test_add_existing_file_without_overwrite_should_fail(binary_path, generate_test_files):
+def test_add_existing_file_without_overwrite_should_skip(binary_path, generate_test_files):
     _ = generate_test_files
     script_dir = Path(__file__).parent
     target_file = script_dir / "data" / "files.mpq"
@@ -211,10 +214,13 @@ def test_add_existing_file_without_overwrite_should_fail(binary_path, generate_t
     output_lines = set(result.stderr.splitlines())
     expected_stderr_output = {
         "[!] File already exists in MPQ archive: cats.txt - Skipping...",
+        "[*] 1 file(s) already in the archive were skipped. Use --overwrite to replace them, "
+        "or --update to replace only the ones that changed.",
     }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
-    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    # Skipping a pre-existing file is the documented default, not a failure.
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
 
     verify_file_in_mpq_has_content(binary_path, target_file, "cats.txt", expected_content)
 
@@ -700,8 +706,10 @@ def test_add_directory_without_overwrite_skips_existing(binary_path, generate_te
             text=True
         )
 
-        assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+        # Skipping pre-existing files is the documented default, not a failure.
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
         assert "[!] File already exists in MPQ archive: cats.txt - Skipping..." in result.stderr
+        assert "Use --overwrite to replace them" in result.stderr
 
         verify_file_in_mpq_has_content(binary_path, target_mpq, "cats.txt", original_content)
     finally:
@@ -714,7 +722,7 @@ def test_add_update_skips_unchanged_files(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_unchanged"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This is a file about cats.\n")
@@ -722,15 +730,15 @@ def test_add_update_skips_unchanged_files(binary_path, generate_test_files):
 
     try:
         result = subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update", "--overwrite"],
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[~] Skipping unchanged file: cats.txt" in result.stdout
-        assert "[~] Skipping unchanged file: dogs.txt" in result.stdout
+        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stdout
+        assert "[~] Skipping unchanged file: dogs.txt (MD5 matches)" in result.stdout
         assert "files added" in result.stdout
         assert "files skipped" in result.stdout
     finally:
@@ -743,7 +751,7 @@ def test_add_update_adds_changed_files(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_changed"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This cat content is completely different and longer now.")
@@ -751,7 +759,7 @@ def test_add_update_adds_changed_files(binary_path, generate_test_files):
 
     try:
         result = subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update", "--overwrite"],
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -777,19 +785,19 @@ def test_add_update_second_run_skips_all(binary_path, generate_test_files):
     target_mpq = script_dir / "data" / "files.mpq"
     update_dir = script_dir / "data" / "update_dir_idempotent"
 
-    create_mpq_archive_for_test(binary_path, script_dir)
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
 
     update_dir.mkdir(parents=True, exist_ok=True)
     (update_dir / "cats.txt").write_text("This is a file about cats.\n")
 
     try:
         subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update", "--overwrite"],
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
 
         result = subprocess.run(
-            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update", "--overwrite"],
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -802,7 +810,68 @@ def test_add_update_second_run_skips_all(binary_path, generate_test_files):
         shutil.rmtree(update_dir, ignore_errors=True)
 
 
-def test_add_update_single_file_emits_warning(binary_path, generate_test_files):
+def test_add_update_single_file_skips_when_unchanged(binary_path, generate_test_files):
+    """--update applies the same change detection to a single file as to a directory."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    work_dir = script_dir / "data" / "update_single_unchanged"
+
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
+
+    # Same content as the archived copy, written fresh so the timestamp differs
+    # and the decision falls through to the MD5 comparison.
+    work_dir.mkdir(parents=True, exist_ok=True)
+    (work_dir / "cats.txt").write_text("This is a file about cats.\n")
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(work_dir / "cats.txt"), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stdout
+        assert "[+] Adding file: cats.txt" not in result.stdout
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
+def test_add_update_single_file_replaces_when_changed(binary_path, generate_test_files):
+    """The single-file path must still replace a file whose content changed."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    work_dir = script_dir / "data" / "update_single_changed"
+
+    create_mpq_archive_with_attrs_for_test(binary_path, script_dir)
+
+    work_dir.mkdir(parents=True, exist_ok=True)
+    (work_dir / "cats.txt").write_text("This cat content is completely different and longer now.")
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(work_dir / "cats.txt"), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[+] Adding file: cats.txt" in result.stdout
+
+        verify_file_in_mpq_has_content(
+            binary_path, target_mpq, "cats.txt",
+            {"This cat content is completely different and longer now."}
+        )
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
+def test_add_update_and_overwrite_are_mutually_exclusive(binary_path, generate_test_files):
+    """--overwrite and --update are two points on one axis, so CLI11 must reject both."""
     _ = generate_test_files
     script_dir = Path(__file__).parent
     target_mpq = script_dir / "data" / "files.mpq"
@@ -812,14 +881,163 @@ def test_add_update_single_file_emits_warning(binary_path, generate_test_files):
     test_file = script_dir / "data" / "files" / "cats.txt"
 
     result = subprocess.run(
-        [str(binary_path), "add", str(target_mpq), str(test_file), "--update"],
+        [str(binary_path), "add", str(target_mpq), str(test_file), "--update", "--overwrite"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
     )
 
-    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
-    assert "--update is only meaningful when adding a directory" in result.stderr
+    assert result.returncode != 0, "Expected mpqcli to reject --update with --overwrite"
+    assert "excludes" in result.stderr
+
+
+def test_add_update_skips_unchanged_files_via_crc32(binary_path, generate_test_files):
+    """CRC32 branch: archive has CRC32+FILETIME but no MD5 (wc3 profile).
+    Unchanged file must be skipped with reason 'CRC32 matches'.
+    The file is written fresh (new mtime) so the timestamp check fails first,
+    forcing the code to fall through to the CRC32 comparison."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    update_dir = script_dir / "data" / "update_dir_crc32_unchanged"
+
+    create_mpq_archive_with_crc32_for_test(binary_path, script_dir)
+
+    update_dir.mkdir(parents=True, exist_ok=True)
+    (update_dir / "cats.txt").write_text("This is a file about cats.\n")
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[~] Skipping unchanged file: cats.txt (CRC32 matches)" in result.stdout
+        assert "files skipped" in result.stdout
+    finally:
+        shutil.rmtree(update_dir, ignore_errors=True)
+
+
+def test_add_update_adds_changed_files_via_crc32(binary_path, generate_test_files):
+    """CRC32 branch: archive has CRC32+FILETIME but no MD5 (wc3 profile).
+    A file with the same size but different content (different CRC32) must be re-added."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    update_dir = script_dir / "data" / "update_dir_crc32_changed"
+
+    create_mpq_archive_with_crc32_for_test(binary_path, script_dir)
+
+    update_dir.mkdir(parents=True, exist_ok=True)
+    # Same byte-length as "This is a file about cats.\n" (27 bytes) but different content.
+    (update_dir / "cats.txt").write_text("This is a file about CATS.\n")
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[+] Adding file: cats.txt" in result.stdout
+        assert "Skipping unchanged" not in result.stdout
+    finally:
+        shutil.rmtree(update_dir, ignore_errors=True)
+
+
+def test_add_update_skips_unchanged_files_via_timestamp(binary_path, generate_test_files):
+    """Timestamp branch: archive has FILETIME only (no CRC32, no MD5).
+    Unchanged file (same mtime) must be skipped with reason 'Timestamp matches'."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    update_dir = script_dir / "data" / "update_dir_ts_unchanged"
+
+    create_mpq_archive_with_filetime_for_test(binary_path, script_dir)
+
+    update_dir.mkdir(parents=True, exist_ok=True)
+    dst = update_dir / "cats.txt"
+    # Preserve the original mtime so the timestamp comparison matches.
+    shutil.copy2(script_dir / "data" / "files" / "cats.txt", dst)
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[~] Skipping unchanged file: cats.txt (Timestamp matches)" in result.stdout
+        assert "files skipped" in result.stdout
+    finally:
+        shutil.rmtree(update_dir, ignore_errors=True)
+
+
+def test_add_update_adds_changed_files_via_timestamp(binary_path, generate_test_files):
+    """Timestamp branch: archive has FILETIME only (no CRC32, no MD5).
+    A file with the same size but a different mtime must be re-added."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    update_dir = script_dir / "data" / "update_dir_ts_changed"
+
+    create_mpq_archive_with_filetime_for_test(binary_path, script_dir)
+
+    update_dir.mkdir(parents=True, exist_ok=True)
+    dst = update_dir / "cats.txt"
+    shutil.copy2(script_dir / "data" / "files" / "cats.txt", dst)
+    # Shift the mtime by one hour so the timestamp no longer matches.
+    original_mtime = os.path.getmtime(dst)
+    os.utime(dst, (original_mtime + 3600, original_mtime + 3600))
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[+] Adding file: cats.txt" in result.stdout
+        assert "Skipping unchanged" not in result.stdout
+    finally:
+        shutil.rmtree(update_dir, ignore_errors=True)
+
+
+def test_add_update_always_adds_without_attributes(binary_path, generate_test_files):
+    """No-attributes branch: archive has no (attributes) file.
+    Even an identical file must be re-added because there is nothing to compare."""
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+    update_dir = script_dir / "data" / "update_dir_no_attrs"
+
+    create_mpq_archive_for_test(binary_path, script_dir)
+
+    update_dir.mkdir(parents=True, exist_ok=True)
+    (update_dir / "cats.txt").write_text("This is a file about cats.\n")
+
+    try:
+        result = subprocess.run(
+            [str(binary_path), "add", str(target_mpq), str(update_dir), "--update"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        assert "[+] Adding file: cats.txt" in result.stdout
+        assert "Skipping unchanged" not in result.stdout
+    finally:
+        shutil.rmtree(update_dir, ignore_errors=True)
 
 
 def test_add_files_via_stdin(binary_path, generate_test_files):
@@ -862,6 +1080,63 @@ def create_mpq_archive_for_test(binary_path, script_dir):
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
         [str(binary_path), "create", "--version", "1", str(target_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert target_file.exists(), "MPQ file was not created"
+    assert target_file.stat().st_size > 0, "MPQ file is empty"
+
+
+def create_mpq_archive_with_attrs_for_test(binary_path, script_dir):
+    """Like create_mpq_archive_for_test but uses the wow1 game profile so that
+    the archive includes a (attributes) file with CRC32, MD5, and FILETIME
+    checksums.  Required by --update tests that rely on checksum comparison."""
+    target_dir = script_dir / "data" / "files"
+    target_file = target_dir.with_suffix(".mpq")
+    target_file.unlink(missing_ok=True)
+    result = subprocess.run(
+        [str(binary_path), "create", "--game", "wow1", str(target_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert target_file.exists(), "MPQ file was not created"
+    assert target_file.stat().st_size > 0, "MPQ file is empty"
+
+
+def create_mpq_archive_with_crc32_for_test(binary_path, script_dir):
+    """Creates an archive using the wc3 game profile, which stores CRC32 and
+    FILETIME attributes but no MD5.  Used by --update tests that exercise the
+    CRC32 comparison branch."""
+    target_dir = script_dir / "data" / "files"
+    target_file = target_dir.with_suffix(".mpq")
+    target_file.unlink(missing_ok=True)
+    result = subprocess.run(
+        [str(binary_path), "create", "--game", "wc3", str(target_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert target_file.exists(), "MPQ file was not created"
+    assert target_file.stat().st_size > 0, "MPQ file is empty"
+
+
+def create_mpq_archive_with_filetime_for_test(binary_path, script_dir):
+    """Creates an archive with FILETIME attributes only (no CRC32, no MD5) by
+    using the wc3 game profile and overriding attr-flags to 2 (FILETIME only).
+    Used by --update tests that exercise the timestamp comparison branch."""
+    target_dir = script_dir / "data" / "files"
+    target_file = target_dir.with_suffix(".mpq")
+    target_file.unlink(missing_ok=True)
+    result = subprocess.run(
+        [str(binary_path), "create", "--game", "wc3", "--attr-flags", "2", str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

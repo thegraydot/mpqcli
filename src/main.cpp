@@ -163,10 +163,11 @@ int main(int argc, char **argv) {
         ->expected(-1);
     add->add_option("-p,--path", base_path,
                     "Archive path for a single file, or prefix for a directory");
-    add->add_flag("-w,--overwrite", add_overwrite,
-                  "Overwrite file if it already is in MPQ archive");
+    CLI::Option *add_overwrite_flag = add->add_flag(
+        "-w,--overwrite", add_overwrite, "Replace every file that already exists in the archive");
     add->add_flag("-u,--update", add_update,
-                  "Skip files whose archived size matches the on-disk size (directory add only)");
+                  "Replace only files that changed. Compares size, then timestamp/MD5/CRC32")
+        ->excludes(add_overwrite_flag);
     add->add_option("--locale", base_locale, "Locale to use for added file")->check(locale_valid);
     add->add_option("-g,--game", base_game_profile,
                     "Game profile for compression rules. Valid options:\n" +

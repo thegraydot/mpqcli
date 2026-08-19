@@ -24,11 +24,11 @@ HANDLE CreateMpqArchive(const std::string &output_archive_name, uint32_t file_co
 int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
              LCID locale, const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
-             bool overwrite = false, bool update = false);
+             bool overwrite = false, bool update = false, int *skipped = nullptr);
 int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
             LCID locale, const GameRules &game_rules,
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
-            bool overwrite = false);
+            bool overwrite = false, bool update = false, int *skipped = nullptr);
 int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale);
 int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
               bool list_detailed, const std::vector<std::string> &properties);

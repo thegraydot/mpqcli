@@ -38,6 +38,7 @@ int HandleAbout() {
     std::cout << "Dependencies:" << std::endl;
     std::cout << " - StormLib (https://github.com/ladislav-zezula/StormLib)" << std::endl;
     std::cout << " - CLI11 (https://github.com/CLIUtils/CLI11)" << std::endl;
+    std::cout << " - hash-library (https://github.com/stbrumme/hash-library)" << std::endl;
     return 0;
 }
 
@@ -187,31 +188,39 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
         }
     }
 
-    if (update && !has_directory) {
-        std::cerr << "[!] Warning: --update is only meaningful when adding a directory"
-                  << std::endl;
-    }
-
     int result = 0;
+    int files_skipped = 0;
     for (const auto &f : files) {
         if (!fs::exists(f)) {
             std::cerr << "[!] Path does not exist: " << f << std::endl;
+            result |= 1;
             continue;
         }
 
         if (fs::is_directory(f)) {
             std::string prefix = path.value_or("");
-            result |=
-                AddFiles(archive, f, prefix, lcid, game_rules, add_overrides, overwrite, update);
+            result |= AddFiles(archive, f, prefix, lcid, game_rules, add_overrides, overwrite,
+                               update, &files_skipped);
 
         } else if (fs::is_regular_file(f)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
-            result |= AddFile(archive, f, archive_path, lcid, game_rules, add_overrides, overwrite);
+            result |= AddFile(archive, f, archive_path, lcid, game_rules, add_overrides, overwrite,
+                              update, &files_skipped);
 
         } else {
             std::cerr << "[!] Not a file or directory: " << f << std::endl;
+            result |= 1;
         }
+    }
+
+    // Skipping pre-existing files is the default, so point at the flags that change it
+    // rather than letting the run look like it silently did nothing.
+    if (!overwrite && !update && files_skipped > 0) {
+        std::cerr << "[*] " << files_skipped
+                  << " file(s) already in the archive were skipped. Use --overwrite to replace "
+                     "them, or --update to replace only the ones that changed."
+                  << std::endl;
     }
 
     CloseMpqArchive(archive);

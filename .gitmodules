@@ -4,3 +4,6 @@
 [submodule "extern/StormLib"]
 	path = extern/StormLib
 	url = https://github.com/ladislav-zezula/StormLib.git
+[submodule "extern/hash-library"]
+	path = extern/hash-library
+	url = https://github.com/stbrumme/hash-library.git

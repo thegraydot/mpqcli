@@ -48,4 +48,4 @@ target_include_directories(mpqcli PRIVATE
 )
 
 # Link libraries
-target_link_libraries(mpqcli PRIVATE storm CLI11::CLI11)
+target_link_libraries(mpqcli PRIVATE storm CLI11::CLI11 hash-library)

@@ -6,4 +6,7 @@ src = "docs"
 [output.html]
 git-repository-url = "https://github.com/thegraydot/mpqcli"
 git-repository-icon = "fab-github"
-additional-js = ["docs/js/copy-command.js"]
+additional-js = ["docs/js/copy-command.js", "mermaid.min.js", "mermaid-init.js"]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

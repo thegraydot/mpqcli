@@ -4,7 +4,11 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <hash-library/crc32.h>
+#include <hash-library/md5.h>
 #include <iostream>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -127,4 +131,57 @@ void PrintAsBinary(const char *buffer, uint32_t size) {
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
     std::cout.write(buffer, size);
+}
+
+// CRC32 (ZIP/gzip polynomial) and MD5 are provided by the hash-library
+// submodule, matching the values StormLib stores in (attributes).
+std::optional<uint32_t> ComputeFileCrc32(const fs::path &path) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f) {
+        return std::nullopt;
+    }
+    CRC32 crc32;
+    char buf[65536];
+    while (f.read(buf, sizeof(buf)) || f.gcount() > 0) {
+        crc32.add(buf, static_cast<size_t>(f.gcount()));
+    }
+    // getHash yields the checksum as big-endian bytes; reassemble the value.
+    unsigned char digest[CRC32::HashBytes];
+    crc32.getHash(digest);
+    return (static_cast<uint32_t>(digest[0]) << 24) | (static_cast<uint32_t>(digest[1]) << 16) |
+           (static_cast<uint32_t>(digest[2]) << 8) | static_cast<uint32_t>(digest[3]);
+}
+
+bool ComputeFileMd5(const fs::path &path, uint8_t *md5_out) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f) {
+        return false;
+    }
+    MD5 md5;
+    char buf[65536];
+    while (f.read(buf, sizeof(buf)) || f.gcount() > 0) {
+        md5.add(buf, static_cast<size_t>(f.gcount()));
+    }
+    md5.getHash(md5_out);
+    return true;
+}
+
+// Returns the file's last-modification time as a Windows FILETIME value
+// (100-nanosecond intervals since 1601-01-01 UTC).  Returns 0 on error.
+uint64_t LocalFileTimestamp(const fs::path &path) {
+#ifdef _WIN32
+    // _wstat64 handles paths with non-ASCII characters, which the narrow
+    // stat() would mangle on Windows.
+    struct _stat64 st {};
+    if (_wstat64(path.wstring().c_str(), &st) != 0) {
+        return 0;
+    }
+#else
+    struct stat st {};
+    if (stat(path.string().c_str(), &st) != 0) {
+        return 0;
+    }
+#endif
+    constexpr int64_t epoch_diff = 11644473600LL;
+    return static_cast<uint64_t>((static_cast<int64_t>(st.st_mtime) + epoch_diff) * 10000000LL);
 }

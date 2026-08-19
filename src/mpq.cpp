@@ -1,6 +1,7 @@
 #include "mpq.h"
 
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -186,9 +187,70 @@ HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t f
     return archive;
 }
 
+static bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,
+                                std::string &match_reason) {
+    const DWORD archived_size = SFileGetFileSize(file, nullptr);
+    const uintmax_t disk_size = fs::file_size(local_file);
+    if (disk_size != static_cast<uintmax_t>(archived_size)) {
+        return false;
+    }
+
+    const DWORD attr_flags = SFileGetAttributes(archive);
+
+    // Step 1: Timestamp: cheapest check, no local file I/O.
+    if (attr_flags & MPQ_ATTRIBUTE_FILETIME) {
+        const uint64_t archived_time = GetFileInfo<uint64_t>(file, SFileInfoFileTime);
+        const uint64_t local_time = LocalFileTimestamp(local_file);
+        // Compare at second resolution: stat() has only second precision.
+        if (archived_time != 0 && local_time != 0 &&
+            archived_time / 10000000u == local_time / 10000000u) {
+            match_reason = "Timestamp matches";
+            return true;
+        }
+    }
+
+    // Step 2: MD5: if timestamp did not match or was unavailable.
+    if (attr_flags & MPQ_ATTRIBUTE_MD5) {
+        uint8_t archived_md5[MD5_DIGEST_SIZE]{};
+        if (SFileGetFileInfo(file, SFileInfoMD5, archived_md5, sizeof(archived_md5), nullptr)) {
+            // An all-zero digest means "no MD5 stored". A file whose
+            // real MD5 is all zeroes is astronomically unlikely; the
+            // worst case is a redundant re-add.
+            const uint8_t zero_md5[MD5_DIGEST_SIZE]{};
+            if (std::memcmp(archived_md5, zero_md5, MD5_DIGEST_SIZE) != 0) {
+                uint8_t local_md5[MD5_DIGEST_SIZE]{};
+                if (ComputeFileMd5(local_file, local_md5) &&
+                    std::memcmp(local_md5, archived_md5, MD5_DIGEST_SIZE) == 0) {
+                    match_reason = "MD5 matches";
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Step 3: CRC32: if neither timestamp nor MD5 matched or was available.
+    if (attr_flags & MPQ_ATTRIBUTE_CRC32) {
+        const DWORD archived_crc32 = GetFileInfo<DWORD>(file, SFileInfoCRC32);
+        // Zero means "no CRC32 stored"; a file whose real CRC32 is
+        // zero just gets a redundant re-add.
+        if (archived_crc32 != 0) {
+            if (auto local_crc32 = ComputeFileCrc32(local_file)) {
+                if (*local_crc32 == archived_crc32) {
+                    match_reason = "CRC32 matches";
+                    return true;
+                }
+            }
+        }
+    }
+
+    // No attributes present, or none matched: re-add the file.
+    return false;
+}
+
 int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
              LCID locale, const GameRules &game_rules,
-             const CompressionSettingsOverrides &overrides, bool overwrite, bool update) {
+             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
+             int *skipped) {
     fs::path target_path = fs::path(input_path);
 
     std::vector<fs::directory_entry> entries;
@@ -223,33 +285,14 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
             continue;
         }
 
-        if (update) {
-            SFileSetLocale(locale);
-            HANDLE file;
-            if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
-                int32_t file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
-                if (file_locale == locale) {
-                    DWORD archived_size = SFileGetFileSize(file, nullptr);
-                    SFileCloseFile(file);
-                    uintmax_t disk_size = fs::file_size(entry.path());
-                    if (disk_size == static_cast<uintmax_t>(archived_size)) {
-                        std::cout << "[~] Skipping unchanged file: " << archive_file_path
-                                  << std::endl;
-                        files_skipped++;
-                        continue;
-                    }
-                } else {
-                    SFileCloseFile(file);
-                }
-            }
-        }
-
-        const int result = AddFile(archive, entry.path(), archive_file_path, locale, game_rules,
-                                   overrides, overwrite);
-        if (result == 0) {
-            files_added++;
-        } else {
+        int file_skipped = 0;
+        if (AddFile(archive, entry.path(), archive_file_path, locale, game_rules, overrides,
+                    overwrite, update, &file_skipped) != 0) {
             files_failed++;
+        } else if (file_skipped > 0) {
+            files_skipped++;
+        } else {
+            files_added++;
         }
     }
 
@@ -259,12 +302,17 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
                   << std::endl;
     }
 
-    return files_failed;
+    if (skipped != nullptr) {
+        *skipped += files_skipped;
+    }
+
+    return files_failed > 0 ? 1 : 0;
 }
 
 int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
             const LCID locale, const GameRules &game_rules,
-            const CompressionSettingsOverrides &overrides, bool overwrite) {
+            const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
+            int *skipped) {
     // Return if file doesn't exist on disk
     if (!fs::exists(local_file)) {
         std::cerr << "[!] File doesn't exist on disk: " << local_file << std::endl;
@@ -275,17 +323,40 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     SFileSetLocale(locale);
     HANDLE file;
     if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
-        int32_t file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
-        SFileCloseFile(file);
-        if (file_locale == locale && !overwrite) {
-            std::cerr << "[!] File" << PrettyPrintLocale(locale, " for locale ")
-                      << " already exists in MPQ archive: " << archive_file_path << " - Skipping..."
-                      << std::endl;
-            return 1;
-        } else if (file_locale == locale) {
+        const auto file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+        if (file_locale == locale) {
+            // --update: leave the archived copy alone while it still matches the local file
+            std::string match_reason;
+            const bool unchanged =
+                update && ArchivedFileMatches(archive, file, local_file, match_reason);
+            SFileCloseFile(file);
+
+            if (unchanged) {
+                std::cout << "[~] Skipping unchanged file: " << archive_file_path << " ("
+                          << match_reason << ")" << std::endl;
+                if (skipped != nullptr) {
+                    (*skipped)++;
+                }
+                return 0;
+            }
+
+            // Without either flag, leaving the archived copy in place is the documented
+            // default, so this is a skip rather than a failure.
+            if (!overwrite && !update) {
+                std::cerr << "[!] File" << PrettyPrintLocale(locale, " for locale ")
+                          << " already exists in MPQ archive: " << archive_file_path
+                          << " - Skipping..." << std::endl;
+                if (skipped != nullptr) {
+                    (*skipped)++;
+                }
+                return 0;
+            }
+
             std::cout << "[+] File" << PrettyPrintLocale(locale, " for locale ")
                       << " already exists in MPQ archive: " << archive_file_path
                       << " - Overwriting..." << std::endl;
+        } else {
+            SFileCloseFile(file);
         }
     }
     std::cout << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
@@ -324,7 +395,9 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     DWORD compression = overrides.compression.value_or(settings.compression_first);
     DWORD compression_next = overrides.compression_next.value_or(settings.compression_next);
 
-    if (overwrite) {
+    // Both flags mean "replace what is already there"; --update has simply decided
+    // beforehand that this particular file is worth replacing.
+    if (overwrite || update) {
         flags |= MPQ_FILE_REPLACEEXISTING;
     }
 

@@ -67,6 +67,23 @@ docker_glibc_build: ## Build Docker image using glibc
 docker_glibc_run: ## Run the glibc Docker image
 	@docker run -it mpqcli:$(VERSION) version
 
+# DOCS
+.PHONY: docs_mermaid
+docs_mermaid: ## Fetch mermaid.min.js and mermaid-init.js into the repo root (gitignored)
+	mdbook-mermaid install .
+
+.PHONY: docs_build
+docs_build: docs_mermaid ## Build the documentation site into book/
+	mdbook build
+
+.PHONY: docs_serve
+docs_serve: docs_mermaid ## Serve the docs locally with live reload
+	mdbook serve --open
+
+.PHONY: docs_clean
+docs_clean: ## Remove the generated docs site and mermaid assets
+	rm -rf book mermaid.min.js mermaid-init.js
+
 # TEST
 .PHONY: test
 test: build test_mpqcli ## Run test suite (builds binary first)
@@ -117,7 +134,7 @@ ci: configure build fmt_check lint_cpp test ## Run all CI checks locally
 
 # CLEAN
 .PHONY: clean
-clean: build_clean test_clean ## Remove all build and test artifacts
+clean: build_clean test_clean docs_clean ## Remove all build, test, and docs artifacts
 
 # GET
 .PHONY: get_project_version

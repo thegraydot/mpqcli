@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
 
 project(MPQCLI VERSION 0.10.2)
 
@@ -48,6 +48,11 @@ Did you forget to execute the following commands?
    git submodule update")
 endif()
 
+# Use StormLib's bundled zlib/bzip2/libtommath sources instead of requiring
+# system packages. This keeps mpqcli buildable everywhere (musl/glibc Docker
+# images, MSVC, plain `cmake -B build`) without extra system dependencies.
+set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
+
 add_subdirectory(extern/StormLib)
 
 # Handle CLI11 dependency
@@ -63,6 +68,24 @@ if(BUILD_MPQCLI)
     endif()
 
     add_subdirectory(extern/CLI11)
+
+    # Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
+    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/hash-library/crc32.cpp")
+        message(FATAL_ERROR
+    "Missing dependency: hash-library
+    mpqcli requires the hash-library library.
+    It is provided as a submodule of this repository.
+    Did you forget to execute the following commands?
+       git submodule init
+       git submodule update")
+    endif()
+
+    # hash-library ships no CMakeLists; compile only the two algorithms we use
+    add_library(hash-library STATIC
+        extern/hash-library/crc32.cpp
+        extern/hash-library/md5.cpp
+    )
+    target_include_directories(hash-library SYSTEM INTERFACE "${CMAKE_SOURCE_DIR}/extern")
 
     # Add the main application
     add_subdirectory(src)

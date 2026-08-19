@@ -111,8 +111,8 @@ _mpqcli_add() {
         '1:archive:_files' \
         '*:files:_files' \
         '(-p --path)'{-p,--path}'[archive path or prefix for directory add]:path' \
-        '(-w --overwrite)'{-w,--overwrite}'[overwrite existing file]' \
-        '(-u --update)'{-u,--update}'[skip unchanged files in directory add]' \
+        '(-w --overwrite -u --update)'{-w,--overwrite}'[replace every existing file]' \
+        '(-u --update -w --overwrite)'{-u,--update}'[replace only files that changed]' \
         '--locale[locale for added file]:locale:('"${_mpqcli_locales[@]}"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"${_mpqcli_games[@]}"')' \
         '--flags[override MPQ file flags]:flags' \
