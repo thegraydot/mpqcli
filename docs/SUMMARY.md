@@ -10,6 +10,7 @@
   - [create](./commands/create.md)
   - [add](./commands/add.md)
   - [remove](./commands/remove.md)
+  - [rename](./commands/rename.md)
   - [list](./commands/list.md)
   - [extract](./commands/extract.md)
   - [read](./commands/read.md)

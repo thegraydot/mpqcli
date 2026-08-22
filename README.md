@@ -6,7 +6,7 @@
 
 ![Release downloads](https://img.shields.io/github/downloads/thegraydot/mpqcli/total?label=release_downloads) ![Package downloads](https://img.shields.io/badge/package_downloads-996-green)
 
-A command-line tool to create, add, remove, list, extract, read, and verify MPQ archives using the [StormLib library](https://github.com/ladislav-zezula/StormLib).
+A command-line tool to create, add, remove, list, extract, read, rename, and verify MPQ archives using the [StormLib library](https://github.com/ladislav-zezula/StormLib).
 
 > ⚠️ **Warning:** This project is under active development and will change functionality between released versions until version 1.0.0.
 

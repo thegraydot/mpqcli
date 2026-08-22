@@ -23,6 +23,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               int64_t file_compression, int64_t file_compression_next);
 int HandleRemove(const std::vector<std::string> &files, const std::string &target,
                  const std::optional<std::string> &locale);
+int HandleRename(const std::string &old_file, const std::string &new_file,
+                 const std::string &target, const std::optional<std::string> &locale);
 int HandleList(const std::string &target, const std::optional<std::string> &listfile_name,
                bool list_all, bool list_detailed, const std::vector<std::string> &properties);
 int HandleExtract(const std::string &target, const std::optional<std::string> &output,

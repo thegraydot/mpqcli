@@ -30,6 +30,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
             bool overwrite = false, bool update = false, int *skipped = nullptr);
 int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale);
+int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
+               const std::string &new_archive_file_path, LCID locale);
 int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
               bool list_detailed, const std::vector<std::string> &properties);
 std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned int *file_size,

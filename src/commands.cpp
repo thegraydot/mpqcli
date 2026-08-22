@@ -250,6 +250,19 @@ int HandleRemove(const std::vector<std::string> &files, const std::string &targe
     return overall_result;
 }
 
+int HandleRename(const std::string &old_file, const std::string &new_file,
+                 const std::string &target, const std::optional<std::string> &locale) {
+    HANDLE archive;
+    if (!OpenMpqArchive(target, &archive, 0)) {
+        return 1;
+    }
+
+    LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
+    int result = RenameFile(archive, old_file, new_file, lcid);
+    CloseMpqArchive(archive);
+    return result;
+}
+
 int HandleList(const std::string &target, const std::optional<std::string> &listfile_name,
                bool list_all, bool list_detailed, const std::vector<std::string> &properties) {
     HANDLE archive;

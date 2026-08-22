@@ -49,6 +49,7 @@ _mpqcli() {
                 create)     _mpqcli_create ;;
                 add)        _mpqcli_add ;;
                 remove)     _mpqcli_remove ;;
+                rename)     _mpqcli_rename ;;
                 list)       _mpqcli_list ;;
                 extract)    _mpqcli_extract ;;
                 read)       _mpqcli_read ;;
@@ -68,6 +69,7 @@ _mpqcli_cmds() {
         'create:Create an MPQ archive from target file or directory'
         'add:Add files to an existing MPQ archive'
         'remove:Remove files from an existing MPQ archive'
+        'rename:Rename a file in an existing MPQ archive'
         'list:List files from the MPQ archive'
         'extract:Extract files from the MPQ archive'
         'read:Read a file from an MPQ archive'
@@ -125,6 +127,14 @@ _mpqcli_remove() {
         '1:archive:_files' \
         '*:archive paths' \
         '--locale[locale of file to remove]:locale:('"${_mpqcli_locales[@]}"')'
+}
+
+_mpqcli_rename() {
+    _arguments \
+        '1:archive:_files' \
+        '2:old archive path' \
+        '3:new archive path' \
+        '--locale[locale of file to rename]:locale:("${_mpqcli_locales[@]}")'
 }
 
 _mpqcli_list() {

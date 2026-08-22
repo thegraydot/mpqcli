@@ -28,6 +28,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'create'     = 'Create an MPQ archive from target file or directory'
         'add'        = 'Add files to an existing MPQ archive'
         'remove'     = 'Remove files from an existing MPQ archive'
+        'rename'     = 'Rename a file in an existing MPQ archive'
         'list'       = 'List files from the MPQ archive'
         'extract'    = 'Extract files from the MPQ archive'
         'read'       = 'Read a file from an MPQ archive'
@@ -116,6 +117,9 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         }
         'remove' = @{
             '--locale' = 'Locale of file to remove'
+        }
+        'rename' = @{
+            '--locale' = 'Locale of file to rename'
         }
         'list' = @{
             '-l'         = 'File listing content of an MPQ archive'

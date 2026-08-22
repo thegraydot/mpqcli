@@ -126,3 +126,25 @@ def test_completion_invalid_shell(binary_path):
 
     assert result.returncode != 0, "Expected non-zero exit code for unsupported shell"
     assert result.stderr, "Expected error output for unsupported shell"
+
+
+def test_completion_scripts_cover_every_subcommand(binary_path):
+    """Every subcommand must appear in all four completion scripts. A new
+    subcommand wired into only some of them is the failure this guards against."""
+    subcommands = [
+        "version", "about", "info", "create", "add", "remove",
+        "rename", "list", "extract", "read", "verify", "compact",
+        "completion",
+    ]
+
+    for shell in ["bash", "zsh", "powershell", "fish"]:
+        result = subprocess.run(
+            [str(binary_path), "completion", shell],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+        missing = [s for s in subcommands if s not in result.stdout]
+        assert not missing, f"{shell} completion is missing subcommands: {missing}"

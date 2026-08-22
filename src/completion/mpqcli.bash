@@ -29,7 +29,7 @@ _mpqcli() {
         cword=$COMP_CWORD
     fi
 
-    local subcommands="version about info create add remove list extract read verify compact completion"
+    local subcommands="version about info create add remove rename list extract read verify compact completion"
     local -a locales=(
         default enUS zhTW csCZ deDE esES frFR itIT
         jaJP koKR nlNL plPL ptBR ruRU zhCN enGB esMX ptPT
@@ -138,6 +138,21 @@ _mpqcli() {
                 mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
             else
                 _mpqcli_filedir
+            fi
+            ;;
+
+        rename)
+            case "$prev" in
+                --locale)
+                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
+                    return ;;
+            esac
+            if [[ "$cur" == -* ]]; then
+                mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
+            elif [[ $cword -eq 2 ]]; then
+                # positional 1 is the archive; positionals 2 and 3 are in-archive
+                # paths, so they get no filesystem completion
+                _mpqcli_filedir mpq
             fi
             ;;
 
