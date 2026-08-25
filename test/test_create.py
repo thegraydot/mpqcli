@@ -703,6 +703,71 @@ def test_create_mpq_skips_special_files(binary_path, tmp_path):
         assert name not in listing.stdout, f"Special file {name!r} unexpectedly found in archive listing"
 
 
+def test_create_mpq_folder_structure_with_trailing_slash(binary_path, tmp_path):
+    """
+    Test MPQ archive creation from a directory path with a trailing slash.
+
+    Regression test for the lexical relative path handling: archive paths must
+    stay relative to the target directory even when the target path carries a
+    trailing separator.
+
+    This test checks:
+    - The archive is created successfully.
+    - Nested files keep their folder structure in the archive.
+    """
+    source_dir = tmp_path / "src"
+    (source_dir / "sub").mkdir(parents=True)
+    (source_dir / "root.txt").write_text("root file")
+    (source_dir / "sub" / "nested.txt").write_text("nested file")
+
+    output_file = tmp_path / "output.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(source_dir) + "/", "-o", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_file.exists(), "MPQ file was not created"
+
+    verify_archive_file_content(
+        binary_path, output_file, {"enUS  root.txt", "enUS  sub\\nested.txt"}
+    )
+
+
+def test_create_mpq_folder_structure_with_dot_relative_path(binary_path, tmp_path):
+    """
+    Test MPQ archive creation from a "./" prefixed relative path.
+
+    Regression test for the lexical relative path handling: archive paths must
+    be relative to the target directory, with no leading "./" segments.
+
+    This test checks:
+    - The archive is created successfully.
+    - Nested files keep their folder structure in the archive.
+    """
+    source_dir = tmp_path / "src"
+    (source_dir / "sub").mkdir(parents=True)
+    (source_dir / "sub" / "nested.txt").write_text("nested file")
+
+    output_file = tmp_path / "output.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", "./src", "-o", str(output_file)],
+        cwd=str(tmp_path),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_file.exists(), "MPQ file was not created"
+
+    verify_archive_file_content(binary_path, output_file, {"enUS  sub\\nested.txt"})
+
+
 def verify_archive_file_content(binary_path, test_file, expected_output):
     result = subprocess.run(
         [str(binary_path), "list", str(test_file), "-d", "-p", "locale"],

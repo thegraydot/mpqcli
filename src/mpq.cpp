@@ -269,7 +269,10 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
     int files_failed = 0;
 
     for (const auto &entry : entries) {
-        fs::path input_file_path = fs::relative(entry, target_path);
+        // Relativise lexically rather than with fs::relative, which resolves both
+        // paths through the OS and throws on volumes that cannot report real paths
+        // (RAM disks, some network shares).
+        fs::path input_file_path = entry.path().lexically_relative(target_path);
         std::string archive_file_path;
 
         if (path_prefix.empty()) {
