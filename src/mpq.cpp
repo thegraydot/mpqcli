@@ -280,32 +280,19 @@ static bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &loc
     return false;
 }
 
-int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
-             LCID locale, const GameRules &game_rules,
+int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
+             const std::string &path_prefix, LCID locale, const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
              int *skipped) {
-    fs::path target_path = fs::path(input_path);
-
-    std::vector<fs::directory_entry> entries;
-    for (const auto &entry : fs::recursive_directory_iterator(input_path)) {
-        if (fs::is_regular_file(entry.path())) {
-            entries.push_back(entry);
-        }
-    }
-    std::sort(entries.begin(), entries.end(),
-              [](const fs::directory_entry &a, const fs::directory_entry &b) {
-                  return a.path() < b.path();
-              });
-
     int files_added = 0;
     int files_skipped = 0;
     int files_failed = 0;
 
-    for (const auto &entry : entries) {
+    for (const auto &file : files) {
         // Determine relative path lexically rather than with fs::relative, which
         // resolves paths through the OS and throws on volumes that cannot report
         // real paths (RAM disks, some network shares).
-        fs::path input_file_path = entry.path().lexically_relative(target_path);
+        fs::path input_file_path = file.lexically_relative(base_path);
         std::string archive_file_path;
 
         if (path_prefix.empty()) {
@@ -322,8 +309,8 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
         }
 
         int file_skipped = 0;
-        if (AddFile(archive, entry.path(), archive_file_path, locale, game_rules, overrides,
-                    overwrite, update, &file_skipped) != 0) {
+        if (AddFile(archive, file, archive_file_path, locale, game_rules, overrides, overwrite,
+                    update, &file_skipped) != 0) {
             files_failed++;
         } else if (file_skipped > 0) {
             files_skipped++;
@@ -333,7 +320,7 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
     }
 
     if (update) {
-        std::cout << "[*] For " << input_path << ": " << files_added << " files added, "
+        std::cout << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
                   << files_skipped << " files skipped, " << files_failed << " files failed."
                   << std::endl;
     }

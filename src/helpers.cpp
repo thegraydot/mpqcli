@@ -9,6 +9,8 @@
 #include <hash-library/md5.h>
 #include <iostream>
 #include <sys/stat.h>
+#include <system_error>
+#include <vector>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -89,18 +91,25 @@ std::string StormErrorString(uint32_t err) {
     }
 }
 
-uint32_t CalculateMpqMaxFileValue(const std::string &path) {
-    uint32_t file_count = 0;
-
-    // Determine the number of files in the target directory, recusively
-    if (!fs::is_regular_file(path)) {
-        for (const auto &entry : fs::recursive_directory_iterator(path)) {
-            if (fs::is_regular_file(entry.path())) {
-                ++file_count;
-            }
+std::vector<fs::path> ListFilesRecursive(const fs::path &directory, std::error_code &ec) {
+    std::vector<fs::path> files;
+    fs::recursive_directory_iterator it(directory, ec);
+    while (!ec && it != fs::recursive_directory_iterator()) {
+        if (it->is_regular_file(ec)) {
+            files.push_back(it->path());
+        }
+        if (!ec) {
+            it.increment(ec);
         }
     }
+    if (ec) {
+        return {};
+    }
+    std::sort(files.begin(), files.end());
+    return files;
+}
 
+uint32_t CalculateMpqMaxFileValue(uint32_t file_count) {
     // Always add 3 for "special" files
     file_count += 3;
 

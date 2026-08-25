@@ -4,6 +4,7 @@
 #include <iostream>
 #include <system_error>
 #include <unordered_set>
+#include <vector>
 
 #include <StormLib.h>
 
@@ -109,8 +110,23 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         overrides.raw_chunk_size = static_cast<DWORD>(raw_chunk_size);
     game_rules.OverrideCreateSettings(overrides);
 
-    // Determine the number of files we are going to add
-    uint32_t file_count = CalculateMpqMaxFileValue(target);
+    // List the files up front: the archive's max file count is fixed at creation
+    std::error_code ec;
+    std::vector<fs::path> files;
+    const bool is_directory = fs::is_directory(target, ec);
+    if (is_directory) {
+        files = ListFilesRecursive(target, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                      << ": " << target << std::endl;
+            return 1;
+        }
+    } else if (!fs::is_regular_file(target, ec)) {
+        std::cerr << "[!] Not a file or directory: " << target << std::endl;
+        return 1;
+    }
+    const uint32_t file_count =
+        CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
 
     // Create the MPQ archive and add files
     int result = 0;
@@ -127,18 +143,12 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         if (file_compression_next >= 0)
             add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
 
-        std::error_code ec;
-        if (fs::is_directory(target, ec)) {
+        if (is_directory) {
             const std::string prefix = path.value_or("");
-            result |= AddFiles(archive, target, prefix, lcid, game_rules, add_overrides);
-
-        } else if (fs::is_regular_file(target, ec)) {
+            result |= AddFiles(archive, files, target, prefix, lcid, game_rules, add_overrides);
+        } else {
             std::string archive_path = ResolveArchiveName(target, path);
             result |= AddFile(archive, target, archive_path, lcid, game_rules, add_overrides);
-
-        } else {
-            std::cerr << "[!] Not a file or directory: " << target << std::endl;
-            result |= 1;
         }
 
         if (sign_archive) {
@@ -201,9 +211,16 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
         }
 
         if (fs::is_directory(f, ec)) {
+            std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
+            if (ec) {
+                std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                          << ": " << f << std::endl;
+                result |= 1;
+                continue;
+            }
             std::string prefix = path.value_or("");
-            result |= AddFiles(archive, f, prefix, lcid, game_rules, add_overrides, overwrite,
-                               update, &files_skipped);
+            result |= AddFiles(archive, directory_files, f, prefix, lcid, game_rules, add_overrides,
+                               overwrite, update, &files_skipped);
 
         } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
