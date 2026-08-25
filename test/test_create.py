@@ -1,6 +1,9 @@
+import platform
 import subprocess
 import shutil
 from pathlib import Path
+
+import pytest
 
 
 def test_create_mpq_target_does_not_exist(binary_path, generate_test_files):
@@ -766,6 +769,35 @@ def test_create_mpq_folder_structure_with_dot_relative_path(binary_path, tmp_pat
     assert output_file.exists(), "MPQ file was not created"
 
     verify_archive_file_content(binary_path, output_file, {"enUS  sub\\nested.txt"})
+
+
+@pytest.mark.skipif(platform.system() == "Windows", reason="Symlink creation needs privileges on Windows")
+def test_create_mpq_skips_dangling_symlink(binary_path, tmp_path):
+    """
+    Test MPQ archive creation from a directory containing a dangling symlink.
+
+    This test checks:
+    - The archive is created successfully.
+    - The dangling symlink is skipped and the regular files are added.
+    """
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    (source_dir / "real.txt").write_text("real file")
+    (source_dir / "dangling.txt").symlink_to(tmp_path / "missing.txt")
+
+    output_file = tmp_path / "output.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(source_dir), "-o", str(output_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert output_file.exists(), "MPQ file was not created"
+
+    verify_archive_file_content(binary_path, output_file, {"enUS  real.txt"})
 
 
 def verify_archive_file_content(binary_path, test_file, expected_output):

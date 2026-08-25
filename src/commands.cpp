@@ -61,9 +61,15 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
                  int64_t stream_flags, int64_t sector_size, int64_t raw_chunk_size,
                  int64_t file_flags1, int64_t file_flags2, int64_t file_flags3, int64_t attr_flags,
                  int64_t file_flags, int64_t file_compression, int64_t file_compression_next) {
+    std::error_code ec;
     fs::path output_file_path;
     if (output.has_value()) {
-        output_file_path = fs::absolute(output.value());
+        output_file_path = fs::absolute(output.value(), ec);
+        if (ec) {
+            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
+                      << ec.message() << ": " << output.value() << std::endl;
+            return 1;
+        }
     } else {
         output_file_path = fs::path(target);
         // If the path ends with a separator (e.g. "dir/"), strip the
@@ -111,7 +117,6 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
     game_rules.OverrideCreateSettings(overrides);
 
     // List the files up front: the archive's max file count is fixed at creation
-    std::error_code ec;
     std::vector<fs::path> files;
     const bool is_directory = fs::is_directory(target, ec);
     if (is_directory) {

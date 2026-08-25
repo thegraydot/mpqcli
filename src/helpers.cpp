@@ -95,12 +95,17 @@ std::vector<fs::path> ListFilesRecursive(const fs::path &directory, std::error_c
     std::vector<fs::path> files;
     fs::recursive_directory_iterator it(directory, ec);
     while (!ec && it != fs::recursive_directory_iterator()) {
-        if (it->is_regular_file(ec)) {
+        // A dangling symlink reports not_found rather than a hard error, and is
+        // skipped like any other non-regular entry
+        std::error_code status_ec;
+        const fs::file_status status = it->status(status_ec);
+        if (fs::is_regular_file(status)) {
             files.push_back(it->path());
+        } else if (status_ec && status.type() != fs::file_type::not_found) {
+            ec = status_ec;
+            break;
         }
-        if (!ec) {
-            it.increment(ec);
-        }
+        it.increment(ec);
     }
     if (ec) {
         return {};
