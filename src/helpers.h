@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <system_error>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -12,7 +14,9 @@ std::string FileTimeToLsTime(int64_t file_time);
 std::string NormalizeFilePath(const fs::path &path);
 std::string WindowsifyFilePath(const fs::path &path);
 std::string StormErrorString(uint32_t err);
-uint32_t CalculateMpqMaxFileValue(const std::string &path);
+
+std::vector<fs::path> ListFilesRecursive(const fs::path &directory, std::error_code &ec);
+uint32_t CalculateMpqMaxFileValue(uint32_t file_count);
 uint32_t NextPowerOfTwo(uint32_t n);
 void PrintAsBinary(const char *buffer, uint32_t size);
 

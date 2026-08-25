@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <system_error>
 #include <vector>
 
 #include <StormLib.h>
@@ -67,6 +68,10 @@ bool SignMpqArchive(HANDLE archive) {
     return true;
 }
 
+static bool IsWithinDirectory(const fs::path &base, const fs::path &path) {
+    return std::mismatch(base.begin(), base.end(), path.begin(), path.end()).first == base.end();
+}
+
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale) {
     SFileSetLocale(preferred_locale);
@@ -112,29 +117,55 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
         file_name_string = file_name_path.filename().u8string();
     }
 
-    // Create output directory
-    fs::path output_path_absolute = fs::canonical(output);
-    fs::path output_path_base =
-        output_path_absolute.parent_path() / output_path_absolute.filename();
-    std::filesystem::create_directories(fs::path(output_path_base).parent_path());
+    std::error_code ec;
+    fs::path output_path_base = fs::absolute(output, ec).lexically_normal();
+    if (ec) {
+        std::cerr << "[!] Failed to resolve output directory: (" << ec.value() << ") "
+                  << ec.message() << ": " << output << std::endl;
+        return 1;
+    }
+    if (output_path_base.filename().empty()) {
+        output_path_base = output_path_base.parent_path();
+    }
 
-    // Ensure sub-directories for folder-nested files exist before calling canonical
-    fs::path output_file_path_name = output_path_base / file_name_string;
-    std::filesystem::create_directories(output_file_path_name.parent_path());
-
-    // Guard against path traversal attacks: resolve symlinks and ".." with canonical
-    // (requires path to exist, hence create_directories above)
-    fs::path resolved_output =
-        fs::canonical(output_file_path_name.parent_path()) / output_file_path_name.filename();
-    if (std::mismatch(output_path_base.begin(), output_path_base.end(), resolved_output.begin(),
-                      resolved_output.end())
-            .first != output_path_base.end()) {
+    // Guard against path traversal attacks in two stages. First lexically, so a
+    // ".." entry is rejected before anything is created on disk
+    fs::path output_file_path_name = (output_path_base / file_name_string).lexically_normal();
+    if (!IsWithinDirectory(output_path_base, output_file_path_name)) {
         std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
                   << std::endl;
         return 1;
     }
 
-    std::string output_file_name{resolved_output.u8string()};
+    // Ensure sub-directories for folder-nested files exist before resolving
+    fs::create_directories(output_file_path_name.parent_path(), ec);
+    if (ec) {
+        std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
+                  << ec.message() << ": " << output_file_path_name.parent_path().u8string()
+                  << std::endl;
+        return 1;
+    }
+
+    // Second, through the OS to also catch symlinks. Volumes that cannot report
+    // real paths (RAM disks) fail here, in which case the lexical check above is
+    // the only guard; HandleExtract warns about this once
+    fs::path resolved_base = fs::canonical(output_path_base, ec);
+    if (!ec) {
+        fs::path resolved_output = fs::canonical(output_file_path_name.parent_path(), ec) /
+                                   output_file_path_name.filename();
+        if (ec) {
+            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
+                      << ec.message() << ": " << output_file_path_name.u8string() << std::endl;
+            return 1;
+        }
+        if (!IsWithinDirectory(resolved_base, resolved_output)) {
+            std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
+                      << std::endl;
+            return 1;
+        }
+    }
+
+    std::string output_file_name{output_file_path_name.u8string()};
 
     if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
         std::cout << "[*] Extracted: " << file_name_string << std::endl;
@@ -151,7 +182,8 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
 HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t file_count,
                         const GameRules &game_rules) {
     // Check if file already exists
-    if (fs::exists(output_archive_name)) {
+    std::error_code ec;
+    if (fs::exists(output_archive_name, ec)) {
         std::cerr << "[!] File already exists: " << output_archive_name << " Exiting..."
                   << std::endl;
         return nullptr;
@@ -190,8 +222,9 @@ HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t f
 static bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,
                                 std::string &match_reason) {
     const DWORD archived_size = SFileGetFileSize(file, nullptr);
-    const uintmax_t disk_size = fs::file_size(local_file);
-    if (disk_size != static_cast<uintmax_t>(archived_size)) {
+    std::error_code ec;
+    const uintmax_t disk_size = fs::file_size(local_file, ec);
+    if (ec || disk_size != static_cast<uintmax_t>(archived_size)) {
         return false;
     }
 
@@ -247,29 +280,19 @@ static bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &loc
     return false;
 }
 
-int AddFiles(HANDLE archive, const std::string &input_path, const std::string &path_prefix,
-             LCID locale, const GameRules &game_rules,
+int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
+             const std::string &path_prefix, LCID locale, const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
              int *skipped) {
-    fs::path target_path = fs::path(input_path);
-
-    std::vector<fs::directory_entry> entries;
-    for (const auto &entry : fs::recursive_directory_iterator(input_path)) {
-        if (fs::is_regular_file(entry.path())) {
-            entries.push_back(entry);
-        }
-    }
-    std::sort(entries.begin(), entries.end(),
-              [](const fs::directory_entry &a, const fs::directory_entry &b) {
-                  return a.path() < b.path();
-              });
-
     int files_added = 0;
     int files_skipped = 0;
     int files_failed = 0;
 
-    for (const auto &entry : entries) {
-        fs::path input_file_path = fs::relative(entry, target_path);
+    for (const auto &file : files) {
+        // Determine relative path lexically rather than with fs::relative, which
+        // resolves paths through the OS and throws on volumes that cannot report
+        // real paths (RAM disks, some network shares).
+        fs::path input_file_path = file.lexically_relative(base_path);
         std::string archive_file_path;
 
         if (path_prefix.empty()) {
@@ -286,8 +309,8 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
         }
 
         int file_skipped = 0;
-        if (AddFile(archive, entry.path(), archive_file_path, locale, game_rules, overrides,
-                    overwrite, update, &file_skipped) != 0) {
+        if (AddFile(archive, file, archive_file_path, locale, game_rules, overrides, overwrite,
+                    update, &file_skipped) != 0) {
             files_failed++;
         } else if (file_skipped > 0) {
             files_skipped++;
@@ -297,7 +320,7 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
     }
 
     if (update) {
-        std::cout << "[*] For " << input_path << ": " << files_added << " files added, "
+        std::cout << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
                   << files_skipped << " files skipped, " << files_failed << " files failed."
                   << std::endl;
     }
@@ -314,7 +337,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
             int *skipped) {
     // Return if file doesn't exist on disk
-    if (!fs::exists(local_file)) {
+    std::error_code ec;
+    if (!fs::exists(local_file, ec)) {
         std::cerr << "[!] File doesn't exist on disk: " << local_file << std::endl;
         return 1;
     }
@@ -378,7 +402,12 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     }
 
     // Get file size for rule matching
-    const std::uintmax_t raw_file_size = fs::file_size(local_file);
+    const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
+    if (ec) {
+        std::cerr << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
+                  << local_file << std::endl;
+        return 1;
+    }
     if (raw_file_size > std::numeric_limits<DWORD>::max()) {
         std::cerr << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
                      "correctly: "
@@ -795,8 +824,14 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
         int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
 
-        const fs::path archive_path = fs::canonical(target);
-        std::uintmax_t file_size = fs::file_size(archive_path);
+        const fs::path archive_path(target);
+        std::error_code ec;
+        const std::uintmax_t file_size = fs::file_size(archive_path, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to read archive size: (" << ec.value() << ") " << ec.message()
+                      << ": " << target << std::endl;
+            return -1;
+        }
         int64_t signature_length = file_size - archive_offset - archive_size;
 
         if (signature_length <= 0) {

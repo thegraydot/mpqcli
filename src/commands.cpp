@@ -2,7 +2,9 @@
 
 #include <filesystem>
 #include <iostream>
+#include <system_error>
 #include <unordered_set>
+#include <vector>
 
 #include <StormLib.h>
 
@@ -59,9 +61,15 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
                  int64_t stream_flags, int64_t sector_size, int64_t raw_chunk_size,
                  int64_t file_flags1, int64_t file_flags2, int64_t file_flags3, int64_t attr_flags,
                  int64_t file_flags, int64_t file_compression, int64_t file_compression_next) {
+    std::error_code ec;
     fs::path output_file_path;
     if (output.has_value()) {
-        output_file_path = fs::absolute(output.value());
+        output_file_path = fs::absolute(output.value(), ec);
+        if (ec) {
+            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
+                      << ec.message() << ": " << output.value() << std::endl;
+            return 1;
+        }
     } else {
         output_file_path = fs::path(target);
         // If the path ends with a separator (e.g. "dir/"), strip the
@@ -108,8 +116,22 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         overrides.raw_chunk_size = static_cast<DWORD>(raw_chunk_size);
     game_rules.OverrideCreateSettings(overrides);
 
-    // Determine the number of files we are going to add
-    uint32_t file_count = CalculateMpqMaxFileValue(target);
+    // List the files up front: the archive's max file count is fixed at creation
+    std::vector<fs::path> files;
+    const bool is_directory = fs::is_directory(target, ec);
+    if (is_directory) {
+        files = ListFilesRecursive(target, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                      << ": " << target << std::endl;
+            return 1;
+        }
+    } else if (!fs::is_regular_file(target, ec)) {
+        std::cerr << "[!] Not a file or directory: " << target << std::endl;
+        return 1;
+    }
+    const uint32_t file_count =
+        CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
 
     // Create the MPQ archive and add files
     int result = 0;
@@ -126,17 +148,12 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         if (file_compression_next >= 0)
             add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
 
-        if (fs::is_directory(target)) {
+        if (is_directory) {
             const std::string prefix = path.value_or("");
-            result |= AddFiles(archive, target, prefix, lcid, game_rules, add_overrides);
-
-        } else if (fs::is_regular_file(target)) {
+            result |= AddFiles(archive, files, target, prefix, lcid, game_rules, add_overrides);
+        } else {
             std::string archive_path = ResolveArchiveName(target, path);
             result |= AddFile(archive, target, archive_path, lcid, game_rules, add_overrides);
-
-        } else {
-            std::cerr << "[!] Not a file or directory: " << target << std::endl;
-            result |= 1;
         }
 
         if (sign_archive) {
@@ -180,9 +197,10 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     if (file_compression_next >= 0)
         add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
 
+    std::error_code ec;
     bool has_directory = false;
     for (const auto &f : files) {
-        if (fs::is_directory(f)) {
+        if (fs::is_directory(f, ec)) {
             has_directory = true;
             break;
         }
@@ -191,18 +209,25 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     int result = 0;
     int files_skipped = 0;
     for (const auto &f : files) {
-        if (!fs::exists(f)) {
+        if (!fs::exists(f, ec)) {
             std::cerr << "[!] Path does not exist: " << f << std::endl;
             result |= 1;
             continue;
         }
 
-        if (fs::is_directory(f)) {
+        if (fs::is_directory(f, ec)) {
+            std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
+            if (ec) {
+                std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                          << ": " << f << std::endl;
+                result |= 1;
+                continue;
+            }
             std::string prefix = path.value_or("");
-            result |= AddFiles(archive, f, prefix, lcid, game_rules, add_overrides, overwrite,
-                               update, &files_skipped);
+            result |= AddFiles(archive, directory_files, f, prefix, lcid, game_rules, add_overrides,
+                               overwrite, update, &files_skipped);
 
-        } else if (fs::is_regular_file(f)) {
+        } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
             result |= AddFile(archive, f, archive_path, lcid, game_rules, add_overrides, overwrite,
@@ -280,17 +305,36 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
                   const std::optional<std::string> &locale) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
+    std::error_code ec;
     std::string effective_output;
     if (!output.has_value()) {
-        fs::path output_path_absolute = fs::canonical(target);
-        fs::path output_path = output_path_absolute.parent_path() / output_path_absolute.stem();
-        effective_output = output_path.u8string();
+        fs::path target_path = fs::absolute(target, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to resolve archive path: (" << ec.value() << ") "
+                      << ec.message() << ": " << target << std::endl;
+            return 1;
+        }
+        effective_output = (target_path.parent_path() / target_path.stem()).u8string();
     } else {
         effective_output = output.value();
     }
-    if (!fs::create_directory(effective_output) && !fs::is_directory(effective_output)) {
-        std::cerr << "[!] Failed to create output directory: " << effective_output << std::endl;
-        return 1;
+    fs::create_directory(effective_output, ec);
+    if (ec) {
+        std::error_code query_ec;
+        if (!fs::is_directory(effective_output, query_ec)) {
+            std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
+                      << ec.message() << ": " << effective_output << std::endl;
+            return 1;
+        }
+    }
+
+    // ExtractFile can only check for symlink traversal where the OS can resolve
+    // real paths; warn once up front on volumes where it cannot (RAM disks)
+    static_cast<void>(fs::canonical(effective_output, ec));
+    if (ec) {
+        std::cout << "[!] Warning: Output directory cannot be fully resolved, symlinks will not "
+                     "be checked during extraction: "
+                  << effective_output << std::endl;
     }
 
     HANDLE archive;
