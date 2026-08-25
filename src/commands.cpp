@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <system_error>
 #include <unordered_set>
 
 #include <StormLib.h>
@@ -280,17 +281,36 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
                   const std::optional<std::string> &locale) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
+    std::error_code ec;
     std::string effective_output;
     if (!output.has_value()) {
-        fs::path output_path_absolute = fs::canonical(target);
-        fs::path output_path = output_path_absolute.parent_path() / output_path_absolute.stem();
-        effective_output = output_path.u8string();
+        fs::path target_path = fs::absolute(target, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to resolve archive path: (" << ec.value() << ") "
+                      << ec.message() << ": " << target << std::endl;
+            return 1;
+        }
+        effective_output = (target_path.parent_path() / target_path.stem()).u8string();
     } else {
         effective_output = output.value();
     }
-    if (!fs::create_directory(effective_output) && !fs::is_directory(effective_output)) {
-        std::cerr << "[!] Failed to create output directory: " << effective_output << std::endl;
-        return 1;
+    fs::create_directory(effective_output, ec);
+    if (ec) {
+        std::error_code query_ec;
+        if (!fs::is_directory(effective_output, query_ec)) {
+            std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
+                      << ec.message() << ": " << effective_output << std::endl;
+            return 1;
+        }
+    }
+
+    // ExtractFile can only check for symlink traversal where the OS can resolve
+    // real paths; warn once up front on volumes where it cannot (RAM disks)
+    static_cast<void>(fs::canonical(effective_output, ec));
+    if (ec) {
+        std::cout << "[!] Warning: Output directory cannot be fully resolved, symlinks will not "
+                     "be checked during extraction: "
+                  << effective_output << std::endl;
     }
 
     HANDLE archive;

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <system_error>
 #include <vector>
 
 #include <StormLib.h>
@@ -67,6 +68,10 @@ bool SignMpqArchive(HANDLE archive) {
     return true;
 }
 
+static bool IsWithinDirectory(const fs::path &base, const fs::path &path) {
+    return std::mismatch(base.begin(), base.end(), path.begin(), path.end()).first == base.end();
+}
+
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale) {
     SFileSetLocale(preferred_locale);
@@ -112,29 +117,55 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
         file_name_string = file_name_path.filename().u8string();
     }
 
-    // Create output directory
-    fs::path output_path_absolute = fs::canonical(output);
-    fs::path output_path_base =
-        output_path_absolute.parent_path() / output_path_absolute.filename();
-    std::filesystem::create_directories(fs::path(output_path_base).parent_path());
+    std::error_code ec;
+    fs::path output_path_base = fs::absolute(output, ec).lexically_normal();
+    if (ec) {
+        std::cerr << "[!] Failed to resolve output directory: (" << ec.value() << ") "
+                  << ec.message() << ": " << output << std::endl;
+        return 1;
+    }
+    if (output_path_base.filename().empty()) {
+        output_path_base = output_path_base.parent_path();
+    }
 
-    // Ensure sub-directories for folder-nested files exist before calling canonical
-    fs::path output_file_path_name = output_path_base / file_name_string;
-    std::filesystem::create_directories(output_file_path_name.parent_path());
-
-    // Guard against path traversal attacks: resolve symlinks and ".." with canonical
-    // (requires path to exist, hence create_directories above)
-    fs::path resolved_output =
-        fs::canonical(output_file_path_name.parent_path()) / output_file_path_name.filename();
-    if (std::mismatch(output_path_base.begin(), output_path_base.end(), resolved_output.begin(),
-                      resolved_output.end())
-            .first != output_path_base.end()) {
+    // Guard against path traversal attacks in two stages. First lexically, so a
+    // ".." entry is rejected before anything is created on disk
+    fs::path output_file_path_name = (output_path_base / file_name_string).lexically_normal();
+    if (!IsWithinDirectory(output_path_base, output_file_path_name)) {
         std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
                   << std::endl;
         return 1;
     }
 
-    std::string output_file_name{resolved_output.u8string()};
+    // Ensure sub-directories for folder-nested files exist before resolving
+    fs::create_directories(output_file_path_name.parent_path(), ec);
+    if (ec) {
+        std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
+                  << ec.message() << ": " << output_file_path_name.parent_path().u8string()
+                  << std::endl;
+        return 1;
+    }
+
+    // Second, through the OS to also catch symlinks. Volumes that cannot report
+    // real paths (RAM disks) fail here, in which case the lexical check above is
+    // the only guard; HandleExtract warns about this once
+    fs::path resolved_base = fs::canonical(output_path_base, ec);
+    if (!ec) {
+        fs::path resolved_output = fs::canonical(output_file_path_name.parent_path(), ec) /
+                                   output_file_path_name.filename();
+        if (ec) {
+            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
+                      << ec.message() << ": " << output_file_path_name.u8string() << std::endl;
+            return 1;
+        }
+        if (!IsWithinDirectory(resolved_base, resolved_output)) {
+            std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
+                      << std::endl;
+            return 1;
+        }
+    }
+
+    std::string output_file_name{output_file_path_name.u8string()};
 
     if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
         std::cout << "[*] Extracted: " << file_name_string << std::endl;
@@ -269,9 +300,9 @@ int AddFiles(HANDLE archive, const std::string &input_path, const std::string &p
     int files_failed = 0;
 
     for (const auto &entry : entries) {
-        // Relativise lexically rather than with fs::relative, which resolves both
-        // paths through the OS and throws on volumes that cannot report real paths
-        // (RAM disks, some network shares).
+        // Determine relative path lexically rather than with fs::relative, which
+        // resolves paths through the OS and throws on volumes that cannot report
+        // real paths (RAM disks, some network shares).
         fs::path input_file_path = entry.path().lexically_relative(target_path);
         std::string archive_file_path;
 
