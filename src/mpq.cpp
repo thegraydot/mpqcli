@@ -182,7 +182,8 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
 HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t file_count,
                         const GameRules &game_rules) {
     // Check if file already exists
-    if (fs::exists(output_archive_name)) {
+    std::error_code ec;
+    if (fs::exists(output_archive_name, ec)) {
         std::cerr << "[!] File already exists: " << output_archive_name << " Exiting..."
                   << std::endl;
         return nullptr;
@@ -221,8 +222,9 @@ HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t f
 static bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,
                                 std::string &match_reason) {
     const DWORD archived_size = SFileGetFileSize(file, nullptr);
-    const uintmax_t disk_size = fs::file_size(local_file);
-    if (disk_size != static_cast<uintmax_t>(archived_size)) {
+    std::error_code ec;
+    const uintmax_t disk_size = fs::file_size(local_file, ec);
+    if (ec || disk_size != static_cast<uintmax_t>(archived_size)) {
         return false;
     }
 
@@ -348,7 +350,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
             int *skipped) {
     // Return if file doesn't exist on disk
-    if (!fs::exists(local_file)) {
+    std::error_code ec;
+    if (!fs::exists(local_file, ec)) {
         std::cerr << "[!] File doesn't exist on disk: " << local_file << std::endl;
         return 1;
     }
@@ -412,7 +415,12 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     }
 
     // Get file size for rule matching
-    const std::uintmax_t raw_file_size = fs::file_size(local_file);
+    const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
+    if (ec) {
+        std::cerr << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
+                  << local_file << std::endl;
+        return 1;
+    }
     if (raw_file_size > std::numeric_limits<DWORD>::max()) {
         std::cerr << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
                      "correctly: "

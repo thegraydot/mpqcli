@@ -127,11 +127,12 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         if (file_compression_next >= 0)
             add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
 
-        if (fs::is_directory(target)) {
+        std::error_code ec;
+        if (fs::is_directory(target, ec)) {
             const std::string prefix = path.value_or("");
             result |= AddFiles(archive, target, prefix, lcid, game_rules, add_overrides);
 
-        } else if (fs::is_regular_file(target)) {
+        } else if (fs::is_regular_file(target, ec)) {
             std::string archive_path = ResolveArchiveName(target, path);
             result |= AddFile(archive, target, archive_path, lcid, game_rules, add_overrides);
 
@@ -181,9 +182,10 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     if (file_compression_next >= 0)
         add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
 
+    std::error_code ec;
     bool has_directory = false;
     for (const auto &f : files) {
-        if (fs::is_directory(f)) {
+        if (fs::is_directory(f, ec)) {
             has_directory = true;
             break;
         }
@@ -192,18 +194,18 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     int result = 0;
     int files_skipped = 0;
     for (const auto &f : files) {
-        if (!fs::exists(f)) {
+        if (!fs::exists(f, ec)) {
             std::cerr << "[!] Path does not exist: " << f << std::endl;
             result |= 1;
             continue;
         }
 
-        if (fs::is_directory(f)) {
+        if (fs::is_directory(f, ec)) {
             std::string prefix = path.value_or("");
             result |= AddFiles(archive, f, prefix, lcid, game_rules, add_overrides, overwrite,
                                update, &files_skipped);
 
-        } else if (fs::is_regular_file(f)) {
+        } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
             result |= AddFile(archive, f, archive_path, lcid, game_rules, add_overrides, overwrite,
