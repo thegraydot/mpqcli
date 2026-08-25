@@ -829,8 +829,14 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
         int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
 
-        const fs::path archive_path = fs::canonical(target);
-        std::uintmax_t file_size = fs::file_size(archive_path);
+        const fs::path archive_path(target);
+        std::error_code ec;
+        const std::uintmax_t file_size = fs::file_size(archive_path, ec);
+        if (ec) {
+            std::cerr << "[!] Failed to read archive size: (" << ec.value() << ") " << ec.message()
+                      << ": " << target << std::endl;
+            return -1;
+        }
         int64_t signature_length = file_size - archive_offset - archive_size;
 
         if (signature_length <= 0) {
