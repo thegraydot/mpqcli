@@ -3,7 +3,16 @@
 # that recompiles the sources instead is a second build that drifts from the
 # shipped one.
 add_library(mpqcli_core STATIC
-    commands.cpp
+    cli/add.cpp
+    cli/compact.cpp
+    cli/create.cpp
+    cli/extract.cpp
+    cli/info.cpp
+    cli/list.cpp
+    cli/read.cpp
+    cli/remove.cpp
+    cli/rename.cpp
+    cli/verify.cpp
     mpq/add.cpp
     mpq/archive.cpp
     mpq/compact.cpp

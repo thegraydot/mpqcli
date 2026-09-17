@@ -6,9 +6,9 @@
 
 #include <CLI/CLI.hpp>
 
+#include "cli/commands.h"
 #include "commands.h"
 #include "gamerules.h"
-#include "subcommands.h"
 #include "validators.h"
 
 int main(int argc, char **argv) {

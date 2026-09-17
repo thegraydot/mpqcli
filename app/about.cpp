@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mpqcli/version.h>
 
-#include "subcommands.h"
+#include "commands.h"
 
 int HandleAbout() {
     std::cout << "Name: mpqcli" << std::endl;

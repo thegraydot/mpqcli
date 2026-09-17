@@ -1,5 +1,5 @@
-#ifndef SUBCOMMANDS_H
-#define SUBCOMMANDS_H
+#ifndef COMMANDS_H
+#define COMMANDS_H
 
 int HandleVersion();
 int HandleAbout();
@@ -9,4 +9,4 @@ void HandleCompletionZsh();
 void HandleCompletionPs();
 void HandleCompletionFish();
 
-#endif // SUBCOMMANDS_H
+#endif // COMMANDS_H

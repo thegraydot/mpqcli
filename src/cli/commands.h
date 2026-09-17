@@ -1,5 +1,5 @@
-#ifndef COMMANDS_H
-#define COMMANDS_H
+#ifndef CLI_COMMANDS_H
+#define CLI_COMMANDS_H
 
 #include <cstdint>
 #include <optional>
@@ -34,4 +34,4 @@ int HandleRead(const std::string &file, const std::string &target,
 int HandleVerify(const std::string &target, bool print_signature);
 int HandleCompact(const std::string &target, const std::optional<std::string> &listfile_name);
 
-#endif // COMMANDS_H
+#endif // CLI_COMMANDS_H

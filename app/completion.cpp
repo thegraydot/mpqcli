@@ -1,7 +1,7 @@
 #include <iostream>
 #include <mpqcli/completion_data.h>
 
-#include "subcommands.h"
+#include "commands.h"
 
 void HandleCompletionBash() {
     std::cout << BashCompletionScript;
