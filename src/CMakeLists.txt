@@ -22,7 +22,6 @@ configure_file(completion_data.h.in "${CMAKE_BINARY_DIR}/completion_data.h")
 # shipped one.
 add_library(mpqcli_core STATIC
     commands.cpp
-    completion.cpp
     mpq.cpp
     helpers.cpp
     locales.cpp

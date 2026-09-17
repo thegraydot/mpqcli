@@ -1,8 +1,7 @@
-#include "completion.h"
-
 #include <iostream>
 
 #include "completion_data.h"
+#include "subcommands.h"
 
 void HandleCompletionBash() {
     std::cout << BashCompletionScript;

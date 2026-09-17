@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-int HandleVersion();
-int HandleAbout();
 int HandleInfo(const std::string &target, const std::optional<std::string> &property);
 int HandleCreate(const std::string &target, const std::optional<std::string> &path,
                  const std::optional<std::string> &output, bool sign_archive,

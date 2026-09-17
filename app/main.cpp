@@ -7,8 +7,8 @@
 #include <CLI/CLI.hpp>
 
 #include "commands.h"
-#include "completion.h"
 #include "gamerules.h"
+#include "subcommands.h"
 #include "validators.h"
 
 int main(int argc, char **argv) {

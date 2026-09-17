@@ -12,7 +12,6 @@
 #include "helpers.h"
 #include "locales.h"
 #include "mpq.h"
-#include "mpqcli.h"
 
 namespace fs = std::filesystem;
 
@@ -24,24 +23,6 @@ std::string ResolveArchiveName(const std::string &f, const std::optional<std::st
         file_path = path.value_or("") / fs::path(filename);
     }
     return WindowsifyFilePath(file_path);
-}
-
-int HandleVersion() {
-    std::cout << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
-    return 0;
-}
-
-int HandleAbout() {
-    std::cout << "Name: mpqcli" << std::endl;
-    std::cout << "Version: " << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
-    std::cout << "Author: Thomas Laurenson" << std::endl;
-    std::cout << "License: MIT" << std::endl;
-    std::cout << "GitHub: https://github.com/thegraydot/mpqcli" << std::endl;
-    std::cout << "Dependencies:" << std::endl;
-    std::cout << " - StormLib (https://github.com/ladislav-zezula/StormLib)" << std::endl;
-    std::cout << " - CLI11 (https://github.com/CLIUtils/CLI11)" << std::endl;
-    std::cout << " - hash-library (https://github.com/stbrumme/hash-library)" << std::endl;
-    return 0;
 }
 
 int HandleInfo(const std::string &target, const std::optional<std::string> &property) {
