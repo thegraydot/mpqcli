@@ -16,18 +16,11 @@ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/completion/mpqcli.ps1" PS_COMPLETION_SCRI
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/completion/mpqcli.fish" FISH_COMPLETION_SCRIPT)
 configure_file(completion_data.h.in "${CMAKE_BINARY_DIR}/completion_data.h")
 
-# Set output directory for the executable
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-# Windows specific settings
-if (MSVC)
-    add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)
-    set(CMAKE_GENERATOR_PLATFORM x64)
-endif()
-
-# Create the main executable
-add_executable(mpqcli
-    main.cpp
+# Internal to this repository, so no include/ and no alias. Keeping the logic in
+# a library rather than beside main() is what lets test binaries link it; a test
+# that recompiles the sources instead is a second build that drifts from the
+# shipped one.
+add_library(mpqcli_core STATIC
     commands.cpp
     completion.cpp
     mpq.cpp
@@ -36,16 +29,16 @@ add_executable(mpqcli
     gamerules.cpp
 )
 
-# Add dependencies
-add_dependencies(mpqcli storm)
+add_dependencies(mpqcli_core storm)
 
-# Include directories
-target_include_directories(mpqcli SYSTEM PRIVATE
-    "${CMAKE_SOURCE_DIR}/extern/StormLib/src"
-)
-target_include_directories(mpqcli PRIVATE
+# PUBLIC so app/ and the test binaries can include these headers by name
+target_include_directories(mpqcli_core PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_BINARY_DIR}"
 )
+target_include_directories(mpqcli_core SYSTEM PUBLIC
+    "${CMAKE_SOURCE_DIR}/extern/StormLib/src"
+)
 
-# Link libraries
-target_link_libraries(mpqcli PRIVATE storm CLI11::CLI11 hash-library)
+# CLI11 is here only for the game profile validator defined in gamerules.cpp
+target_link_libraries(mpqcli_core PUBLIC storm hash-library CLI11::CLI11)

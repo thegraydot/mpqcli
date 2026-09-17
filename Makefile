@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 CMAKE_BUILD_TYPE := Release
-BUILD_MPQCLI     := ON
+MPQCLI_BUILD_APP     := ON
 CLANG_VERSION    := 18
 VERSION          := $(shell awk '/project\(MPQCLI VERSION/ {gsub(/\)/, "", $$3); print $$3}' CMakeLists.txt)
 README           := README.md
@@ -24,7 +24,7 @@ configure: ## Configure cmake build (debug, with compile_commands.json)
 	cmake -B build \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-		-DBUILD_MPQCLI=$(BUILD_MPQCLI) \
+		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP) \
 		-DCMAKE_CXX_COMPILER=clang++-$(CLANG_VERSION) \
 		-DCMAKE_CXX_FLAGS="--gcc-install-dir=$(GCC_INSTALL_DIR)"
 
@@ -36,14 +36,14 @@ build: ## Build via cmake
 build_linux: ## Build for Linux using cmake
 	cmake -B build \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-		-DBUILD_MPQCLI=$(BUILD_MPQCLI)
+		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
 	cmake --build build
 
 .PHONY: build_windows
 build_windows: ## Build for Windows using cmake
 	cmake -B build \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-		-DBUILD_MPQCLI=$(BUILD_MPQCLI)
+		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
 	cmake --build build --config $(CMAKE_BUILD_TYPE)
 
 .PHONY: build_clean

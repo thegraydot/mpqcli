@@ -13,8 +13,8 @@ COPY . .
 
 RUN cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_MPQCLI=ON \
-    -DBUILD_STATIC=ON
+    -DMPQCLI_BUILD_APP=ON \
+    -DMPQCLI_BUILD_STATIC=ON
 
 RUN cmake --build build
 
