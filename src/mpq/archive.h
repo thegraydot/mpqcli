@@ -1,0 +1,13 @@
+#ifndef MPQ_ARCHIVE_H
+#define MPQ_ARCHIVE_H
+
+#include <cstdint>
+#include <string>
+
+#include <StormLib.h>
+
+bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags);
+bool CloseMpqArchive(HANDLE archive);
+bool SignMpqArchive(HANDLE archive);
+
+#endif

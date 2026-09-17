@@ -4,7 +4,19 @@
 # shipped one.
 add_library(mpqcli_core STATIC
     commands.cpp
-    mpq.cpp
+    mpq/add.cpp
+    mpq/archive.cpp
+    mpq/compact.cpp
+    mpq/create.cpp
+    mpq/extract.cpp
+    mpq/flags.cpp
+    mpq/info.cpp
+    mpq/list.cpp
+    mpq/query.cpp
+    mpq/read.cpp
+    mpq/remove.cpp
+    mpq/rename.cpp
+    mpq/verify.cpp
     gamerules.cpp
     util/capacity.cpp
     util/format.cpp

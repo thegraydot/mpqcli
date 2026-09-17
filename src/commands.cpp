@@ -9,7 +9,17 @@
 #include <StormLib.h>
 
 #include "gamerules.h"
-#include "mpq.h"
+#include "mpq/add.h"
+#include "mpq/archive.h"
+#include "mpq/compact.h"
+#include "mpq/create.h"
+#include "mpq/extract.h"
+#include "mpq/info.h"
+#include "mpq/list.h"
+#include "mpq/read.h"
+#include "mpq/remove.h"
+#include "mpq/rename.h"
+#include "mpq/verify.h"
 #include "util/capacity.h"
 #include "util/format.h"
 #include "util/locales.h"
