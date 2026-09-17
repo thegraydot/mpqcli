@@ -119,12 +119,12 @@ if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 
 ### StormLib locale state is global and not thread-safe
 
-`SFileSetLocale` sets a process-wide locale variable (`g_lcFileLocale`) inside StormLib. All locale-sensitive operations in `mpq.cpp` - file open, add, remove, read, extract, and list - call `SFileSetLocale` immediately before the relevant StormLib call. There is no locale-explicit alternative in StormLib's public API (`SFileOpenFileEx`, `SFileAddFileEx`, etc. all read `g_lcFileLocale` internally).
+`SFileSetLocale` sets a process-wide locale variable (`g_lcFileLocale`) inside StormLib. All locale-sensitive operations in `src/mpq/` - file open, add, remove, read, extract, and list - call `SFileSetLocale` immediately before the relevant StormLib call. There is no locale-explicit alternative in StormLib's public API (`SFileOpenFileEx`, `SFileAddFileEx`, etc. all read `g_lcFileLocale` internally).
 
 This means:
 
 - The `SFileSetLocale` + StormLib-call sequence is **not atomic** and would be unsafe under concurrency
-- mpqcli is intentionally **single-threaded**; do not introduce threads or async I/O without auditing every locale-sensitive call site in `mpq.cpp`
+- mpqcli is intentionally **single-threaded**; do not introduce threads or async I/O without auditing every locale-sensitive call site in `src/mpq/`
 
 If you add a new StormLib call that is locale-sensitive, follow the existing pattern: call `SFileSetLocale` immediately before it, with no intervening calls between the two.
 

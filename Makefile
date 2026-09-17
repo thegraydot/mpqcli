@@ -111,18 +111,18 @@ test_lint: ## Run ruff linter on test directory
 # LINT
 .PHONY: fmt_check
 fmt_check: ## Check C++ formatting with clang-format
-	find src \( -name "*.cpp" -o -name "*.h" \) \
+	find src app \( -name "*.cpp" -o -name "*.h" \) \
 	| xargs clang-format-$(CLANG_VERSION) --dry-run --Werror
 
 .PHONY: fmt
 fmt: ## Auto-fix C++ formatting with clang-format
-	find src \( -name "*.cpp" -o -name "*.h" \) \
+	find src app \( -name "*.cpp" -o -name "*.h" \) \
 	| xargs clang-format-$(CLANG_VERSION) -i
 
 .PHONY: lint_cpp
 lint_cpp: ## Run clang-tidy static analysis (requires: make configure)
 	clang-tidy-$(CLANG_VERSION) --quiet -p build \
-	--header-filter="$(CURDIR)/src/.*" src/*.cpp 2>&1 \
+	--header-filter="$(CURDIR)/(src|app)/.*" $$(find src app -name "*.cpp") 2>&1 \
 	| grep -v " warnings generated"; \
 	exit $${PIPESTATUS[0]}
 
