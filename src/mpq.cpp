@@ -15,8 +15,11 @@
 #include <StormLib.h>
 
 #include "gamerules.h"
-#include "helpers.h"
-#include "locales.h"
+#include "util/capacity.h"
+#include "util/format.h"
+#include "util/hash.h"
+#include "util/locales.h"
+#include "util/path.h"
 
 namespace fs = std::filesystem;
 
@@ -66,10 +69,6 @@ bool SignMpqArchive(HANDLE archive) {
         return false;
     }
     return true;
-}
-
-static bool IsWithinDirectory(const fs::path &base, const fs::path &path) {
-    return std::mismatch(base.begin(), base.end(), path.begin(), path.end()).first == base.end();
 }
 
 int ExtractFiles(HANDLE archive, const std::string &output,

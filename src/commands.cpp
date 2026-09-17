@@ -9,21 +9,13 @@
 #include <StormLib.h>
 
 #include "gamerules.h"
-#include "helpers.h"
-#include "locales.h"
 #include "mpq.h"
+#include "util/capacity.h"
+#include "util/format.h"
+#include "util/locales.h"
+#include "util/path.h"
 
 namespace fs = std::filesystem;
-
-std::string ResolveArchiveName(const std::string &f, const std::optional<std::string> &path,
-                               const bool treat_as_directory = false) {
-    fs::path file_path = path.value_or(fs::path(f).filename().u8string());
-    if (treat_as_directory) {
-        const std::string filename = fs::path(f).filename().u8string();
-        file_path = path.value_or("") / fs::path(filename);
-    }
-    return WindowsifyFilePath(file_path);
-}
 
 int HandleInfo(const std::string &target, const std::optional<std::string> &property) {
     HANDLE archive;

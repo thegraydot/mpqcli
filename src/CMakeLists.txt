@@ -5,9 +5,12 @@
 add_library(mpqcli_core STATIC
     commands.cpp
     mpq.cpp
-    helpers.cpp
-    locales.cpp
     gamerules.cpp
+    util/capacity.cpp
+    util/format.cpp
+    util/hash.cpp
+    util/locales.cpp
+    util/path.cpp
 )
 
 add_dependencies(mpqcli_core storm)
