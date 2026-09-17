@@ -16,6 +16,6 @@ jobs:
 
       - run: make configure
 
-      - run: make fmt_check
+      - run: make check_format
 
-      - run: make lint_cpp
+      - run: make check_lint

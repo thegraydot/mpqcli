@@ -18,7 +18,7 @@ jobs:
 
       - name: Resolve release version
         id: version
-        run: echo "version=$(make get_project_version)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(make get_version)" >> "$GITHUB_OUTPUT"
 
       - name: Download Linux GLIBC binary
         uses: actions/download-artifact@v8

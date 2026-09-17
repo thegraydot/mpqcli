@@ -28,20 +28,19 @@ make install_clang_tools
 
 Run `make help` to list all available targets. Common ones:
 
-| Target                     | Description                                                        |
-|----------------------------|--------------------------------------------------------------------|
-| `make install_clang_tools` | Install clang-format and clang-tidy via apt                        |
-| `make configure`           | Configure cmake build with clang (required before `make lint`)     |
-| `make build_linux`         | Build for Linux using cmake                                        |
-| `make build_windows`       | Build for Windows using cmake                                      |
-| `make build_clean`         | Remove the cmake build directory                                   |
-| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only) |
-| `make test_mpqcli`         | Run the pytest test suite                                          |
-| `make lint`                | Run all C++ linters (clang-format + clang-tidy)                    |
-| `make fmt_check`           | Check formatting only (dry run)                                    |
-| `make fmt`                 | Auto-fix formatting in-place                                       |
-| `make lint_cpp`            | Run clang-tidy static analysis                                     |
-| `make clean`               | Remove all build and test artifacts                                |
+| Target                     | Description                                                          |
+|----------------------------|----------------------------------------------------------------------|
+| `make install_clang_tools` | Install clang-format and clang-tidy via apt                          |
+| `make configure`           | Configure cmake build with clang (required before `make check_lint`) |
+| `make build_linux`         | Build for Linux using cmake                                          |
+| `make build_windows`       | Build for Windows using cmake                                        |
+| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only)   |
+| `make test_mpqcli`         | Run the pytest test suite                                            |
+| `make check_all`           | Run every static check (clang-format + clang-tidy)                   |
+| `make check_format`        | Check formatting only (dry run)                                      |
+| `make format`              | Auto-fix formatting in-place                                         |
+| `make check_lint`          | Run clang-tidy static analysis                                       |
+| `make clean`               | Remove all build, test and docs artifacts                            |
 
 ## Requirements for a Pull Request
 
@@ -83,10 +82,10 @@ make lint
 If there are formatting violations, auto-fix them with:
 
 ```
-make fmt
+make format
 ```
 
-Then re-run `make lint` to confirm everything passes.
+Then re-run `make check_all` to confirm everything passes.
 
 ### 5. Match the existing code style
 
@@ -134,6 +133,6 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 2. Run `git submodule update --init --recursive` after cloning
 3. Run `make install_clang_tools` to install lint dependencies
 4. Make your changes and verify they build: `make build_linux`
-5. Run `make configure` and then `make lint`, fixing any issues
+5. Run `make configure` and then `make check_all`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why

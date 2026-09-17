@@ -46,10 +46,6 @@ build_windows: ## Build for Windows using cmake
 		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
 	cmake --build build --config $(CMAKE_BUILD_TYPE)
 
-.PHONY: build_clean
-build_clean: ## Remove cmake build directory
-	rm -rf build
-
 # DOCKER
 .PHONY: docker_musl_build
 docker_musl_build: ## Build Docker image using musl
@@ -109,36 +105,37 @@ test_lint: ## Run ruff linter on test directory
 	ruff check ./test
 
 # LINT
-.PHONY: fmt_check
-fmt_check: ## Check C++ formatting with clang-format
+.PHONY: check_format
+check_format: ## Check C++ formatting with clang-format
 	find src app \( -name "*.cpp" -o -name "*.h" \) \
 	| xargs clang-format-$(CLANG_VERSION) --dry-run --Werror
 
-.PHONY: fmt
-fmt: ## Auto-fix C++ formatting with clang-format
+.PHONY: format
+format: ## Auto-fix C++ formatting with clang-format
 	find src app \( -name "*.cpp" -o -name "*.h" \) \
 	| xargs clang-format-$(CLANG_VERSION) -i
 
-.PHONY: lint_cpp
-lint_cpp: ## Run clang-tidy static analysis (requires: make configure)
+.PHONY: check_lint
+check_lint: ## Run clang-tidy static analysis (requires: make configure)
 	clang-tidy-$(CLANG_VERSION) --quiet -p build \
 	--header-filter="$(CURDIR)/(src|app)/.*" $$(find src app -name "*.cpp") 2>&1 \
 	| grep -v " warnings generated"; \
 	exit $${PIPESTATUS[0]}
 
-.PHONY: lint
-lint: fmt_check lint_cpp ## Run all C++ linters
+.PHONY: check_all
+check_all: check_format check_lint ## Run every static check
 
 .PHONY: ci
-ci: configure build fmt_check lint_cpp test ## Run all CI checks locally
+ci: configure build check_all test ## Run all CI checks locally
 
 # CLEAN
 .PHONY: clean
-clean: build_clean test_clean docs_clean ## Remove all build, test, and docs artifacts
+clean: test_clean docs_clean ## Remove all build, test, and docs artifacts
+	rm -rf build
 
 # GET
-.PHONY: get_project_version
-get_project_version: ## Print the project version from CMakeLists.txt
+.PHONY: get_version
+get_version: ## Print the project version from CMakeLists.txt
 	@grep -oE 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
 
 .PHONY: get_changelog
