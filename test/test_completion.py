@@ -37,7 +37,7 @@ def test_completion_bash_output_size(binary_path):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    script_path = Path(__file__).parent.parent / "src" / "completion" / "mpqcli.bash"
+    script_path = Path(__file__).parent.parent / "completion" / "mpqcli.bash"
     assert len(result.stdout) == len(script_path.read_text())
 
 
@@ -50,7 +50,7 @@ def test_completion_zsh_output_size(binary_path):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    script_path = Path(__file__).parent.parent / "src" / "completion" / "mpqcli.zsh"
+    script_path = Path(__file__).parent.parent / "completion" / "mpqcli.zsh"
     assert len(result.stdout) == len(script_path.read_text())
 
 
@@ -76,7 +76,7 @@ def test_completion_powershell_output_size(binary_path):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    script_path = Path(__file__).parent.parent / "src" / "completion" / "mpqcli.ps1"
+    script_path = Path(__file__).parent.parent / "completion" / "mpqcli.ps1"
     assert len(result.stdout) == len(script_path.read_text())
 
 
@@ -101,7 +101,7 @@ def test_completion_fish_output_size(binary_path):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    script_path = Path(__file__).parent.parent / "src" / "completion" / "mpqcli.fish"
+    script_path = Path(__file__).parent.parent / "completion" / "mpqcli.fish"
     assert len(result.stdout) == len(script_path.read_text())
 
 

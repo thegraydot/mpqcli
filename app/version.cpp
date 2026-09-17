@@ -1,6 +1,6 @@
 #include <iostream>
+#include <mpqcli/version.h>
 
-#include "mpqcli.h"
 #include "subcommands.h"
 
 int HandleVersion() {

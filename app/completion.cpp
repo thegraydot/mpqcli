@@ -1,6 +1,6 @@
 #include <iostream>
+#include <mpqcli/completion_data.h>
 
-#include "completion_data.h"
 #include "subcommands.h"
 
 void HandleCompletionBash() {
