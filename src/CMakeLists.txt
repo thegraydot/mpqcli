@@ -40,5 +40,4 @@ target_include_directories(mpqcli_core SYSTEM PUBLIC
     "${CMAKE_SOURCE_DIR}/extern/StormLib/src"
 )
 
-# CLI11 is here only for the game profile validator defined in gamerules.cpp
-target_link_libraries(mpqcli_core PUBLIC storm hash-library CLI11::CLI11)
+target_link_libraries(mpqcli_core PUBLIC storm hash-library)

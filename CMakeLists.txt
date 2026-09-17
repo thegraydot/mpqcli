@@ -63,18 +63,20 @@ set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
 
-# Handle CLI11 dependency
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
-    message(FATAL_ERROR
+# Handle CLI11 dependency. Only app/ parses arguments, so the core never sees it.
+if(MPQCLI_BUILD_APP)
+    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
+        message(FATAL_ERROR
 "Missing dependency: CLI11
 mpqcli requires the CLI11 library.
 It is provided as a submodule of this repository.
 Did you forget to execute the following commands?
    git submodule init
    git submodule update")
-endif()
+    endif()
 
-add_subdirectory(extern/CLI11)
+    add_subdirectory(extern/CLI11)
+endif()
 
 # Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
 if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/hash-library/crc32.cpp")

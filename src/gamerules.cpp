@@ -4,8 +4,6 @@
 #include <cctype>
 #include <map>
 
-#include <CLI/CLI.hpp>
-
 // Constructor
 GameRules::GameRules(GameProfile game_profile) : profile_(game_profile) {
     InitializeRules();
@@ -297,27 +295,6 @@ std::string GameRules::GetAvailableProfiles() {
 
     return result;
 }
-
-// Validator for CLI11 - accepts all profile names but only displays canonical ones
-extern const CLI::Validator game_profile_valid = CLI::Validator(
-    [](const std::string &str) {
-        if (str == "default")
-            return std::string();
-
-        // Try to convert the string to a profile
-        GameProfile profile = GameRules::StringToProfile(str);
-
-        // If it's GENERIC and the input wasn't "generic", it means the profile wasn't found
-        if (profile == GameProfile::GENERIC && str != "generic") {
-            std::string valid_profiles = "Game profile must be one of:";
-            for (const auto &p : GameRules::GetCanonicalProfiles()) {
-                valid_profiles += " " + p;
-            }
-            return valid_profiles;
-        }
-        return std::string();
-    },
-    "", "GameProfileValidator");
 
 // Initialize rules for the selected game profile
 void GameRules::InitializeRules() {
