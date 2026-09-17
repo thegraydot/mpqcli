@@ -7,7 +7,8 @@
 
 #include <StormLib.h>
 
-#include "gamerules.h"
+#include "gamerules/rules.h"
+#include "gamerules/settings.h"
 
 namespace fs = std::filesystem;
 

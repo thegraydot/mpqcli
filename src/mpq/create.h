@@ -6,7 +6,7 @@
 
 #include <StormLib.h>
 
-#include "gamerules.h"
+#include "gamerules/rules.h"
 
 HANDLE CreateMpqArchive(const std::string &output_archive_name, uint32_t file_count,
                         const GameRules &game_rules);

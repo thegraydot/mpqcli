@@ -1,30 +1,11 @@
-#ifndef GAMERULES_H
-#define GAMERULES_H
+#ifndef GAMERULES_SETTINGS_H
+#define GAMERULES_SETTINGS_H
 
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include <StormLib.h>
-
-enum class GameProfile {
-    GENERIC,       // Default/generic MPQ with basic compression
-    DIABLO1,       // Diablo I / Hellfire (1997)
-    LORDSOFMAGIC,  // Lords of Magic SE (1998)
-    STARCRAFT1,    // StarCraft / Brood War (1998)
-    WARCRAFT2,     // Warcraft II: Battle.net Edition (1999)
-    DIABLO2,       // Diablo II / Lords of Destruction (2000)
-    WARCRAFT3,     // Warcraft III / The Frozen Throne (2002)
-    WARCRAFT3_MAP, // Warcraft III Map files (2002)
-    WOW_1X,        // World of Warcraft 1 - Vanilla (2004)
-    WOW_2X,        // World of Warcraft 2 - The Burning Crusade (2007)
-    WOW_3X,        // World of Warcraft 3 - Wrath of the Lich King (2008)
-    WOW_4X,        // World of Warcraft 4 - Cataclysm (2010)
-    WOW_5X,        // World of Warcraft 5 - Mists of Pandaria (2012)
-    STARCRAFT2,    // StarCraft II (2010)
-    DIABLO3        // Diablo III (2012)
-};
 
 enum class RuleType {
     FILE_MASK, // Rule based on file pattern (e.g., "*.wav")
@@ -103,59 +84,4 @@ struct MpqCreateSettingsOverrides {
     std::optional<DWORD> raw_chunk_size;
 };
 
-// Game rules class that manages compression rules for different games
-class GameRules {
-private:
-    GameProfile profile_;
-    std::vector<CompressionRule> rules_;
-    MpqCreateSettings create_settings_;
-
-    // Helper function to match file mask pattern
-    static bool MatchFileMask(const std::string &filename, const std::string &mask);
-
-    // Add rule by file mask
-    void AddRuleByFileMask(const std::string &file_mask, DWORD mpq_flags, DWORD compression_first,
-                           DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
-
-    // Add rule by file size
-    void AddRuleByFileSize(DWORD size_min, DWORD size_max, DWORD mpq_flags, DWORD compression_first,
-                           DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
-
-    // Add default rule
-    void AddRuleDefault(DWORD mpq_flags, DWORD compression_first,
-                        DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
-
-    // Initialize rules for the selected game profile
-    void InitializeRules();
-
-    // Convert GameProfile enum to string
-    static std::string ProfileToString(GameProfile profile);
-
-public:
-    // Constructor
-    explicit GameRules(GameProfile game_profile);
-
-    // Get compression settings for a specific file
-    [[nodiscard]] CompressionSettings GetCompressionSettings(const std::string &filename,
-                                                             DWORD file_size) const;
-
-    // Get MPQ creation settings
-    [[nodiscard]] const MpqCreateSettings &GetCreateSettings() const { return create_settings_; }
-
-    // Override MPQ creation settings
-    void OverrideCreateSettings(const MpqCreateSettingsOverrides &overrides);
-
-    // Convert string to GameProfile enum
-    static GameProfile StringToProfile(const std::string &profile_name);
-
-    // Get list of canonical game profile names (for display purposes)
-    static std::vector<std::string> GetCanonicalProfiles();
-
-    // Get available profiles as a comma-separated string
-    static std::string GetAvailableProfiles();
-
-    // Get default game profile (GENERIC)
-    static GameProfile GetDefaultProfile() { return GameProfile::GENERIC; }
-};
-
-#endif // GAMERULES_H
+#endif

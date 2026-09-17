@@ -26,12 +26,15 @@ add_library(mpqcli_core STATIC
     mpq/remove.cpp
     mpq/rename.cpp
     mpq/verify.cpp
-    gamerules.cpp
+    gamerules/profile_data.cpp
+    gamerules/profiles.cpp
+    gamerules/rules.cpp
     util/capacity.cpp
     util/format.cpp
     util/hash.cpp
     util/locales.cpp
     util/path.cpp
+    util/string.cpp
 )
 
 add_dependencies(mpqcli_core storm)

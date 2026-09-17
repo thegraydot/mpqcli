@@ -11,7 +11,7 @@
 #include <StormLib.h>
 
 #include "cli/commands.h"
-#include "gamerules.h"
+#include "gamerules/rules.h"
 #include "mpq/add.h"
 #include "mpq/archive.h"
 #include "util/capacity.h"

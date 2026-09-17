@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "gamerules.h"
+#include "gamerules/rules.h"
 #include "util/locales.h"
 
 // Accepts every profile name but lists only the canonical ones on failure

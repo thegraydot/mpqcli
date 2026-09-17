@@ -8,7 +8,7 @@
 
 #include <StormLib.h>
 
-#include "gamerules.h"
+#include "gamerules/rules.h"
 #include "mpq/query.h"
 #include "util/capacity.h"
 #include "util/format.h"
