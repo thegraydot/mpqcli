@@ -31,7 +31,7 @@ Run `make help` to list all available targets. Common ones:
 | Target                     | Description                                                          |
 |----------------------------|----------------------------------------------------------------------|
 | `make install_clang_tools` | Install clang-format and clang-tidy via apt                          |
-| `make configure`           | Configure cmake build with clang (required before `make check_lint`) |
+| `make configure`           | Configure the cmake build (uses the default compiler)                |
 | `make build_linux`         | Build for Linux using cmake                                          |
 | `make build_windows`       | Build for Windows using cmake                                        |
 | `make test_create_venv`    | Create Python venv and install test dependencies (first-time only)   |
@@ -39,6 +39,7 @@ Run `make help` to list all available targets. Common ones:
 | `make check_all`           | Run every static check (clang-format + clang-tidy)                   |
 | `make check_format`        | Check formatting only (dry run)                                      |
 | `make format`              | Auto-fix formatting in-place                                         |
+| `make configure_lint`      | Configure build-lint/ with clang++ for clang-tidy                    |
 | `make check_lint`          | Run clang-tidy static analysis                                       |
 | `make clean`               | Remove all build, test and docs artifacts                            |
 

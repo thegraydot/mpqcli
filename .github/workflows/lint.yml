@@ -14,7 +14,7 @@ jobs:
 
       - run: make install_clang_tools
 
-      - run: make configure
+      - run: make configure_lint
 
       - run: make check_format
 
