@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace mpqcli {
+
 int HandleInfo(const std::string &target, const std::optional<std::string> &property);
 int HandleCreate(const std::string &target, const std::optional<std::string> &path,
                  const std::optional<std::string> &output, bool sign_archive,
@@ -33,5 +35,7 @@ int HandleRead(const std::string &file, const std::string &target,
                const std::optional<std::string> &locale);
 int HandleVerify(const std::string &target, bool print_signature);
 int HandleCompact(const std::string &target, const std::optional<std::string> &listfile_name);
+
+} // namespace mpqcli
 
 #endif // CLI_COMMANDS_H

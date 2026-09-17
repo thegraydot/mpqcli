@@ -1,5 +1,7 @@
 #include "gamerules/rules.h"
 
+namespace mpqcli {
+
 // Initialize rules for the selected game profile
 void GameRules::InitializeRules() {
     rules_.clear();
@@ -233,3 +235,5 @@ void GameRules::InitializeRules() {
         break;
     }
 }
+
+} // namespace mpqcli

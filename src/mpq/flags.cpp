@@ -5,6 +5,8 @@
 
 #include <StormLib.h>
 
+namespace mpqcli {
+
 std::string GetFlagString(uint32_t flags) {
     std::string result;
 
@@ -27,3 +29,5 @@ std::string GetFlagString(uint32_t flags) {
 
     return result;
 }
+
+} // namespace mpqcli

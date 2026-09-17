@@ -18,6 +18,8 @@
 
 namespace fs = std::filesystem;
 
+namespace mpqcli {
+
 int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               const std::optional<std::string> &path, bool overwrite, bool update,
               const std::optional<std::string> &locale,
@@ -101,3 +103,5 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     CloseMpqArchive(archive);
     return result;
 }
+
+} // namespace mpqcli

@@ -11,6 +11,8 @@
 #include "mpq/query.h"
 #include "util/format.h"
 
+namespace mpqcli {
+
 void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_property) {
     // Map of property names to their corresponding actions
     std::map<std::string, std::function<void(bool)>> property_actions = {
@@ -91,3 +93,5 @@ void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_propert
         }
     }
 }
+
+} // namespace mpqcli

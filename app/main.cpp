@@ -11,6 +11,8 @@
 #include "gamerules/rules.h"
 #include "validators.h"
 
+using namespace mpqcli;
+
 int main(int argc, char **argv) {
     CLI::App app{
         "A command line tool to create, add, remove, list, extract, read, rename, and verify MPQ "

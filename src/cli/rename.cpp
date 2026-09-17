@@ -9,6 +9,8 @@
 #include "mpq/archive.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 int HandleRename(const std::string &old_file, const std::string &new_file,
                  const std::string &target, const std::optional<std::string> &locale) {
     HANDLE archive;
@@ -21,3 +23,5 @@ int HandleRename(const std::string &old_file, const std::string &new_file,
     CloseMpqArchive(archive);
     return result;
 }
+
+} // namespace mpqcli

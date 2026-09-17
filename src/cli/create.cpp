@@ -20,6 +20,8 @@
 
 namespace fs = std::filesystem;
 
+namespace mpqcli {
+
 int HandleCreate(const std::string &target, const std::optional<std::string> &path,
                  const std::optional<std::string> &output, bool sign_archive,
                  const std::optional<std::string> &locale,
@@ -133,3 +135,5 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
 
     return result;
 }
+
+} // namespace mpqcli

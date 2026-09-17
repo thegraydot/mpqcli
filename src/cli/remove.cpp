@@ -11,6 +11,8 @@
 #include "mpq/archive.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 int HandleRemove(const std::vector<std::string> &files, const std::string &target,
                  const std::optional<std::string> &locale) {
     HANDLE archive;
@@ -33,3 +35,5 @@ int HandleRemove(const std::vector<std::string> &files, const std::string &targe
     CloseMpqArchive(archive);
     return overall_result;
 }
+
+} // namespace mpqcli

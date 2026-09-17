@@ -9,6 +9,8 @@
 
 namespace fs = std::filesystem;
 
+namespace mpqcli {
+
 std::string NormalizeFilePath(const fs::path &path) {
     std::string file_path = path.u8string();
 #ifndef _WIN32
@@ -81,3 +83,5 @@ std::string ResolveArchiveName(const std::string &f, const std::optional<std::st
     }
     return WindowsifyFilePath(file_path);
 }
+
+} // namespace mpqcli

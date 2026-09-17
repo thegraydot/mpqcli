@@ -9,6 +9,8 @@
 #include "gamerules/profiles.h"
 #include "gamerules/settings.h"
 
+namespace mpqcli {
+
 // Game rules class that manages compression rules for different games
 class GameRules {
 private:
@@ -63,5 +65,7 @@ public:
     // Get default game profile (GENERIC)
     static GameProfile GetDefaultProfile() { return GameProfile::GENERIC; }
 };
+
+} // namespace mpqcli
 
 #endif

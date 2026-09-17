@@ -5,6 +5,8 @@
 #include "gamerules/rules.h"
 #include "util/locales.h"
 
+using namespace mpqcli;
+
 // Accepts every profile name but lists only the canonical ones on failure
 extern const CLI::Validator game_profile_valid = CLI::Validator(
     [](const std::string &str) {

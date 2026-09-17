@@ -12,6 +12,8 @@
 #include "util/format.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 int HandleRead(const std::string &file, const std::string &target,
                const std::optional<std::string> &locale) {
     HANDLE archive;
@@ -37,3 +39,5 @@ int HandleRead(const std::string &file, const std::string &target,
     CloseMpqArchive(archive);
     return 0;
 }
+
+} // namespace mpqcli

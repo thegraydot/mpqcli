@@ -7,7 +7,7 @@
 
 #include <StormLib.h>
 
-namespace fs = std::filesystem;
+namespace mpqcli {
 
 /// Files the archive maintains for itself rather than on a user's behalf
 inline const std::vector<std::string> special_mpq_files = {"(listfile)", "(signature)",
@@ -16,7 +16,7 @@ inline const std::vector<std::string> special_mpq_files = {"(listfile)", "(signa
 bool FileExistsInArchiveForLocale(HANDLE archive, const std::string &file_path, LCID locale);
 
 /// Reports whether the archived copy of local_file is byte-for-byte current
-bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,
+bool ArchivedFileMatches(HANDLE archive, HANDLE file, const std::filesystem::path &local_file,
                          std::string &match_reason);
 
 template <typename T> T GetFileInfo(HANDLE file, SFileInfoClass info_class) {
@@ -26,5 +26,7 @@ template <typename T> T GetFileInfo(HANDLE file, SFileInfoClass info_class) {
     }
     return value;
 }
+
+} // namespace mpqcli
 
 #endif

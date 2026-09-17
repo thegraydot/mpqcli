@@ -5,6 +5,8 @@
 
 #include "util/string.h"
 
+namespace mpqcli {
+
 // Constructor
 GameRules::GameRules(GameProfile game_profile) : profile_(game_profile) {
     InitializeRules();
@@ -165,3 +167,5 @@ void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrid
     // Note: If user explicitly sets fileFlags2 to 0 via override, we respect that choice
     // even if attrFlags is non-zero.
 }
+
+} // namespace mpqcli

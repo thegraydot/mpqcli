@@ -9,6 +9,8 @@
 #include "util/format.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned int *file_size,
                                  LCID preferred_locale) {
     SFileSetLocale(preferred_locale);
@@ -44,3 +46,5 @@ std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned
     SFileCloseFile(file);
     return file_content;
 }
+
+} // namespace mpqcli

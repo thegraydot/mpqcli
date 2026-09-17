@@ -11,6 +11,10 @@
 #include "util/locales.h"
 #include "util/path.h"
 
+namespace mpqcli {
+
+namespace fs = std::filesystem;
+
 bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_path,
                                   const LCID locale) {
     bool file_exists = false;
@@ -85,3 +89,5 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
     // No attributes present, or none matched: re-add the file.
     return false;
 }
+
+} // namespace mpqcli

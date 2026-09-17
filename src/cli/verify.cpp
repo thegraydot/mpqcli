@@ -8,6 +8,8 @@
 #include "cli/commands.h"
 #include "mpq/archive.h"
 
+namespace mpqcli {
+
 int HandleVerify(const std::string &target, bool print_signature) {
     HANDLE archive;
     if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
@@ -52,3 +54,5 @@ int HandleVerify(const std::string &target, bool print_signature) {
     CloseMpqArchive(archive);
     return result;
 }
+
+} // namespace mpqcli

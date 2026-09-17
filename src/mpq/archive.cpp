@@ -8,6 +8,8 @@
 
 #include "util/format.h"
 
+namespace mpqcli {
+
 bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags) {
     if (!SFileOpenArchive(filename.c_str(), 0, flags, archive)) {
         const auto error = SErrGetLastError();
@@ -35,3 +37,5 @@ bool SignMpqArchive(HANDLE archive) {
     }
     return true;
 }
+
+} // namespace mpqcli

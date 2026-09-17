@@ -6,6 +6,10 @@
 
 #include <StormLib.h>
 
+namespace mpqcli {
+
 int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name);
+
+} // namespace mpqcli
 
 #endif

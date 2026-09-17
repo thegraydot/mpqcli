@@ -14,6 +14,8 @@
 
 namespace fs = std::filesystem;
 
+namespace mpqcli {
+
 int HandleExtract(const std::string &target, const std::optional<std::string> &output,
                   const std::optional<std::string> &file, bool keep_folder_structure,
                   const std::optional<std::string> &listfile_name,
@@ -76,3 +78,5 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
     }
     return result;
 }
+
+} // namespace mpqcli

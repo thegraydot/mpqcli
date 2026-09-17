@@ -1,6 +1,8 @@
 #ifndef GAMERULES_PROFILES_H
 #define GAMERULES_PROFILES_H
 
+namespace mpqcli {
+
 enum class GameProfile {
     GENERIC,       // Default/generic MPQ with basic compression
     DIABLO1,       // Diablo I / Hellfire (1997)
@@ -18,5 +20,7 @@ enum class GameProfile {
     STARCRAFT2,    // StarCraft II (2010)
     DIABLO3        // Diablo III (2012)
 };
+
+} // namespace mpqcli
 
 #endif

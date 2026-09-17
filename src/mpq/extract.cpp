@@ -1,5 +1,6 @@
 #include "mpq/extract.h"
 
+#include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -10,6 +11,10 @@
 #include "util/format.h"
 #include "util/locales.h"
 #include "util/path.h"
+
+namespace mpqcli {
+
+namespace fs = std::filesystem;
 
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale) {
@@ -116,3 +121,5 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
 
     return 0;
 }
+
+} // namespace mpqcli

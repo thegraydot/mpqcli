@@ -13,6 +13,10 @@
 #include "util/format.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
+namespace fs = std::filesystem;
+
 uint32_t VerifyMpqArchive(HANDLE archive) {
     return SFileVerifyArchive(archive);
 }
@@ -71,3 +75,5 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
 
     return 0;
 }
+
+} // namespace mpqcli

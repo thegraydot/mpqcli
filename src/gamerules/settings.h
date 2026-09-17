@@ -7,6 +7,8 @@
 
 #include <StormLib.h>
 
+namespace mpqcli {
+
 enum class RuleType {
     FILE_MASK, // Rule based on file pattern (e.g., "*.wav")
     FILE_SIZE, // Rule based on file size range
@@ -83,5 +85,7 @@ struct MpqCreateSettingsOverrides {
     std::optional<DWORD> sector_size;
     std::optional<DWORD> raw_chunk_size;
 };
+
+} // namespace mpqcli
 
 #endif

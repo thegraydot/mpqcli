@@ -3,7 +3,11 @@
 
 #include <string>
 
+namespace mpqcli {
+
 /// Returns str with every ASCII letter lowercased
 std::string ToLower(const std::string &str);
+
+} // namespace mpqcli
 
 #endif

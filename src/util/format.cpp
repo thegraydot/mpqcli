@@ -12,6 +12,8 @@
 
 #include <StormLib.h>
 
+namespace mpqcli {
+
 std::string FileTimeToLsTime(int64_t file_time) {
     if (file_time == 0) {
         return "";
@@ -72,3 +74,5 @@ void PrintAsBinary(const char *buffer, uint32_t size) {
 #endif
     std::cout.write(buffer, size);
 }
+
+} // namespace mpqcli

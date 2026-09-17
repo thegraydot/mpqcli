@@ -8,6 +8,8 @@
 
 #include "util/format.h"
 
+namespace mpqcli {
+
 int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name) {
     std::cout << "[*] Compacting archive. This may take some time..." << std::endl;
     // Check if the user provided a listfile input
@@ -21,3 +23,5 @@ int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile
     }
     return 0;
 }
+
+} // namespace mpqcli

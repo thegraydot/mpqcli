@@ -9,6 +9,8 @@
 #include "util/format.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale) {
     SFileSetLocale(locale);
     std::cout << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": "
@@ -30,3 +32,5 @@ int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale
 
     return 0;
 }
+
+} // namespace mpqcli

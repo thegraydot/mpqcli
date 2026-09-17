@@ -10,15 +10,18 @@
 #include "gamerules/rules.h"
 #include "gamerules/settings.h"
 
-namespace fs = std::filesystem;
+namespace mpqcli {
 
-int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
-             const std::string &path_prefix, LCID locale, const GameRules &game_rules,
+int AddFiles(HANDLE archive, const std::vector<std::filesystem::path> &files,
+             const std::filesystem::path &base_path, const std::string &path_prefix, LCID locale,
+             const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
              bool overwrite = false, bool update = false, int *skipped = nullptr);
-int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
-            LCID locale, const GameRules &game_rules,
+int AddFile(HANDLE archive, const std::filesystem::path &local_file,
+            const std::string &archive_file_path, LCID locale, const GameRules &game_rules,
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
             bool overwrite = false, bool update = false, int *skipped = nullptr);
+
+} // namespace mpqcli
 
 #endif

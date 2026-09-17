@@ -16,6 +16,8 @@
 #include "util/format.h"
 #include "util/locales.h"
 
+namespace mpqcli {
+
 int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
               bool list_detailed, const std::vector<std::string> &properties) {
     // Check if the user provided a listfile input
@@ -162,3 +164,5 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
     SFileFindClose(find_handle);
     return 0;
 }
+
+} // namespace mpqcli

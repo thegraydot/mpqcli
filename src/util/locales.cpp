@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 
+namespace mpqcli {
+
 namespace {
 // Files in MPQs have locales with which they are associated.
 // Multiple files can have the same file name if they have different locales.
@@ -119,3 +121,5 @@ std::string PrettyPrintLocale(const LCID locale, const std::string &prefix, bool
     const auto lang = LocaleToLang(locale);
     return prefix + lang;
 }
+
+} // namespace mpqcli

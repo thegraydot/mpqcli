@@ -15,6 +15,10 @@
 #include "util/locales.h"
 #include "util/path.h"
 
+namespace mpqcli {
+
+namespace fs = std::filesystem;
+
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
              const std::string &path_prefix, LCID locale, const GameRules &game_rules,
              const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
@@ -177,3 +181,5 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
 
     return 0;
 }
+
+} // namespace mpqcli

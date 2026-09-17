@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace mpqcli {
+
 uint32_t NextPowerOfTwo(uint32_t n) {
     n--;
     n |= n >> 1;
@@ -27,3 +29,5 @@ uint32_t CalculateMpqMaxFileValue(uint32_t file_count) {
 
     return NextPowerOfTwo(file_count);
 }
+
+} // namespace mpqcli

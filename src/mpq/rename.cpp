@@ -10,6 +10,8 @@
 #include "util/locales.h"
 #include "util/path.h"
 
+namespace mpqcli {
+
 int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
                const std::string &new_archive_file_path, LCID locale) {
     SFileSetLocale(locale);
@@ -33,3 +35,5 @@ int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
 
     return 0;
 }
+
+} // namespace mpqcli

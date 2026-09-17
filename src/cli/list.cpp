@@ -9,6 +9,8 @@
 #include "cli/commands.h"
 #include "mpq/archive.h"
 
+namespace mpqcli {
+
 int HandleList(const std::string &target, const std::optional<std::string> &listfile_name,
                bool list_all, bool list_detailed, const std::vector<std::string> &properties) {
     HANDLE archive;
@@ -19,3 +21,5 @@ int HandleList(const std::string &target, const std::optional<std::string> &list
     CloseMpqArchive(archive);
     return 0;
 }
+
+} // namespace mpqcli

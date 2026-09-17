@@ -5,6 +5,8 @@
 #include "gamerules/rules.h"
 #include "util/string.h"
 
+namespace mpqcli {
+
 // Get the profile name map (single source of truth for all valid profile names)
 static const std::map<std::string, GameProfile> &GetProfileMap() {
     static const std::map<std::string, GameProfile> profile_map = {
@@ -127,3 +129,5 @@ std::string GameRules::GetAvailableProfiles() {
 
     return result;
 }
+
+} // namespace mpqcli

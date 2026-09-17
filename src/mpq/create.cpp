@@ -12,6 +12,8 @@
 
 namespace fs = std::filesystem;
 
+namespace mpqcli {
+
 HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t file_count,
                         const GameRules &game_rules) {
     // Check if file already exists
@@ -51,3 +53,5 @@ HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t f
 
     return archive;
 }
+
+} // namespace mpqcli
