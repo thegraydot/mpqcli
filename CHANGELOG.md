@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.11.0 - 2026-09-21
+
+### Added
+
+- Add rename subcommand to rename a file inside an archive
+
+### Changed
+
+- Compare timestamps and checksums when updating files, not size alone
+- Accept the update flag for single files as well as directories
+- Reject the update and overwrite flags on add when both are given
+
+### Fixed
+
+- Report filesystem errors instead of aborting when a path cannot be resolved
+- Add to and create archives on volumes that cannot report real paths
+- Block path traversal in extract before anything is written to disk
+
+### Updated
+
+- Update StormLib for a variety of fixes
+- Add hash-library as a submodule dependency
+- Build with StormLib's bundled compression libraries instead of system packages
+- Require CMake 3.25 or later
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
+
 ## 0.10.2 - 2026-07-03
 
 ### Fixed

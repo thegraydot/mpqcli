@@ -157,6 +157,14 @@ ci: configure build check_all test ## Run all CI checks locally
 clean: test_clean docs_clean ## Remove all build, test, and docs artifacts
 	rm -rf build $(LINT_DIR)
 
+##@ GENERATE
+# The docs site builds from the committed copy, so this is run deliberately and the
+# result committed rather than being made a prerequisite of docs_build
+.PHONY: gen_docs_changelog
+gen_docs_changelog: ## Copy CHANGELOG.md into the docs site
+	@cp CHANGELOG.md docs/changelog.md
+	@echo "[*] Updated docs/changelog.md"
+
 ##@ GET
 .PHONY: get_version
 get_version: ## Print the project version from CMakeLists.txt
