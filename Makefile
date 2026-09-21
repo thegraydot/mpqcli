@@ -136,6 +136,14 @@ ci: configure build fmt_check lint_cpp test ## Run all CI checks locally
 .PHONY: clean
 clean: build_clean test_clean docs_clean ## Remove all build, test, and docs artifacts
 
+# GENERATE
+# The docs site builds from the committed copy, so this is run deliberately and the
+# result committed rather than being made a prerequisite of docs_build
+.PHONY: gen_docs_changelog
+gen_docs_changelog: ## Copy CHANGELOG.md into the docs site
+	@cp CHANGELOG.md docs/changelog.md
+	@echo "[*] Updated docs/changelog.md"
+
 # GET
 .PHONY: get_project_version
 get_project_version: ## Print the project version from CMakeLists.txt
