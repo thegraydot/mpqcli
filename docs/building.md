@@ -2,10 +2,11 @@
 
 ## Requirements
 
-- cmake
+- cmake 3.25 or later
 - C++ 17 compiler
 - StormLib (provided as Git Submodule)
 - CLI11 (provided as Git Submodule)
+- hash-library (provided as Git Submodule)
 
 ## Linux
 
