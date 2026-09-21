@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.10.2 - 2026-07-03
+
+### Fixed
+
+- `verify` incorrectly reporting success for a tampered archive
+- `verify` failure messages now clarify whether a signature is missing or invalid
+- `add` overwrite flag not always working as expected
+- Archive size incorrectly reported for large archives
+- File sizes shown as negative for large files
+
+### Updated
+
+- Simplified how strong archive signatures are read internally
+
+## 0.10.1 - 2026-07-03
+
+### Added
+
+- Command completion for common shells (bash, zsh, fish and powershell)
+
+### Fixed
+
+- Memory leak in read subcommand
+- Inconsistencies in documentation
+
+### Updated
+
+- Code style to conform to Google CPP style with slight variations
+- StormLib dependency for a variety of fixes
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
+
 ## 0.10.0 - 2026-06-07
 
 ### Added
