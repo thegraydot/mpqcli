@@ -25,3 +25,5 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
     needs: build
+  valgrind:
+    uses: ./.github/workflows/valgrind.yml

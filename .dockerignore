@@ -1,1 +1,31 @@
-/build
+# Build directories
+build
+build/
+build/**
+bin/
+lib/
+
+# Python
+test/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Valgrind logs
+valgrind_logs/
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
