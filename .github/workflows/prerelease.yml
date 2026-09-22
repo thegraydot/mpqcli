@@ -39,9 +39,16 @@ jobs:
         with:
           name: mpqcli-windows-amd64.exe
 
-      - name: Delete existing dev release
+      - name: Delete any existing dev release
         run: |
-          gh release delete dev --yes --cleanup-tag || true
+          if err=$(gh release view dev 2>&1 >/dev/null); then
+            gh release delete dev --yes --cleanup-tag
+          elif grep -qi "release not found" <<<"$err"; then
+            echo "No existing dev release"
+          else
+            echo "::error::could not determine whether a dev release exists: ${err}"
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
