@@ -16,9 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Resolve release version
+      - name: Resolve release version from the tag
         id: version
-        run: echo "version=$(make get_version)" >> "$GITHUB_OUTPUT"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          project_version="$(make get_version)"
+          if [ "$version" != "$project_version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match the project version ${project_version} in CMakeLists.txt"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Download Linux GLIBC binary
         uses: actions/download-artifact@v8

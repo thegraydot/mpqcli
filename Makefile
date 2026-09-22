@@ -167,8 +167,13 @@ gen_docs_changelog: ## Copy CHANGELOG.md into the docs site
 
 ##@ GET
 .PHONY: get_version
-get_version: ## Print the project version from CMakeLists.txt
-	@grep -oE 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+get_version: ## Print the project version from CMakeLists.txt (fails if absent)
+	@awk '\
+	  /cmake_minimum_required/ { next } \
+	  match($$0, /VERSION[ \t]+[0-9]+\.[0-9]+\.[0-9]+/) { \
+	    v = substr($$0, RSTART, RLENGTH); sub(/VERSION[ \t]+/, "", v); \
+	    print v; found = 1; exit } \
+	  END { if (!found) exit 1 }' CMakeLists.txt
 
 .PHONY: get_changelog
 get_changelog: ## Print release notes for TAG to stdout (default: latest tag; override with TAG=v1.0.0)
