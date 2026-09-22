@@ -19,7 +19,7 @@ namespace {
 // https://winprotocoldoc.z19.web.core.windows.net/MS-LCID/%5bMS-LCID%5d.pdf
 
 // Define a bidirectional map for locale-language mappings
-const std::map<uint16_t, std::string> locale_to_lang_map = {
+const std::map<LCID, std::string> locale_to_lang_map = {
     {0x000, "enUS"}, // Default - English (US)
     {0x404, "zhTW"}, // Chinese (Taiwan)
     {0x405, "csCZ"}, // Czech
@@ -41,8 +41,8 @@ const std::map<uint16_t, std::string> locale_to_lang_map = {
 };
 
 // Create a reverse map for language-to-locale lookups
-const std::map<std::string, uint16_t> lang_to_locale_map = []() {
-    std::map<std::string, uint16_t> reverse_map;
+const std::map<std::string, LCID> lang_to_locale_map = []() {
+    std::map<std::string, LCID> reverse_map;
     for (const auto &[locale, lang] : locale_to_lang_map) {
         if (locale != default_locale) { // Skip the default locale to avoid duplication
             reverse_map[lang] = locale;
@@ -55,7 +55,11 @@ std::string FormatLocaleAsHex(const LCID locale) {
     std::stringstream ss;
     ss << std::hex << std::uppercase << locale;
     const std::string hex_str = ss.str();
-    // Prepend 0s if needed
+    // Pad to four digits, guarding the subtraction: an LCID wider than 0xFFFF
+    // formats to more than four characters and would underflow the length
+    if (hex_str.length() >= 4) {
+        return hex_str;
+    }
     return std::string(4 - hex_str.length(), '0') + hex_str;
 }
 } // namespace
@@ -82,7 +86,7 @@ LCID ParseHexLocale(const std::string &str) {
     return locale;
 }
 
-std::string LocaleToLang(uint16_t locale) {
+std::string LocaleToLang(const LCID locale) {
     auto it = locale_to_lang_map.find(locale);
     return it != locale_to_lang_map.end() ? it->second : FormatLocaleAsHex(locale);
 }

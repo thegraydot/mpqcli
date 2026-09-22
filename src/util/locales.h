@@ -11,7 +11,7 @@ namespace mpqcli {
 
 inline constexpr LCID default_locale = 0;
 
-std::string LocaleToLang(uint16_t locale);
+std::string LocaleToLang(LCID locale);
 LCID LangToLocale(const std::string &lang);
 LCID ParseHexLocale(const std::string &str);
 std::vector<std::string> GetAllLocales();

@@ -85,7 +85,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     SFileSetLocale(locale);
     HANDLE file;
     if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
-        const auto file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+        const auto file_locale = GetFileInfo<LCID>(file, SFileInfoLocale);
         if (file_locale == locale) {
             // --update: leave the archived copy alone while it still matches the local file
             std::string match_reason;

@@ -8,7 +8,7 @@
 
 namespace mpqcli {
 
-bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags);
+bool OpenMpqArchive(const std::string &filename, HANDLE *archive, DWORD flags);
 bool CloseMpqArchive(HANDLE archive);
 bool SignMpqArchive(HANDLE archive);
 

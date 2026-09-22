@@ -51,13 +51,15 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
 
         const fs::path archive_path(target);
         std::error_code ec;
-        const std::uintmax_t file_size = fs::file_size(archive_path, ec);
+        const auto file_size = static_cast<int64_t>(fs::file_size(archive_path, ec));
         if (ec) {
             std::cerr << "[!] Failed to read archive size: (" << ec.value() << ") " << ec.message()
                       << ": " << target << std::endl;
             return -1;
         }
-        int64_t signature_length = file_size - archive_offset - archive_size;
+        // Signed deliberately: the subtraction can legitimately go negative, and in
+        // unsigned arithmetic it would wrap to a huge positive and pass the check below
+        const int64_t signature_length = file_size - archive_offset - archive_size;
 
         if (signature_length <= 0) {
             std::cerr << "[!] Invalid signature length: " << signature_length << std::endl;
@@ -67,7 +69,8 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         std::ifstream file_mpq(archive_path, std::ios::binary);
         file_mpq.seekg(archive_offset + archive_size, std::ios::beg);
         signature_content.resize(static_cast<size_t>(signature_length));
-        file_mpq.read(signature_content.data(), signature_content.size());
+        file_mpq.read(signature_content.data(),
+                      static_cast<std::streamsize>(signature_content.size()));
         file_mpq.close();
 
         PrintAsBinary(signature_content.data(), static_cast<uint32_t>(signature_content.size()));

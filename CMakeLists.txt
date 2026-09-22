@@ -6,6 +6,10 @@ project(MPQCLI VERSION 0.11.0)
 # carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.
 option(MPQCLI_BUILD_APP "Build the mpqcli binary" ON)
 option(MPQCLI_BUILD_STATIC "Build static binary" OFF)
+# Off by default, so a new compiler release adding a warning cannot stop a
+# developer working. The bar is enforced by check_lint instead: clang-tidy
+# replays these flags and .clang-tidy treats every warning as an error
+option(MPQCLI_WERROR "Treat compiler warnings as errors" OFF)
 
 # Set project defaults
 set(CMAKE_CXX_STANDARD 17)

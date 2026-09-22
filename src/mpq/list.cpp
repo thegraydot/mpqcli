@@ -130,7 +130,7 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
                                   << std::dec << " ";
                     } else if (prop == "locale") {
                         std::cout << std::setw(4)
-                                  << LocaleToLang(GetFileInfo<int32_t>(file, it->second)) << " ";
+                                  << LocaleToLang(GetFileInfo<LCID>(file, it->second)) << " ";
                     } else if (prop == "byte-offset") {
                         std::cout << std::hex << std::setw(8)
                                   << GetFileInfo<int64_t>(file, it->second) << std::dec << " ";
@@ -142,7 +142,7 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
                         std::cout << std::setw(8) << GetFileInfo<uint32_t>(file, it->second) << " ";
                     } else if (prop == "flags") {
                         std::cout << std::setw(8)
-                                  << GetFlagString(GetFileInfo<int32_t>(file, it->second)) << " ";
+                                  << GetFlagString(GetFileInfo<uint32_t>(file, it->second)) << " ";
                     } else if (prop == "encryption-key" || prop == "encryption-key-raw") {
                         std::cout << std::setfill('0') << std::hex << std::setw(8)
                                   << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')

@@ -10,7 +10,7 @@
 
 namespace mpqcli {
 
-bool OpenMpqArchive(const std::string &filename, HANDLE *archive, int32_t flags) {
+bool OpenMpqArchive(const std::string &filename, HANDLE *archive, const DWORD flags) {
     if (!SFileOpenArchive(filename.c_str(), 0, flags, archive)) {
         const auto error = SErrGetLastError();
         std::cerr << "[!] Failed to open MPQ archive: " << filename << ": (" << error << ") "

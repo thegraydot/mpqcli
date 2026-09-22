@@ -1,3 +1,22 @@
+# The warning bar, defined once and linked privately by every target the project
+# owns. -Wsign-conversion is spelled out because clang folds it into -Wconversion
+# and GCC does not; left implicit, the two compilers hold different bars for the
+# same source. The vendored targets deliberately do not link this
+add_library(mpqcli_warnings INTERFACE)
+target_compile_options(mpqcli_warnings INTERFACE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wshadow -Wnon-virtual-dtor -Wold-style-cast>
+)
+
+if(MPQCLI_WERROR)
+    target_compile_options(mpqcli_warnings INTERFACE
+        $<$<CXX_COMPILER_ID:MSVC>:/WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Werror>
+    )
+endif()
+
+add_library(mpqcli::warnings ALIAS mpqcli_warnings)
+
 # Generated beside the core library so the core and the CLI report the same version
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
@@ -56,3 +75,4 @@ target_include_directories(mpqcli_core SYSTEM PUBLIC
 )
 
 target_link_libraries(mpqcli_core PUBLIC storm hash-library)
+target_link_libraries(mpqcli_core PRIVATE mpqcli::warnings)

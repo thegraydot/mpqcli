@@ -21,7 +21,7 @@ bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_
     SFileSetLocale(locale);
     HANDLE file;
     if (SFileOpenFileEx(archive, file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {
-        const auto file_locale = GetFileInfo<int32_t>(file, SFileInfoLocale);
+        const auto file_locale = GetFileInfo<LCID>(file, SFileInfoLocale);
         if (file_locale == locale) {
             file_exists = true;
         }
