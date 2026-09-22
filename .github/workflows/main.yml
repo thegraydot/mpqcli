@@ -16,8 +16,8 @@ on:
       - "extern/**"
       - "test/**"
       - "CMakeLists.txt"
-      - "Dockerfile.glibc"
-      - "Dockerfile.musl"
+      - "Dockerfile"
+      - ".dockerignore"
 
 concurrency:
   group: prerelease

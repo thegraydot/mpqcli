@@ -63,20 +63,12 @@ build_windows: ## Build for Windows using cmake
 	cmake --build build --config $(CMAKE_BUILD_TYPE) --parallel $(JOBS)
 
 ##@ DOCKER
-.PHONY: docker_musl_build
-docker_musl_build: ## Build Docker image using musl
-	docker build -t mpqcli:$(VERSION) -f Dockerfile.musl .
+.PHONY: docker_build
+docker_build: ## Build the Docker image
+	docker build -t mpqcli:$(VERSION) .
 
-.PHONY: docker_musl_run
-docker_musl_run: ## Run the musl Docker image
-	@docker run -it mpqcli:$(VERSION) version
-
-.PHONY: docker_glibc_build
-docker_glibc_build: ## Build Docker image using glibc
-	docker build -t mpqcli:$(VERSION) -f Dockerfile.glibc .
-
-.PHONY: docker_glibc_run
-docker_glibc_run: ## Run the glibc Docker image
+.PHONY: docker_run
+docker_run: ## Run the Docker image
 	@docker run -it mpqcli:$(VERSION) version
 
 ##@ DOCS

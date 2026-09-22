@@ -10,30 +10,12 @@ jobs:
         include:
           # AMD64 builds on ubuntu-24.04
           - arch: amd64
-            libc: glibc
             runner: ubuntu-24.04
-            dockerfile: Dockerfile.glibc
             platform: linux/amd64
-            binary_path: /usr/local/bin/mpqcli
-          - arch: amd64
-            libc: musl
-            runner: ubuntu-24.04
-            dockerfile: Dockerfile.musl
-            platform: linux/amd64
-            binary_path: /mpqcli
           # ARM64 builds on ubuntu-24.04-arm
           - arch: arm64
-            libc: glibc
             runner: ubuntu-24.04-arm
-            dockerfile: Dockerfile.glibc
             platform: linux/arm64
-            binary_path: /usr/local/bin/mpqcli
-          - arch: arm64
-            libc: musl
-            runner: ubuntu-24.04-arm
-            dockerfile: Dockerfile.musl
-            platform: linux/arm64
-            binary_path: /mpqcli
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -42,29 +24,29 @@ jobs:
         with:
           submodules: true
 
-      - name: Build Docker image (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Build Docker image (${{ matrix.arch }})
         run: |
-          docker build --platform ${{ matrix.platform }} -t mpqcli-${{ matrix.arch }}-${{ matrix.libc }} -f ${{ matrix.dockerfile }} .
+          docker build --platform ${{ matrix.platform }} -t mpqcli-${{ matrix.arch }} .
 
       - name: Extract binary from Docker image
         run: |
           # Create a temporary container from the image
-          CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }}-${{ matrix.libc }})
+          CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }})
           # Copy the binary from the container
-          docker cp $CONTAINER_ID:${{ matrix.binary_path }} ./mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
+          docker cp $CONTAINER_ID:/mpqcli ./mpqcli-linux-${{ matrix.arch }}
           # Clean up the container
           docker rm $CONTAINER_ID
 
       - name: Verify binary
         run: |
-          file ./mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
-          echo "Binary created: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}"
+          file ./mpqcli-linux-${{ matrix.arch }}
+          echo "Binary created: mpqcli-linux-${{ matrix.arch }}"
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
-          path: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
+          name: mpqcli-linux-${{ matrix.arch }}
+          path: mpqcli-linux-${{ matrix.arch }}
           retention-days: 1
 
   build_windows:
@@ -107,11 +89,9 @@ jobs:
         with:
           submodules: true
 
-      # For the distributable Docker image we use musl
-      # This results in a smaller image size
       - name: Build Docker image (AMD64)
         run: |
-          docker build --platform linux/amd64 -t mpqcli -f Dockerfile.musl .
+          docker build --platform linux/amd64 -t mpqcli .
 
       - name: Save Docker image as a tar file
         run: |

@@ -54,7 +54,7 @@ make build_linux   # Linux
 make build_windows # Windows
 ```
 
-A PR automatically triggers the CI build workflow, which compiles and tests across all supported Linux targets (AMD64 and ARM64, glibc and musl). You are not expected to reproduce all of those locally.
+A PR automatically triggers the CI build workflow, which compiles and tests across all supported Linux targets (AMD64 and ARM64). You are not expected to reproduce all of those locally.
 
 ### 2. Tests pass
 

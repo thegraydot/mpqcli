@@ -1,1 +1,10 @@
-/build
+# Local build, docs and test output: large, stale and never read by the image build
+build/
+build-lint/
+book/
+.venv/
+test/data/
+
+# .git is deliberately not ignored. The root CMakeLists runs git rev-parse to
+# stamp the commit into the version header, and without the repository the
+# released binary reports "unknown"

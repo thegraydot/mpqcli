@@ -14,25 +14,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download Linux GLIBC binary
+      - name: Download Linux AMD64 binary
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-amd64-glibc
+          name: mpqcli-linux-amd64
 
-      - name: Download Linux MUSL binary
+      - name: Download Linux ARM64 binary
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-amd64-musl
-
-      - name: Download Linux ARM64 GLIBC binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-linux-arm64-glibc
-
-      - name: Download Linux ARM64 MUSL binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-linux-arm64-musl
+          name: mpqcli-linux-arm64
 
       - name: Download Windows binary
         uses: actions/download-artifact@v8
@@ -58,10 +48,8 @@ jobs:
             --title "Dev (Pre-release)" \
             --prerelease \
             --notes "**Commit:** ${{ github.sha }}" \
-            mpqcli-linux-amd64-glibc \
-            mpqcli-linux-amd64-musl \
-            mpqcli-linux-arm64-glibc \
-            mpqcli-linux-arm64-musl \
+            mpqcli-linux-amd64 \
+            mpqcli-linux-arm64 \
             mpqcli-windows-amd64.exe
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

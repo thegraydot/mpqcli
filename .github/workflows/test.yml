@@ -13,17 +13,9 @@ jobs:
         include:
           # AMD64 tests on ubuntu-24.04
           - arch: amd64
-            libc: glibc
-            runner: ubuntu-24.04
-          - arch: amd64
-            libc: musl
             runner: ubuntu-24.04
           # ARM64 tests on ubuntu-24.04-arm
           - arch: arm64
-            libc: glibc
-            runner: ubuntu-24.04-arm
-          - arch: arm64
-            libc: musl
             runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
@@ -34,19 +26,19 @@ jobs:
         with:
           submodules: false
 
-      - name: Download Linux binary (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Download Linux binary (${{ matrix.arch }})
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
+          name: mpqcli-linux-${{ matrix.arch }}
           path: build/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }} build/bin/mpqcli
+        run: mv build/bin/mpqcli-linux-${{ matrix.arch }} build/bin/mpqcli
 
       - name: Make binary executable
         run: chmod +x ./build/bin/mpqcli
 
-      - name: Check mpqcli version (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Check mpqcli version (${{ matrix.arch }})
         run: ./build/bin/mpqcli version
 
       - name: Setup python
@@ -59,7 +51,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r test/requirements.txt
 
-      - name: Run tests (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Run tests (${{ matrix.arch }})
         run: |
           python3 -m pytest test
 
