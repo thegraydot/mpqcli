@@ -272,8 +272,9 @@ int main(int argc, char **argv) {
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
-        // If we get a "subcommand required" error, print help message
-        if (e.get_exit_code() == static_cast<int>(CLI::ExitCodes::RequiredError)) {
+        // An empty command line is a request for help rather than a mistake. The argc
+        // check is what keeps an unknown subcommand, which raises the same error, failing
+        if (argc == 1 && e.get_exit_code() == static_cast<int>(CLI::ExitCodes::RequiredError)) {
             std::cout << app.help() << std::endl;
             return 0;
         }
