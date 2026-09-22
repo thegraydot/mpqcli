@@ -1,9 +1,3 @@
-configure_file(
-    "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
-    "${PROJECT_BINARY_DIR}/include/mpqcli/version.h"
-    @ONLY
-)
-
 # Re-run configure when a script is edited, so the embedded copy cannot go stale
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/completion/mpqcli.bash"

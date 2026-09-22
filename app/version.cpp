@@ -4,6 +4,6 @@
 #include "commands.h"
 
 int HandleVersion() {
-    std::cout << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
+    std::cout << mpqcli::version_string << "-" << mpqcli::git_commit_hash << std::endl;
     return 0;
 }

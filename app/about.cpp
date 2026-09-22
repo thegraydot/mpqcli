@@ -5,7 +5,8 @@
 
 int HandleAbout() {
     std::cout << "Name: mpqcli" << std::endl;
-    std::cout << "Version: " << MPQCLI_VERSION << "-" << GIT_COMMIT_HASH << std::endl;
+    std::cout << "Version: " << mpqcli::version_string << "-" << mpqcli::git_commit_hash
+              << std::endl;
     std::cout << "Author: Thomas Laurenson" << std::endl;
     std::cout << "License: MIT" << std::endl;
     std::cout << "GitHub: https://github.com/thegraydot/mpqcli" << std::endl;
