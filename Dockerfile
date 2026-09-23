@@ -2,8 +2,11 @@
 FROM alpine:3.23 AS build
 
 RUN apk add --no-cache \
+    # The C and C++ toolchain, with the musl-dev the static link needs
     build-base \
+    # Configures and drives the build
     cmake \
+    # Stamps the commit hash into the version header; see .dockerignore
     git
 
 WORKDIR /src
@@ -26,5 +29,10 @@ LABEL org.opencontainers.image.description="A command-line tool to create, add, 
 LABEL org.opencontainers.image.licenses="MIT"
 
 COPY --from=build /src/build/release/bin/mpqcli /mpqcli
-USER 1001:1001
+
+# No USER, deliberately. The image exists to process files on a bind mount, and
+# no fixed uid can match whoever owns the host directory, so a non-root default
+# would fail every write for most Linux users. Callers who want output owned by
+# themselves pass --user "$(id -u):$(id -g)", which the installation docs show
+WORKDIR /data
 ENTRYPOINT ["/mpqcli"]
