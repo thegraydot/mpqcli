@@ -10,10 +10,12 @@ jobs:
         include:
           # AMD64 builds on ubuntu-24.04
           - arch: amd64
+            asset: mpqcli-linux-x86_64
             runner: ubuntu-24.04
             platform: linux/amd64
           # ARM64 builds on ubuntu-24.04-arm
           - arch: arm64
+            asset: mpqcli-linux-aarch64
             runner: ubuntu-24.04-arm
             platform: linux/arm64
 
@@ -33,20 +35,20 @@ jobs:
           # Create a temporary container from the image
           CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }})
           # Copy the binary from the container
-          docker cp $CONTAINER_ID:/mpqcli ./mpqcli-linux-${{ matrix.arch }}
+          docker cp $CONTAINER_ID:/mpqcli ./${{ matrix.asset }}
           # Clean up the container
           docker rm $CONTAINER_ID
 
       - name: Verify binary
         run: |
-          file ./mpqcli-linux-${{ matrix.arch }}
-          echo "Binary created: mpqcli-linux-${{ matrix.arch }}"
+          file ./${{ matrix.asset }}
+          echo "Binary created: ${{ matrix.asset }}"
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mpqcli-linux-${{ matrix.arch }}
-          path: mpqcli-linux-${{ matrix.arch }}
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
           retention-days: 1
 
   build_windows:
@@ -72,13 +74,13 @@ jobs:
         run: build/bin/Release/mpqcli.exe version
 
       - name: Copy mpqcli binary
-        run: cp build/bin/Release/mpqcli.exe build/bin/mpqcli-windows-amd64.exe
+        run: cp build/bin/Release/mpqcli.exe build/bin/mpqcli-windows-x86_64.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: mpqcli-windows-amd64.exe
-          path: build/bin/mpqcli-windows-amd64.exe
+          name: mpqcli-windows-x86_64.exe
+          path: build/bin/mpqcli-windows-x86_64.exe
           retention-days: 1
 
   build_docker:

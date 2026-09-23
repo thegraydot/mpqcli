@@ -14,20 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download Linux AMD64 binary
+      - name: Download all build artefacts
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-amd64
-
-      - name: Download Linux ARM64 binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-linux-arm64
-
-      - name: Download Windows binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-windows-amd64.exe
+          path: dist
+          merge-multiple: true
 
       - name: Delete any existing dev release
         run: |
@@ -48,9 +39,9 @@ jobs:
             --title "Dev (Pre-release)" \
             --prerelease \
             --notes "**Commit:** ${{ github.sha }}" \
-            mpqcli-linux-amd64 \
-            mpqcli-linux-arm64 \
-            mpqcli-windows-amd64.exe
+            dist/mpqcli-linux-x86_64 \
+            dist/mpqcli-linux-aarch64 \
+            dist/mpqcli-windows-x86_64.exe
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

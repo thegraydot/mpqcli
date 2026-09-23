@@ -13,9 +13,11 @@ jobs:
         include:
           # AMD64 tests on ubuntu-24.04
           - arch: amd64
+            asset: mpqcli-linux-x86_64
             runner: ubuntu-24.04
           # ARM64 tests on ubuntu-24.04-arm
           - arch: arm64
+            asset: mpqcli-linux-aarch64
             runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
@@ -29,11 +31,11 @@ jobs:
       - name: Download Linux binary (${{ matrix.arch }})
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-${{ matrix.arch }}
+          name: ${{ matrix.asset }}
           path: build/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/mpqcli-linux-${{ matrix.arch }} build/bin/mpqcli
+        run: mv build/bin/${{ matrix.asset }} build/bin/mpqcli
 
       - name: Make binary executable
         run: chmod +x ./build/bin/mpqcli
@@ -67,11 +69,11 @@ jobs:
       - name: Download Windows binary
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-windows-amd64.exe
+          name: mpqcli-windows-x86_64.exe
           path: build/bin/Release
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/Release/mpqcli-windows-amd64.exe build/bin/mpqcli.exe
+        run: mv build/bin/Release/mpqcli-windows-x86_64.exe build/bin/mpqcli.exe
 
       - name: Check mpqcli version
         run: ./build/bin/mpqcli.exe version
