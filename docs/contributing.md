@@ -41,7 +41,7 @@ Run `make help` to list all available targets. Common ones:
 | `make format`              | Auto-fix formatting in-place                                         |
 | `make configure_lint`      | Configure build-lint/ with clang++ for clang-tidy                    |
 | `make check_lint`          | Run clang-tidy static analysis                                       |
-| `make clean`               | Remove all build, test and docs artifacts                            |
+| `make clean`               | Remove all build, test and docs artefacts                            |
 
 ## Requirements for a Pull Request
 
@@ -73,11 +73,10 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 ### 4. Linting must pass
 
-All C++ code is formatted with clang-format and analysed with clang-tidy. `clang-tidy` needs a compile database generated with clang, so run `make configure` first (`make build_linux`/`make build_windows` alone will not work, since they don't set up the compiler flags clang-tidy needs):
+All C++ code is formatted with clang-format and analysed with clang-tidy. `make check_all` runs both checks. It configures a clang build tree of its own for clang-tidy, so it needs no prior `make configure`:
 
 ```
-make configure
-make lint
+make check_all
 ```
 
 If there are formatting violations, auto-fix them with:
@@ -134,6 +133,6 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 2. Run `git submodule update --init --recursive` after cloning
 3. Run `make install_clang_tools` to install lint dependencies
 4. Make your changes and verify they build: `make build_linux`
-5. Run `make configure` and then `make check_all`, fixing any issues
+5. Run `make check_all`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why

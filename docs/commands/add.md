@@ -136,13 +136,13 @@ The skip decision follows this chain:
 
 1. **File size** must match. If the sizes differ the file is always re-added.
 2. If the sizes match, the archive's `(attributes)` file is consulted:
-   - **Timestamp** – if the archive stores file timestamps, the local file's
+   - **Timestamp**: if the archive stores file timestamps, the local file's
      last-modification time is compared at one-second resolution. A match skips the file.
-   - **MD5** – if the timestamp did not match or is unavailable, and the archive stores MD5
+   - **MD5**: if the timestamp did not match or is unavailable, and the archive stores MD5
      checksums, the MD5 of the local file is computed and compared. A match skips the file.
-   - **CRC32** – if neither timestamp nor MD5 produced a match or was available, and the
+   - **CRC32**: if neither timestamp nor MD5 produced a match or was available, and the
      archive stores CRC32 checksums, those are compared. A match skips the file.
-   - **No attributes** – if the archive has no `(attributes)` file, the file is always
+   - **No attributes**: if the archive has no `(attributes)` file, the file is always
      re-added even when sizes match, because no reliable content check is possible.
 
 Note: a timestamp match alone skips the file, without comparing checksums. A file whose
