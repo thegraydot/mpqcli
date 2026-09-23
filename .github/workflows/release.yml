@@ -3,9 +3,11 @@ name: Release
 on:
   workflow_call
 
+# id-token: write obtains the OIDC token gpipe uses for cosign keyless signing
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   release_binaries:
@@ -33,6 +35,10 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - uses: thomaslaurenson/gpipe@v1
+        with:
+          cosign_sign: true
+
       - name: Extract changelog for this tag
         id: changelog
         run: |
@@ -49,7 +55,9 @@ jobs:
             --notes "$CHANGELOG_CONTENT" \
             dist/mpqcli-linux-x86_64 \
             dist/mpqcli-linux-aarch64 \
-            dist/mpqcli-windows-x86_64.exe
+            dist/mpqcli-windows-x86_64.exe \
+            install.sh install.ps1 \
+            checksums.txt checksums.txt.sigstore.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHANGELOG_CONTENT: ${{ steps.changelog.outputs.content }}

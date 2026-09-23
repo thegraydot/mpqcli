@@ -146,8 +146,8 @@ ci: configure build check_all test ## Run all CI checks locally
 
 ##@ CLEAN
 .PHONY: clean
-clean: test_clean docs_clean ## Remove all build, test, and docs artifacts
-	rm -rf build $(LINT_DIR)
+clean: test_clean docs_clean ## Remove all build, test, docs and release artefacts
+	rm -rf build $(LINT_DIR) dist install.sh install.ps1 checksums.txt checksums.txt.sigstore.json
 
 ##@ GENERATE
 # The docs site builds from the committed copy, so this is run deliberately and the

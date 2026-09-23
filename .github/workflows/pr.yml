@@ -15,6 +15,7 @@ on:
       - "CMakeLists.txt"
       - "Dockerfile"
       - ".dockerignore"
+      - ".gpipe.yml"
 
 permissions:
   contents: read

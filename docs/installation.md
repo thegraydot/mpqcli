@@ -7,14 +7,17 @@ Pre-built binaries are available for Linux and Windows.
 Linux/WSL:
 
 ```bash
-$ curl -fsSL https://raw.githubusercontent.com/thegraydot/mpqcli/main/scripts/install.sh | bash
+$ curl -fsSL https://github.com/thegraydot/mpqcli/releases/latest/download/install.sh | bash
 ```
 
 Microsoft Windows:
 
 ```powershell
-PS> irm https://raw.githubusercontent.com/thegraydot/mpqcli/main/scripts/install.ps1 | iex
+PS> Invoke-WebRequest -Uri https://github.com/thegraydot/mpqcli/releases/latest/download/install.ps1 -OutFile install.ps1
+PS> .\install.ps1
 ```
+
+Both installers put `mpqcli` on the system path and may ask for elevation; pass `--user` on Linux or `-User` on Windows to install for the current user instead. Each release also ships `checksums.txt`, signed with cosign: the installer verifies the SHA-256 of the binary always, and the signature when cosign is installed.
 
 Check the [latest release with binaries](https://github.com/thegraydot/mpqcli/releases).
 

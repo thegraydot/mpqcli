@@ -30,7 +30,7 @@ Docker images are available on [GitHub packages](https://github.com/thegraydot/m
 ## Quickstart
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/thegraydot/mpqcli/main/scripts/install.sh | bash
+curl -fsSL https://github.com/thegraydot/mpqcli/releases/latest/download/install.sh | bash
 ...
 mpqcli list <some-mpq-archive>
 ```
@@ -38,7 +38,8 @@ mpqcli list <some-mpq-archive>
 Microsoft Windows:
 
 ```powershell
-irm https://raw.githubusercontent.com/thegraydot/mpqcli/main/scripts/install.ps1 | iex
+Invoke-WebRequest -Uri https://github.com/thegraydot/mpqcli/releases/latest/download/install.ps1 -OutFile install.ps1
+.\install.ps1
 ...
 mpqcli.exe list <some-mpq-archive>
 ```
