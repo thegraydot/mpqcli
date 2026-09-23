@@ -6,6 +6,9 @@ on:
 jobs:
   build_linux:
     strategy:
+      # Report both architectures independently; one failing says nothing about
+      # the other, and cancelling hides half the answer
+      fail-fast: false
       matrix:
         include:
           # AMD64 builds on ubuntu-24.04
@@ -39,16 +42,35 @@ jobs:
           # Clean up the container
           docker rm $CONTAINER_ID
 
-      - name: Verify binary
+      # Run the bytes that will ship: a static binary missing its loader builds
+      # without complaint and only fails here
+      - name: Smoke-run the artefact
         run: |
-          file ./${{ matrix.asset }}
-          echo "Binary created: ${{ matrix.asset }}"
+          chmod +x ./${{ matrix.asset }}
+          ./${{ matrix.asset }} version
 
       - name: Upload binary as artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.asset }}
           path: ${{ matrix.asset }}
+          retention-days: 1
+
+      # The amd64 image is the one published. Saving it here rather than
+      # rebuilding it in a job of its own means release and prerelease push
+      # exactly the bytes this job smoke-ran
+      - name: Save Docker image as a tar file
+        if: matrix.arch == 'amd64'
+        run: |
+          docker tag mpqcli-${{ matrix.arch }} mpqcli
+          docker save mpqcli -o mpqcli-docker.tar
+
+      - name: Upload Docker image as artifact
+        if: matrix.arch == 'amd64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mpqcli-docker
+          path: mpqcli-docker.tar
           retention-days: 1
 
   build_windows:
@@ -83,25 +105,3 @@ jobs:
           path: build/bin/mpqcli-windows-x86_64.exe
           retention-days: 1
 
-  build_docker:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-        with:
-          submodules: true
-
-      - name: Build Docker image (AMD64)
-        run: |
-          docker build --platform linux/amd64 -t mpqcli .
-
-      - name: Save Docker image as a tar file
-        run: |
-          docker save mpqcli -o mpqcli-docker.tar
-
-      - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: mpqcli-docker
-          path: mpqcli-docker.tar
-          retention-days: 1

@@ -81,7 +81,10 @@ jobs:
           docker tag mpqcli ghcr.io/thegraydot/mpqcli:latest
 
       - name: Push Docker image to GitHub Container Registry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
           docker push ghcr.io/thegraydot/mpqcli:${{ needs.release_binaries.outputs.version }}
           docker push ghcr.io/thegraydot/mpqcli:latest
