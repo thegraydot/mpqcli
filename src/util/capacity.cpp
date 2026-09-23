@@ -18,11 +18,9 @@ uint32_t CalculateMpqMaxFileValue(uint32_t file_count) {
     // Always add 3 for "special" files
     file_count += 3;
 
-    // Based on file count, determine the max number of files an MPQ archive can hold
-    // We always have a minimum of 32
-    // Anything over is rounded up to the closest power of 2
-    // For example: 64, 128, 256
-    // This is examples behavior of WoW MPQ archives (patches and installs)
+    // The table holds at least 32 entries; above that the count rounds up to the
+    // next power of two (64, 128, 256), which matches the WoW patch and install
+    // archives
     if (file_count <= 32) {
         return 32;
     }

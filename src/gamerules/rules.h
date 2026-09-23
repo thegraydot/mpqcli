@@ -11,58 +11,58 @@
 
 namespace mpqcli {
 
-// Game rules class that manages compression rules for different games
+/// Compression rules and archive creation settings for one game profile
 class GameRules {
 private:
     GameProfile profile_;
     std::vector<CompressionRule> rules_;
     MpqCreateSettings create_settings_;
 
-    // Helper function to match file mask pattern
+    /// Matches filename against a mask with * and ? wildcards, ignoring case
     static bool MatchFileMask(const std::string &filename, const std::string &mask);
 
-    // Add rule by file mask
+    /// Adds a rule matched by file mask
     void AddRuleByFileMask(const std::string &file_mask, DWORD mpq_flags, DWORD compression_first,
                            DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
 
-    // Add rule by file size
+    /// Adds a rule matched by file size; a size_max of UINT32_MAX means no upper limit
     void AddRuleByFileSize(DWORD size_min, DWORD size_max, DWORD mpq_flags, DWORD compression_first,
                            DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
 
-    // Add default rule
+    /// Adds the fallback rule used when no other matches
     void AddRuleDefault(DWORD mpq_flags, DWORD compression_first,
                         DWORD compression_next = MPQ_COMPRESSION_NEXT_SAME);
 
-    // Initialize rules for the selected game profile
+    /// Initialises the rules for the selected game profile
     void InitializeRules();
 
-    // Convert GameProfile enum to string
+    /// Converts a GameProfile to its canonical name
     static std::string ProfileToString(GameProfile profile);
 
 public:
-    // Constructor
+    /// Builds the rule set for game_profile
     explicit GameRules(GameProfile game_profile);
 
-    // Get compression settings for a specific file
+    /// Returns the compression settings for a file, first matching rule wins
     [[nodiscard]] CompressionSettings GetCompressionSettings(const std::string &filename,
                                                              DWORD file_size) const;
 
-    // Get MPQ creation settings
+    /// Returns the MPQ creation settings
     [[nodiscard]] const MpqCreateSettings &GetCreateSettings() const { return create_settings_; }
 
-    // Override MPQ creation settings
+    /// Applies user overrides on top of the profile's creation settings
     void OverrideCreateSettings(const MpqCreateSettingsOverrides &overrides);
 
-    // Convert string to GameProfile enum
+    /// Converts a profile name or alias to a GameProfile, GENERIC when unknown
     static GameProfile StringToProfile(const std::string &profile_name);
 
-    // Get list of canonical game profile names (for display purposes)
+    /// Returns the canonical profile names, for display
     static std::vector<std::string> GetCanonicalProfiles();
 
-    // Get available profiles as a comma-separated string
+    /// Returns the canonical profile names as one comma-separated string
     static std::string GetAvailableProfiles();
 
-    // Get default game profile (GENERIC)
+    /// Returns the default profile, GENERIC
     static GameProfile GetDefaultProfile() { return GameProfile::GENERIC; }
 };
 

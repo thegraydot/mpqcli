@@ -1,5 +1,5 @@
-#ifndef LOCALES_H
-#define LOCALES_H
+#ifndef UTIL_LOCALES_H
+#define UTIL_LOCALES_H
 
 #include <string>
 #include <vector>
@@ -19,4 +19,4 @@ std::string PrettyPrintLocale(LCID locale, const std::string &prefix = "",
 
 } // namespace mpqcli
 
-#endif // LOCALES_H
+#endif

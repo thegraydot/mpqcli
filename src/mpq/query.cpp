@@ -12,9 +12,9 @@
 #include "util/locales.h"
 #include "util/path.h"
 
-namespace mpqcli {
-
 namespace fs = std::filesystem;
+
+namespace mpqcli {
 
 bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_path,
                                   const LCID locale) {
@@ -30,6 +30,7 @@ bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_
     }
     return file_exists;
 }
+
 bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,
                          std::string &match_reason) {
     const DWORD archived_size = SFileGetFileSize(file, nullptr);

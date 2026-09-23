@@ -9,13 +9,14 @@
 
 namespace mpqcli {
 
+/// How a compression rule selects the files it applies to
 enum class RuleType {
     FILE_MASK, // Rule based on file pattern (e.g., "*.wav")
     FILE_SIZE, // Rule based on file size range
     DEFAULT    // Default rule (fallback)
 };
 
-// Structure representing a single compression rule
+/// A single compression rule
 struct CompressionRule {
     RuleType type;
     std::string file_mask;   // For FILE_MASK rules (e.g., "*.wav", "UI\\*.blp")
@@ -41,21 +42,21 @@ struct CompressionRule {
           compression_first(comp_first), compression_next(comp_next) {}
 };
 
-// Structure to hold compression settings for a file
+/// The compression settings applied to one file
 struct CompressionSettings {
     DWORD mpq_flags;
     DWORD compression_first;
     DWORD compression_next;
 };
 
-// Structure to hold optional override settings for adding files
+/// Optional overrides for the settings applied to added files
 struct CompressionSettingsOverrides {
     std::optional<DWORD> flags;
     std::optional<DWORD> compression;
     std::optional<DWORD> compression_next;
 };
 
-// Structure to hold MPQ archive creation settings
+/// MPQ archive creation settings
 struct MpqCreateSettings {
     DWORD mpq_version;    // MPQ format version (1, 2, 3, or 4)
     DWORD stream_flags;   // Stream flags (e.g., STREAM_PROVIDER_FLAT)
@@ -66,7 +67,7 @@ struct MpqCreateSettings {
     DWORD sector_size;    // Sector size (typically 0x1000 or 0x4000)
     DWORD raw_chunk_size; // Raw chunk size (for MPQ v4, typically 0x4000)
 
-    // Constructor with defaults
+    /// Defaults for a version 1 archive with a flat file stream
     MpqCreateSettings()
         : mpq_version(MPQ_FORMAT_VERSION_1),
           stream_flags(STREAM_PROVIDER_FLAT | BASE_PROVIDER_FILE),
@@ -74,7 +75,7 @@ struct MpqCreateSettings {
           sector_size(0x1000), raw_chunk_size(0) {}
 };
 
-// Structure to hold optional override settings for MPQ archive creation
+/// Optional overrides for MPQ archive creation settings
 struct MpqCreateSettingsOverrides {
     std::optional<DWORD> mpq_version;
     std::optional<DWORD> stream_flags;

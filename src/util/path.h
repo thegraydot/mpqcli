@@ -13,7 +13,7 @@ namespace mpqcli {
 std::string NormalizeFilePath(const std::filesystem::path &path);
 std::string WindowsifyFilePath(const std::filesystem::path &path);
 
-/// Reports whether path resolves to a location inside base
+/// Reports whether path lies lexically under base, without resolving either
 bool IsWithinDirectory(const std::filesystem::path &base, const std::filesystem::path &path);
 
 /// Builds the in-archive name for a local file

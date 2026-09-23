@@ -52,8 +52,6 @@ std::vector<fs::path> ListFilesRecursive(const fs::path &directory, std::error_c
     return files;
 }
 
-// Returns the file's last-modification time as a Windows FILETIME value
-// (100-nanosecond intervals since 1601-01-01 UTC).  Returns 0 on error.
 uint64_t LocalFileTimestamp(const fs::path &path) {
 #ifdef _WIN32
     // _wstat64 handles paths with non-ASCII characters, which the narrow

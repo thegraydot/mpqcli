@@ -11,8 +11,6 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-// CRC32 (ZIP/gzip polynomial) and MD5 are provided by the hash-library
-// submodule, matching the values StormLib stores in (attributes).
 std::optional<uint32_t> ComputeFileCrc32(const fs::path &path) {
     std::ifstream f(path, std::ios::binary);
     if (!f) {

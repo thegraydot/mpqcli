@@ -17,13 +17,14 @@
 #include "util/format.h"
 #include "util/locales.h"
 
-namespace mpqcli {
-
 namespace fs = std::filesystem;
+
+namespace mpqcli {
 
 uint32_t VerifyMpqArchive(HANDLE archive) {
     return SFileVerifyArchive(archive);
 }
+
 int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
     // Determine if we have a strong or weak digital signature
     int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);

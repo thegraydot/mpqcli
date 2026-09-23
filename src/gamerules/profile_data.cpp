@@ -2,7 +2,6 @@
 
 namespace mpqcli {
 
-// Initialize rules for the selected game profile
 void GameRules::InitializeRules() {
     rules_.clear();
 

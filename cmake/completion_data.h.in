@@ -1,16 +1,14 @@
-#ifndef COMPLETION_DATA_H
-#define COMPLETION_DATA_H
+// Generated from the scripts in completion/, do not edit
+#pragma once
 
-// Auto-generated from completion/mpqcli.bash, do not edit directly
-static constexpr char BashCompletionScript[] = R"BASH_MPQCLI(@BASH_COMPLETION_SCRIPT@)BASH_MPQCLI";
+namespace mpqcli {
 
-// Auto-generated from completion/mpqcli.zsh, do not edit directly
-static constexpr char ZshCompletionScript[] = R"ZSH_MPQCLI(@ZSH_COMPLETION_SCRIPT@)ZSH_MPQCLI";
+inline constexpr char bash_completion_script[] = R"BASH_MPQCLI(@BASH_COMPLETION_SCRIPT@)BASH_MPQCLI";
 
-// Auto-generated from completion/mpqcli.ps1, do not edit directly
-static constexpr char PsCompletionScript[] = R"PS_MPQCLI(@PS_COMPLETION_SCRIPT@)PS_MPQCLI";
+inline constexpr char zsh_completion_script[] = R"ZSH_MPQCLI(@ZSH_COMPLETION_SCRIPT@)ZSH_MPQCLI";
 
-// Auto-generated from completion/mpqcli.fish, do not edit directly
-static constexpr char FishCompletionScript[] = R"FISH_MPQCLI(@FISH_COMPLETION_SCRIPT@)FISH_MPQCLI";
+inline constexpr char ps_completion_script[] = R"PS_MPQCLI(@PS_COMPLETION_SCRIPT@)PS_MPQCLI";
 
-#endif  // COMPLETION_DATA_H
+inline constexpr char fish_completion_script[] = R"FISH_MPQCLI(@FISH_COMPLETION_SCRIPT@)FISH_MPQCLI";
+
+} // namespace mpqcli

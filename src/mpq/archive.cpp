@@ -19,6 +19,7 @@ bool OpenMpqArchive(const std::string &filename, HANDLE *archive, const DWORD fl
     }
     return true;
 }
+
 bool CloseMpqArchive(HANDLE archive) {
     if (!SFileCloseArchive(archive)) {
         const auto error = SErrGetLastError();
@@ -28,6 +29,7 @@ bool CloseMpqArchive(HANDLE archive) {
     }
     return true;
 }
+
 bool SignMpqArchive(HANDLE archive) {
     if (!SFileSignArchive(archive, SIGNATURE_TYPE_WEAK)) {
         const auto error = SErrGetLastError();

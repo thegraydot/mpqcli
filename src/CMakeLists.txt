@@ -17,7 +17,8 @@ endif()
 
 add_library(mpqcli::warnings ALIAS mpqcli_warnings)
 
-# Generated beside the core library so the core and the CLI report the same version
+# Generated into the include tree the core exports, so app/ reaches it through the
+# core's PUBLIC include directory rather than a second include path
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/version.h.in"
     "${PROJECT_BINARY_DIR}/include/mpqcli/version.h"

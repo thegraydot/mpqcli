@@ -9,12 +9,10 @@
 
 namespace mpqcli {
 
-// Constructor
 GameRules::GameRules(GameProfile game_profile) : profile_(game_profile) {
     InitializeRules();
 }
 
-// Helper function to match wildcards (* and ?)
 bool GameRules::MatchFileMask(const std::string &filename, const std::string &mask) {
     // Convert both to lowercase for case-insensitive matching
     std::string lower_filename = ToLower(filename);
@@ -60,11 +58,6 @@ void GameRules::AddRuleByFileMask(const std::string &file_mask, DWORD mpq_flags,
     rules_.emplace_back(file_mask, mpq_flags, compression_first, compression_next);
 }
 
-// Use UINT32_MAX for sizeMax to indicate "no upper limit"
-// Examples:
-//   AddRuleByFileSize(0, 0, ...)                - Match files with exactly 0 bytes
-//   AddRuleByFileSize(0, 0x4000, ...)           - Match files from 0 to 16KB
-//   AddRuleByFileSize(0x4000, UINT32_MAX, ...)  - Match files from 16KB onwards
 void GameRules::AddRuleByFileSize(DWORD size_min, DWORD size_max, DWORD mpq_flags,
                                   DWORD compression_first, DWORD compression_next) {
     rules_.emplace_back(size_min, size_max, mpq_flags, compression_first, compression_next);
@@ -74,7 +67,6 @@ void GameRules::AddRuleDefault(DWORD mpq_flags, DWORD compression_first, DWORD c
     rules_.emplace_back(mpq_flags, compression_first, compression_next);
 }
 
-// Get compression settings for a specific file
 CompressionSettings GameRules::GetCompressionSettings(const std::string &filename,
                                                       const DWORD file_size) const {
     // Iterate through rules in order (first match wins)
@@ -108,7 +100,6 @@ CompressionSettings GameRules::GetCompressionSettings(const std::string &filenam
             MPQ_COMPRESSION_NEXT_SAME};
 }
 
-// Override MPQ creation settings with user-provided values
 void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrides) {
     // Track whether user explicitly set fileFlags2 (needed for automatic adjustment logic)
     bool user_set_file_flags2 = false;

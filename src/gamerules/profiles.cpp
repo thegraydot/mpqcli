@@ -7,8 +7,10 @@
 
 namespace mpqcli {
 
-// Get the profile name map (single source of truth for all valid profile names)
-static const std::map<std::string, GameProfile> &GetProfileMap() {
+namespace {
+
+// The single source of truth for valid profile names and their aliases
+const std::map<std::string, GameProfile> &GetProfileMap() {
     static const std::map<std::string, GameProfile> profile_map = {
         {"generic", GameProfile::GENERIC},
         {"diablo1", GameProfile::DIABLO1},
@@ -48,7 +50,8 @@ static const std::map<std::string, GameProfile> &GetProfileMap() {
     return profile_map;
 }
 
-// Convert string to GameProfile enum
+} // namespace
+
 GameProfile GameRules::StringToProfile(const std::string &profile_name) {
     const auto &profile_map = GetProfileMap();
     std::string lower = ToLower(profile_name);
@@ -59,7 +62,6 @@ GameProfile GameRules::StringToProfile(const std::string &profile_name) {
     return GameProfile::GENERIC;
 }
 
-// Convert GameProfile enum to string
 std::string GameRules::ProfileToString(GameProfile profile) {
     switch (profile) {
     case GameProfile::GENERIC:
@@ -97,7 +99,6 @@ std::string GameRules::ProfileToString(GameProfile profile) {
     }
 }
 
-// Get list of canonical game profile names (for display purposes)
 std::vector<std::string> GameRules::GetCanonicalProfiles() {
     static const std::vector<GameProfile> all_profiles = {
         GameProfile::GENERIC,    GameProfile::DIABLO1,       GameProfile::LORDSOFMAGIC,
@@ -115,7 +116,6 @@ std::vector<std::string> GameRules::GetCanonicalProfiles() {
     return profiles;
 }
 
-// Get available profiles as a comma-separated string
 std::string GameRules::GetAvailableProfiles() {
     auto profiles = GetCanonicalProfiles();
     std::string result;
