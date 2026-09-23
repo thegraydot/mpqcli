@@ -85,7 +85,6 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
         return 1;
     }
 
-    // Check if file exists in MPQ archive
     SFileSetLocale(locale);
     HANDLE file;
     if (SFileOpenFileEx(archive, archive_file_path.c_str(), SFILE_OPEN_FROM_MPQ, &file)) {

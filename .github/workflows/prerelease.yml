@@ -49,7 +49,7 @@ jobs:
     needs: prerelease_binaries
     runs-on: ubuntu-24.04
     steps:
-      - name: Download Docker image artifact
+      - name: Download Docker image artefact
         uses: actions/download-artifact@v8
         with:
           name: mpqcli-docker

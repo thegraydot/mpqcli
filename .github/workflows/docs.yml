@@ -46,7 +46,7 @@ jobs:
       - name: Build docs
         run: make docs_build
 
-      - name: Upload Pages artifact
+      - name: Upload Pages artefact
         uses: actions/upload-pages-artifact@v5
         with:
           path: book/

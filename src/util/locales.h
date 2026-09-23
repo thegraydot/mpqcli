@@ -12,6 +12,7 @@ inline constexpr LCID default_locale = 0;
 
 std::string LocaleToLang(LCID locale);
 LCID LangToLocale(const std::string &lang);
+/// Parses a four-digit hexadecimal locale, returning default_locale for anything else
 LCID ParseHexLocale(const std::string &str);
 std::vector<std::string> GetAllLocales();
 std::string PrettyPrintLocale(LCID locale, const std::string &prefix = "",

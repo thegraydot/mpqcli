@@ -18,7 +18,7 @@ _mpqcli_filedir() {
 _mpqcli() {
     local cur prev words cword
 
-    # Use bash-completion helpers when available, fall back to COMP_* variables.
+    # Use bash-completion helpers when available, fall back to COMP_* variables
     if declare -f _init_completion > /dev/null 2>&1; then
         _init_completion || return
     else
@@ -150,7 +150,7 @@ _mpqcli() {
             if [[ "$cur" == -* ]]; then
                 mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
             elif [[ $cword -eq 2 ]]; then
-                # positional 1 is the archive; positionals 2 and 3 are in-archive
+                # Positional 1 is the archive; positionals 2 and 3 are in-archive
                 # paths, so they get no filesystem completion
                 _mpqcli_filedir mpq
             fi
@@ -202,7 +202,7 @@ _mpqcli() {
             if [[ "$cur" == -* ]]; then
                 mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
             elif [[ $cword -ge 3 ]]; then
-                # positional 1 is an in-archive path (no filesystem completion);
+                # Positional 1 is an in-archive path (no filesystem completion);
                 # positional 2+ is the archive file
                 _mpqcli_filedir mpq
             fi

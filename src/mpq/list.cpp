@@ -21,7 +21,6 @@ namespace mpqcli {
 
 int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
               bool list_detailed, const std::vector<std::string> &properties) {
-    // Check if the user provided a listfile input
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
@@ -58,7 +57,6 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
 
     std::set<std::string>
         seen_file_names; // Used to prevent printing the same file name multiple times
-    // Loop through all files in the MPQ archive
     do {
         // Skip special files unless user wants to list all (like ls -a)
         if (!list_all && std::find(special_mpq_files.begin(), special_mpq_files.end(),
@@ -74,8 +72,7 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
             }
             seen_file_names.insert(find_data.cFileName);
 
-            // Multiple files can be stored with identical filenames under different locales.
-            // Loop over all locales and print the file details for each locale.
+            // Multiple files can be stored with identical filenames under different locales
             DWORD max_locales = 32; // This will be updated in the call to SFileEnumLocales
             std::vector<LCID> file_locale_vec(max_locales);
             LCID *file_locales = file_locale_vec.data();
@@ -101,17 +98,14 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
                           << ". Will only list the " << max_locales << " first files." << std::endl;
             }
 
-            // Loop through all found locales
             for (DWORD i = 0; i < max_locales; i++) {
                 LCID locale = file_locales[i];
                 SFileSetLocale(locale);
                 HANDLE file;
 
-                // We need to open the file to get detailed information
-                // Use our custom GetFileInfo function
                 if (!SFileOpenFileEx(archive, find_data.cFileName, SFILE_OPEN_FROM_MPQ, &file)) {
                     std::cerr << "[!] Failed to open file: " << find_data.cFileName << std::endl;
-                    continue; // Skip to the next file
+                    continue;
                 }
 
                 for (const auto &prop : properties_to_print) {

@@ -21,7 +21,6 @@ namespace mpqcli {
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale) {
     SFileSetLocale(preferred_locale);
-    // Check if the user provided a listfile input
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;

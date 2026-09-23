@@ -16,7 +16,6 @@ namespace {
 // They can be found, for example, here:
 // https://winprotocoldoc.z19.web.core.windows.net/MS-LCID/%5bMS-LCID%5d.pdf
 
-// Define a bidirectional map for locale-language mappings
 const std::map<LCID, std::string> locale_to_lang_map = {
     {0x000, "enUS"}, // Default - English (US)
     {0x404, "zhTW"}, // Chinese (Taiwan)
@@ -62,21 +61,17 @@ std::string FormatLocaleAsHex(const LCID locale) {
 }
 } // namespace
 
-// Check if a string is a 4-character hexadecimal number and parse it
-// Returns the parsed LCID if valid, otherwise returns defaultLocale (0)
 LCID ParseHexLocale(const std::string &str) {
     if (str.length() != 4) {
         return default_locale;
     }
 
-    // Check if all characters are hexadecimal
     for (char c : str) {
         if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) {
             return default_locale;
         }
     }
 
-    // Parse the hexadecimal string
     std::stringstream ss;
     ss << std::hex << str;
     LCID locale;

@@ -42,11 +42,11 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
 
     const DWORD attr_flags = SFileGetAttributes(archive);
 
-    // Step 1: Timestamp: cheapest check, no local file I/O.
+    // Timestamp first: the cheapest check, with no local file I/O
     if (attr_flags & MPQ_ATTRIBUTE_FILETIME) {
         const uint64_t archived_time = GetFileInfo<uint64_t>(file, SFileInfoFileTime);
         const uint64_t local_time = LocalFileTimestamp(local_file);
-        // Compare at second resolution: stat() has only second precision.
+        // Compare at second resolution: stat() has only second precision
         if (archived_time != 0 && local_time != 0 &&
             archived_time / 10000000u == local_time / 10000000u) {
             match_reason = "Timestamp matches";
@@ -54,7 +54,7 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
         }
     }
 
-    // Step 2: MD5: if timestamp did not match or was unavailable.
+    // MD5 when the timestamp did not match or was unavailable
     if (attr_flags & MPQ_ATTRIBUTE_MD5) {
         uint8_t archived_md5[MD5_DIGEST_SIZE]{};
         if (SFileGetFileInfo(file, SFileInfoMD5, archived_md5, sizeof(archived_md5), nullptr)) {
@@ -73,7 +73,7 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
         }
     }
 
-    // Step 3: CRC32: if neither timestamp nor MD5 matched or was available.
+    // CRC32 when neither timestamp nor MD5 matched or was available
     if (attr_flags & MPQ_ATTRIBUTE_CRC32) {
         const DWORD archived_crc32 = GetFileInfo<DWORD>(file, SFileInfoCRC32);
         // Zero means "no CRC32 stored"; a file whose real CRC32 is
@@ -88,7 +88,7 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
         }
     }
 
-    // No attributes present, or none matched: re-add the file.
+    // No attributes present, or none matched: re-add the file
     return false;
 }
 

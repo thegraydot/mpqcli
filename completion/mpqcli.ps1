@@ -158,27 +158,25 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'completion' = @{}
     }
 
-    # Options whose *argument* should complete from a static value set.
+    # Options whose *argument* should complete from a static value set
     $valueOptions = @{
         '--locale'   = $locales
         '-g'         = $gameProfiles
         '--game'     = $gameProfiles
     }
-    # Property options depend on the subcommand (info vs list), handled below.
+    # Property options depend on the subcommand (info vs list), handled below
 
-    # Parse the current command line
-
-    # Tokenized elements of the command line, excluding the executable itself.
+    # Tokenised elements of the command line, excluding the executable itself
     $elements = @($commandAst.CommandElements | Select-Object -Skip 1 |
         ForEach-Object { $_.ToString() })
 
-    # Identify the active subcommand (first element that is a known subcommand).
+    # Identify the active subcommand (first element that is a known subcommand)
     $subcommand = $null
     foreach ($el in $elements) {
         if ($subcommands.Contains($el)) { $subcommand = $el; break }
     }
 
-    # The token immediately preceding the cursor (the one we may be an arg to).
+    # The token immediately preceding the cursor (the one we may be an arg to)
     $prevToken = $null
     if ($elements.Count -ge 1) {
         if ([string]::IsNullOrEmpty($wordToComplete)) {
@@ -228,14 +226,14 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
 
     # 4) Completing the argument to a value-bearing option
     if ($prevToken) {
-        # Locale / game profile options.
+        # Locale / game profile options
         if ($valueOptions.ContainsKey($prevToken)) {
             $items = foreach ($v in $valueOptions[$prevToken]) {
                 [pscustomobject]@{ Value = $v; Tip = $prevToken }
             }
             return & $emit $items 'ParameterValue'
         }
-        # Property options: meaning depends on the subcommand.
+        # Property options: meaning depends on the subcommand
         if ($prevToken -in @('-p', '--property')) {
             if ($subcommand -eq 'info') {
                 $items = foreach ($v in $infoProperties) {
@@ -247,9 +245,9 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
                     [pscustomobject]@{ Value = $v; Tip = 'list property' } }
                 return & $emit $items 'ParameterValue'
             }
-            # For 'verify', -p/--print is a flag (no value) -> fall through.
+            # For 'verify', -p/--print is a flag (no value) -> fall through
         }
-        # Options that take a file/dir path -> let PowerShell complete paths.
+        # Options that take a file/dir path -> let PowerShell complete paths
         $pathOptions = @('-o', '--output', '-l', '--listfile', '-f', '--file',
                          '-p', '--path')
         if ($prevToken -in $pathOptions -and

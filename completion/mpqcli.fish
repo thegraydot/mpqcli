@@ -4,7 +4,7 @@
 # Install:
 #   cp mpqcli.fish ~/.config/fish/completions/mpqcli.fish
 
-# Disable file completion globally; re-enable per argument where needed.
+# Disable file completion globally; re-enable per argument where needed
 complete -c mpqcli -f
 
 # Shared value sets (sourced directly from main.cpp)

@@ -21,7 +21,7 @@ std::optional<uint32_t> ComputeFileCrc32(const fs::path &path) {
     while (f.read(buf, sizeof(buf)) || f.gcount() > 0) {
         crc32.add(buf, static_cast<size_t>(f.gcount()));
     }
-    // getHash yields the checksum as big-endian bytes; reassemble the value.
+    // getHash yields the checksum as big-endian bytes; reassemble the value
     unsigned char digest[CRC32::HashBytes];
     crc32.getHash(digest);
     return (static_cast<uint32_t>(digest[0]) << 24) | (static_cast<uint32_t>(digest[1]) << 16) |

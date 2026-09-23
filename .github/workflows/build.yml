@@ -35,11 +35,8 @@ jobs:
 
       - name: Extract binary from Docker image
         run: |
-          # Create a temporary container from the image
           CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }})
-          # Copy the binary from the container
           docker cp $CONTAINER_ID:/mpqcli ./${{ matrix.asset }}
-          # Clean up the container
           docker rm $CONTAINER_ID
 
       # Run the bytes that will ship: a static binary missing its loader builds
@@ -49,7 +46,7 @@ jobs:
           chmod +x ./${{ matrix.asset }}
           ./${{ matrix.asset }} version
 
-      - name: Upload binary as artifact
+      - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.asset }}
@@ -65,7 +62,7 @@ jobs:
           docker tag mpqcli-${{ matrix.arch }} mpqcli
           docker save mpqcli -o mpqcli-docker.tar
 
-      - name: Upload Docker image as artifact
+      - name: Upload Docker image as artefact
         if: matrix.arch == 'amd64'
         uses: actions/upload-artifact@v7
         with:
@@ -98,7 +95,7 @@ jobs:
       - name: Copy mpqcli binary
         run: cp build/bin/Release/mpqcli.exe build/bin/mpqcli-windows-x86_64.exe
 
-      - name: Upload Artifact
+      - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
           name: mpqcli-windows-x86_64.exe

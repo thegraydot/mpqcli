@@ -14,7 +14,6 @@ GameRules::GameRules(GameProfile game_profile) : profile_(game_profile) {
 }
 
 bool GameRules::MatchFileMask(const std::string &filename, const std::string &mask) {
-    // Convert both to lowercase for case-insensitive matching
     std::string lower_filename = ToLower(filename);
     std::string lower_mask = ToLower(mask);
 
@@ -69,7 +68,7 @@ void GameRules::AddRuleDefault(DWORD mpq_flags, DWORD compression_first, DWORD c
 
 CompressionSettings GameRules::GetCompressionSettings(const std::string &filename,
                                                       const DWORD file_size) const {
-    // Iterate through rules in order (first match wins)
+    // First matching rule wins
     for (const auto &rule : rules_) {
         switch (rule.type) {
         case RuleType::FILE_MASK:
@@ -101,12 +100,11 @@ CompressionSettings GameRules::GetCompressionSettings(const std::string &filenam
 }
 
 void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrides) {
-    // Track whether user explicitly set fileFlags2 (needed for automatic adjustment logic)
+    // Whether the user set file_flags2 themselves decides the adjustment below
     bool user_set_file_flags2 = false;
 
-    // Step 1: Apply user overrides
-    // User-provided values always take priority, even if they might be incorrect.
-    // We only apply override if the optional has a value (i.e., user specified it)
+    // User overrides first: a value the user gave always wins, even one that
+    // looks wrong
 
     if (overrides.mpq_version.has_value()) {
         create_settings_.mpq_version = overrides.mpq_version.value();
@@ -141,24 +139,24 @@ void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrid
         create_settings_.attr_flags = overrides.attr_flags.value();
     }
 
-    // Step 2: Apply automatic adjustments based on dependencies
-    // These only apply if the user hasn't explicitly overridden the values
+    // Then the adjustments the overrides imply, only where the user left the
+    // dependent value alone
 
-    // fileFlags2 controls the (attributes) file, which is only meaningful when
-    // attrFlags is also set. According to StormLib's SFileCreateArchive.cpp:
-    // - The (attributes) file is created only when BOTH fileFlags2 AND attrFlags are non-zero
-    // - If attrFlags is set but fileFlags2 is still 0 (not overridden by user or profile),
-    //   we should set fileFlags2 to MPQ_FILE_DEFAULT_INTERNAL to enable the attributes file
+    // file_flags2 controls the (attributes) file, which is only meaningful when
+    // attr_flags is also set. According to StormLib's SFileCreateArchive.cpp:
+    // - The (attributes) file is created only when BOTH file_flags2 AND attr_flags are non-zero
+    // - If attr_flags is set but file_flags2 is still 0 (not overridden by user or profile),
+    //   we should set file_flags2 to MPQ_FILE_DEFAULT_INTERNAL to enable the attributes file
 
     if (!user_set_file_flags2 && create_settings_.file_flags2 == 0 &&
         create_settings_.attr_flags != 0) {
-        // User wants attributes (attrFlags is set) but hasn't specified how to store
+        // User wants attributes (attr_flags is set) but hasn't specified how to store
         // the (attributes) file itself. Use the default internal file flags.
         create_settings_.file_flags2 = MPQ_FILE_DEFAULT_INTERNAL;
     }
 
-    // Note: If user explicitly sets fileFlags2 to 0 via override, we respect that choice
-    // even if attrFlags is non-zero.
+    // Note: If user explicitly sets file_flags2 to 0 via override, we respect that choice
+    // even if attr_flags is non-zero.
 }
 
 } // namespace mpqcli

@@ -17,7 +17,6 @@ namespace mpqcli {
 
 HANDLE CreateMpqArchive(const std::string &output_archive_name, const uint32_t file_count,
                         const GameRules &game_rules) {
-    // Check if file already exists
     std::error_code ec;
     if (fs::exists(output_archive_name, ec)) {
         std::cerr << "[!] File already exists: " << output_archive_name << " Exiting..."
