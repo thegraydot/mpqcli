@@ -129,8 +129,10 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
                                   << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
                                   << std::dec << " ";
                     } else if (prop == "locale") {
-                        std::cout << std::setw(4)
-                                  << LocaleToLang(GetFileInfo<LCID>(file, it->second)) << " ";
+                        // StormLib packs the hash entry's platform byte into bits 16 to 23 of
+                        // the LCID (SFILE_MAKE_LCID); only the low 16 bits are the locale
+                        const LCID file_locale = SFILE_LOCALE(GetFileInfo<LCID>(file, it->second));
+                        std::cout << std::setw(4) << LocaleToLang(file_locale) << " ";
                     } else if (prop == "byte-offset") {
                         std::cout << std::hex << std::setw(8)
                                   << GetFileInfo<int64_t>(file, it->second) << std::dec << " ";
