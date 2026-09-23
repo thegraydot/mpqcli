@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.12.0 - 2026-09-25
+
+### Changed
+
+- Rename the release assets to mpqcli-linux-x86_64, mpqcli-linux-aarch64 and mpqcli-windows-x86_64.exe
+- Ship one static musl Linux binary per architecture instead of glibc and musl pairs
+- Publish install scripts and a signed checksums file with each release
+- Run the Docker image in /data so mounted paths need no prefix
+
+### Fixed
+
+- Fail with a non-zero exit code on an unknown subcommand or a missing argument
+
 ## 0.11.0 - 2026-09-21
 
 ### Added

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(MPQCLI VERSION 0.11.0)
+project(MPQCLI VERSION 0.12.0)
 
 # An option() name is global to the CMake cache, including a consumer's, so these
 # carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.
@@ -26,7 +26,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # Windows specific settings
 if(MSVC)
     add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)
-    set(CMAKE_GENERATOR_PLATFORM x64)
 endif()
 
 # Static linking configuration
