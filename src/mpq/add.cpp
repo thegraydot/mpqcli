@@ -1,9 +1,12 @@
 #include "mpq/add.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include <StormLib.h>

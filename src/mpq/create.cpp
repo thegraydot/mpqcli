@@ -1,5 +1,6 @@
 #include "mpq/create.h"
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string>

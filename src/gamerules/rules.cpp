@@ -1,6 +1,8 @@
 #include "gamerules/rules.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 
 #include "util/string.h"

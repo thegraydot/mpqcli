@@ -1,9 +1,11 @@
 #include "mpq/extract.h"
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
+#include <system_error>
 
 #include <StormLib.h>
 

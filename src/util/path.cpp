@@ -1,7 +1,9 @@
 #include "util/path.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <sys/stat.h>
 #include <system_error>

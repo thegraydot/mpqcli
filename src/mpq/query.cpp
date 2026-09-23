@@ -1,5 +1,6 @@
 #include "mpq/query.h"
 
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <string>

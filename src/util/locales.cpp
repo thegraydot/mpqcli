@@ -1,8 +1,6 @@
 #include "locales.h"
 
 #include <algorithm>
-#include <fstream>
-#include <iomanip>
 #include <map>
 #include <sstream>
 #include <vector>

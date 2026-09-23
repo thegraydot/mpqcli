@@ -1,6 +1,7 @@
 #include "mpq/list.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <map>

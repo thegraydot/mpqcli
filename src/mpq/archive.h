@@ -1,7 +1,6 @@
 #ifndef MPQ_ARCHIVE_H
 #define MPQ_ARCHIVE_H
 
-#include <cstdint>
 #include <string>
 
 #include <StormLib.h>
