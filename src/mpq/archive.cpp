@@ -1,6 +1,5 @@
 #include "mpq/archive.h"
 
-#include <cstdint>
 #include <iostream>
 #include <string>
 
