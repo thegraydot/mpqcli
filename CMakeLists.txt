@@ -23,6 +23,14 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+# Multi-config generators (Visual Studio, Xcode) append the config name to the
+# output directory, so the bare variable above would put the binary in
+# bin/Release/ rather than bin/. Set all four configs, not just RELEASE, so a
+# Debug build in an IDE lands in the same place.
+foreach(cfg IN ITEMS DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${CMAKE_BINARY_DIR}/bin")
+endforeach()
+
 # Windows specific settings
 if(MSVC)
     add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)

@@ -28,7 +28,7 @@ $ cmake -B build
 $ cmake --build build --config Release
 ```
 
-The `mpqcli.exe` binary will be available in: `.\build\bin\Release\mpqcli.exe`
+The `mpqcli.exe` binary will be available in: `.\build\bin\mpqcli.exe`
 
 ## Dependencies
 
