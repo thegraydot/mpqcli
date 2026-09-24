@@ -30,7 +30,7 @@ Run `make help` to list all available targets. Common ones:
 
 | Target                     | Description                                                          |
 |----------------------------|----------------------------------------------------------------------|
-| `make install_clang_tools` | Install clang-format and clang-tidy via apt                          |
+| `make install_clang_tools` | Install clang, clang-format and clang-tidy via apt                   |
 | `make configure`           | Configure the cmake build (uses the default compiler)                |
 | `make build_linux`         | Build for Linux using cmake                                          |
 | `make build_windows`       | Build for Windows using cmake                                        |

@@ -35,7 +35,7 @@ help: ## Show this help message
 ##@ BUILD
 .PHONY: install_clang_tools
 install_clang_tools: ## Install clang lint dependencies
-	sudo apt-get install -y clang-format-$(CLANG_VERSION) clang-tidy-$(CLANG_VERSION)
+	sudo apt-get install -y clang-$(CLANG_VERSION) clang-format-$(CLANG_VERSION) clang-tidy-$(CLANG_VERSION)
 
 .PHONY: configure
 configure: ## Configure cmake build (debug, with compile_commands.json)
