@@ -21,14 +21,14 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
 # Multi-config generators (Visual Studio, Xcode) append the config name to the
 # output directory, so the bare variable above would put the binary in
 # bin/Release/ rather than bin/. Set all four configs, not just RELEASE, so a
 # Debug build in an IDE lands in the same place.
 foreach(cfg IN ITEMS DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${CMAKE_BINARY_DIR}/bin")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${PROJECT_BINARY_DIR}/bin")
 endforeach()
 
 # Windows specific settings
@@ -46,7 +46,7 @@ endif()
 # Determine git commit hash
 execute_process(
     COMMAND git rev-parse HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     RESULT_VARIABLE GIT_COMMIT_RESULT
@@ -57,7 +57,7 @@ if(NOT GIT_COMMIT_RESULT EQUAL 0 OR NOT GIT_COMMIT_HASH)
 endif()
 
 # Handle StormLib dependency
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
+if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
     message(FATAL_ERROR
 "Missing dependency: StormLib
 mpqcli requires the StormLib library.
@@ -76,7 +76,7 @@ add_subdirectory(extern/StormLib)
 
 # Handle CLI11 dependency. Only app/ parses arguments, so the core never sees it.
 if(MPQCLI_BUILD_APP)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
         message(FATAL_ERROR
 "Missing dependency: CLI11
 mpqcli requires the CLI11 library.
@@ -90,7 +90,7 @@ Did you forget to execute the following commands?
 endif()
 
 # Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/hash-library/crc32.cpp")
+if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/hash-library/crc32.cpp")
     message(FATAL_ERROR
 "Missing dependency: hash-library
 mpqcli requires the hash-library library.
@@ -105,7 +105,7 @@ add_library(hash-library STATIC
     extern/hash-library/crc32.cpp
     extern/hash-library/md5.cpp
 )
-target_include_directories(hash-library SYSTEM INTERFACE "${CMAKE_SOURCE_DIR}/extern")
+target_include_directories(hash-library SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern")
 
 # Unconditional: building the core without the app is what proves nothing in
 # src/ has picked up a dependency on app/.
