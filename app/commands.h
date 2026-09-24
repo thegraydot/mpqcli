@@ -9,4 +9,4 @@ void HandleCompletionZsh();
 void HandleCompletionPs();
 void HandleCompletionFish();
 
-#endif // COMMANDS_H
+#endif

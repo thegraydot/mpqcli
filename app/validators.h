@@ -6,4 +6,4 @@
 extern const CLI::Validator game_profile_valid;
 extern const CLI::Validator locale_valid;
 
-#endif // VALIDATORS_H
+#endif

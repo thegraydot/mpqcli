@@ -38,4 +38,4 @@ int HandleCompact(const std::string &target, const std::optional<std::string> &l
 
 } // namespace mpqcli
 
-#endif // CLI_COMMANDS_H
+#endif
