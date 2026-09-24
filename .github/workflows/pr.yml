@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/**"
+      - "Makefile"
       - ".clang-format"
       - ".clang-tidy"
       - "src/**"
@@ -16,6 +17,12 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - ".gpipe.yml"
+
+# Grouped by pull request number, so a push only ever supersedes an earlier run of
+# its own branch and never one somebody else is waiting on
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
