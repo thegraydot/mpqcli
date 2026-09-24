@@ -1,5 +1,6 @@
 #include "util/format.h"
 
+#include <cstdint>
 #include <cstring>
 #include <ctime>
 #include <iostream>

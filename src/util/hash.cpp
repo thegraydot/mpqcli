@@ -1,5 +1,6 @@
 #include "util/hash.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
