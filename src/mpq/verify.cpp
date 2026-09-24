@@ -62,8 +62,9 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
                       << ": " << target << std::endl;
             return -1;
         }
-        // Signed deliberately: the subtraction can legitimately go negative, and in
-        // unsigned arithmetic it would wrap to a huge positive and pass the check below
+        // fs::file_size returns uintmax_t, so without the cast the subtraction runs
+        // unsigned and a legitimately negative length reaches the check below only
+        // through a conversion C++17 leaves implementation-defined
         const int64_t signature_length = file_size - archive_offset - archive_size;
 
         if (signature_length <= 0) {
