@@ -25,9 +25,9 @@ configure_file(
     @ONLY
 )
 
-# Internal to this repository, so no include/ and no alias. Keeping the logic in
-# a library rather than beside main() is what lets test binaries link it; a test
-# that recompiles the sources instead is a second build that drifts from the
+# Internal to this repository, so no include/. Keeping the logic in a library
+# rather than beside main() is what lets test binaries link it; a test that
+# recompiles the sources instead is a second build that drifts from the
 # shipped one.
 add_library(mpqcli_core STATIC
     cli/add.cpp
@@ -72,8 +72,13 @@ target_include_directories(mpqcli_core PUBLIC
     "${PROJECT_BINARY_DIR}/include"
 )
 target_include_directories(mpqcli_core SYSTEM PUBLIC
-    "${CMAKE_SOURCE_DIR}/extern/StormLib/src"
+    "${PROJECT_SOURCE_DIR}/extern/StormLib/src"
 )
 
 target_link_libraries(mpqcli_core PUBLIC storm hash-library)
 target_link_libraries(mpqcli_core PRIVATE mpqcli::warnings)
+
+# Nothing outside this repository links the core. The alias is for the
+# configure-time check: a typo in mpqcli::core fails now, where a typo in a raw
+# mpqcli_core is taken for a system library and fails at link time instead
+add_library(mpqcli::core ALIAS mpqcli_core)
