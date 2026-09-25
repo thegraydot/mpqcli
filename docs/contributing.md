@@ -28,20 +28,20 @@ make install_clang_tools
 
 Run `make help` to list all available targets. Common ones:
 
-| Target                     | Description                                                        |
-|----------------------------|--------------------------------------------------------------------|
-| `make install_clang_tools` | Install clang-format and clang-tidy via apt                        |
-| `make configure`           | Configure cmake build with clang (required before `make lint`)     |
-| `make build_linux`         | Build for Linux using cmake                                        |
-| `make build_windows`       | Build for Windows using cmake                                      |
-| `make build_clean`         | Remove the cmake build directory                                   |
-| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only) |
-| `make test_mpqcli`         | Run the pytest test suite                                          |
-| `make lint`                | Run all C++ linters (clang-format + clang-tidy)                    |
-| `make fmt_check`           | Check formatting only (dry run)                                    |
-| `make fmt`                 | Auto-fix formatting in-place                                       |
-| `make lint_cpp`            | Run clang-tidy static analysis                                     |
-| `make clean`               | Remove all build and test artifacts                                |
+| Target                     | Description                                                          |
+|----------------------------|----------------------------------------------------------------------|
+| `make install_clang_tools` | Install clang, clang-format and clang-tidy via apt                   |
+| `make configure`           | Configure the cmake build (uses the default compiler)                |
+| `make build_linux`         | Build for Linux using cmake                                          |
+| `make build_windows`       | Build for Windows using cmake                                        |
+| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only)   |
+| `make test_mpqcli`         | Run the pytest test suite                                            |
+| `make check_all`           | Run every static check (clang-format + clang-tidy)                   |
+| `make check_format`        | Check formatting only (dry run)                                      |
+| `make format`              | Auto-fix formatting in-place                                         |
+| `make configure_lint`      | Configure build-lint/ with clang++ for clang-tidy                    |
+| `make check_lint`          | Run clang-tidy static analysis                                       |
+| `make clean`               | Remove all build, test and docs artefacts                            |
 
 ## Requirements for a Pull Request
 
@@ -54,7 +54,7 @@ make build_linux   # Linux
 make build_windows # Windows
 ```
 
-A PR automatically triggers the CI build workflow, which compiles and tests across all supported Linux targets (AMD64 and ARM64, glibc and musl). You are not expected to reproduce all of those locally.
+A PR automatically triggers the CI build workflow, which compiles and tests across all supported Linux targets (AMD64 and ARM64). You are not expected to reproduce all of those locally.
 
 ### 2. Tests pass
 
@@ -73,20 +73,19 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 ### 4. Linting must pass
 
-All C++ code is formatted with clang-format and analysed with clang-tidy. `clang-tidy` needs a compile database generated with clang, so run `make configure` first (`make build_linux`/`make build_windows` alone will not work, since they don't set up the compiler flags clang-tidy needs):
+All C++ code is formatted with clang-format and analysed with clang-tidy. `make check_all` runs both checks. It configures a clang build tree of its own for clang-tidy, so it needs no prior `make configure`:
 
 ```
-make configure
-make lint
+make check_all
 ```
 
 If there are formatting violations, auto-fix them with:
 
 ```
-make fmt
+make format
 ```
 
-Then re-run `make lint` to confirm everything passes.
+Then re-run `make check_all` to confirm everything passes.
 
 ### 5. Match the existing code style
 
@@ -119,12 +118,12 @@ if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 
 ### StormLib locale state is global and not thread-safe
 
-`SFileSetLocale` sets a process-wide locale variable (`g_lcFileLocale`) inside StormLib. All locale-sensitive operations in `mpq.cpp` - file open, add, remove, read, extract, and list - call `SFileSetLocale` immediately before the relevant StormLib call. There is no locale-explicit alternative in StormLib's public API (`SFileOpenFileEx`, `SFileAddFileEx`, etc. all read `g_lcFileLocale` internally).
+`SFileSetLocale` sets a process-wide locale variable (`g_lcFileLocale`) inside StormLib. All locale-sensitive operations in `src/mpq/` - file open, add, remove, read, extract, and list - call `SFileSetLocale` immediately before the relevant StormLib call. There is no locale-explicit alternative in StormLib's public API (`SFileOpenFileEx`, `SFileAddFileEx`, etc. all read `g_lcFileLocale` internally).
 
 This means:
 
 - The `SFileSetLocale` + StormLib-call sequence is **not atomic** and would be unsafe under concurrency
-- mpqcli is intentionally **single-threaded**; do not introduce threads or async I/O without auditing every locale-sensitive call site in `mpq.cpp`
+- mpqcli is intentionally **single-threaded**; do not introduce threads or async I/O without auditing every locale-sensitive call site in `src/mpq/`
 
 If you add a new StormLib call that is locale-sensitive, follow the existing pattern: call `SFileSetLocale` immediately before it, with no intervening calls between the two.
 
@@ -134,6 +133,6 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 2. Run `git submodule update --init --recursive` after cloning
 3. Run `make install_clang_tools` to install lint dependencies
 4. Make your changes and verify they build: `make build_linux`
-5. Run `make configure` and then `make lint`, fixing any issues
+5. Run `make check_all`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why

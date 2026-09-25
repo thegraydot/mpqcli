@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(MPQCLI VERSION 0.11.0)
+project(MPQCLI VERSION 0.12.0)
 
-# Options
-option(BUILD_MPQCLI "Build the mpqcli CLI app" ON)
-option(BUILD_STATIC "Build static binary" OFF)
+# An option() name is global to the CMake cache, including a consumer's, so these
+# carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.
+option(MPQCLI_BUILD_APP "Build the mpqcli binary" ON)
+option(MPQCLI_BUILD_STATIC "Build static binary" OFF)
+# Off by default, so a new compiler release adding a warning cannot stop a
+# developer working. The bar is enforced by check_lint instead: clang-tidy
+# replays these flags and .clang-tidy treats every warning as an error
+option(MPQCLI_WERROR "Treat compiler warnings as errors" OFF)
 
 # Set project defaults
 set(CMAKE_CXX_STANDARD 17)
@@ -16,9 +21,23 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+
+# Multi-config generators (Visual Studio, Xcode) append the config name to the
+# output directory, so the bare variable above would put the binary in
+# bin/Release/ rather than bin/. Set all four configs, not just RELEASE, so a
+# Debug build in an IDE lands in the same place.
+foreach(cfg IN ITEMS DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${PROJECT_BINARY_DIR}/bin")
+endforeach()
+
+# Windows specific settings
+if(MSVC)
+    add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)
+endif()
 
 # Static linking configuration
-if(BUILD_STATIC)
+if(MPQCLI_BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     set(BUILD_SHARED_LIBS OFF)
@@ -27,7 +46,7 @@ endif()
 # Determine git commit hash
 execute_process(
     COMMAND git rev-parse HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     RESULT_VARIABLE GIT_COMMIT_RESULT
@@ -38,7 +57,7 @@ if(NOT GIT_COMMIT_RESULT EQUAL 0 OR NOT GIT_COMMIT_HASH)
 endif()
 
 # Handle StormLib dependency
-if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
+if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
     message(FATAL_ERROR
 "Missing dependency: StormLib
 mpqcli requires the StormLib library.
@@ -55,38 +74,43 @@ set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
 
-# Handle CLI11 dependency
-if(BUILD_MPQCLI)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
+# Handle CLI11 dependency. Only app/ parses arguments, so the core never sees it.
+if(MPQCLI_BUILD_APP)
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
         message(FATAL_ERROR
-    "Missing dependency: CLI11
-    mpqcli requires the CLI11 library.
-    It is provided as a submodule of this repository.
-    Did you forget to execute the following commands?
-       git submodule init
-       git submodule update")
+"Missing dependency: CLI11
+mpqcli requires the CLI11 library.
+It is provided as a submodule of this repository.
+Did you forget to execute the following commands?
+   git submodule init
+   git submodule update")
     endif()
 
     add_subdirectory(extern/CLI11)
+endif()
 
-    # Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/extern/hash-library/crc32.cpp")
-        message(FATAL_ERROR
-    "Missing dependency: hash-library
-    mpqcli requires the hash-library library.
-    It is provided as a submodule of this repository.
-    Did you forget to execute the following commands?
-       git submodule init
-       git submodule update")
-    endif()
+# Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
+if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/hash-library/crc32.cpp")
+    message(FATAL_ERROR
+"Missing dependency: hash-library
+mpqcli requires the hash-library library.
+It is provided as a submodule of this repository.
+Did you forget to execute the following commands?
+   git submodule init
+   git submodule update")
+endif()
 
-    # hash-library ships no CMakeLists; compile only the two algorithms we use
-    add_library(hash-library STATIC
-        extern/hash-library/crc32.cpp
-        extern/hash-library/md5.cpp
-    )
-    target_include_directories(hash-library SYSTEM INTERFACE "${CMAKE_SOURCE_DIR}/extern")
+# hash-library ships no CMakeLists; compile only the two algorithms we use
+add_library(hash-library STATIC
+    extern/hash-library/crc32.cpp
+    extern/hash-library/md5.cpp
+)
+target_include_directories(hash-library SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern")
 
-    # Add the main application
-    add_subdirectory(src)
+# Unconditional: building the core without the app is what proves nothing in
+# src/ has picked up a dependency on app/.
+add_subdirectory(src)
+
+if(MPQCLI_BUILD_APP)
+    add_subdirectory(app)
 endif()

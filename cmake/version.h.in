@@ -1,0 +1,20 @@
+#pragma once
+
+namespace mpqcli {
+
+/// Major version, from project(... VERSION) in the root CMakeLists.txt
+inline constexpr int version_major = @PROJECT_VERSION_MAJOR@;
+
+/// Minor version
+inline constexpr int version_minor = @PROJECT_VERSION_MINOR@;
+
+/// Patch version
+inline constexpr int version_patch = @PROJECT_VERSION_PATCH@;
+
+/// The version as a dotted string, "1.2.3"
+inline constexpr const char *version_string = "@PROJECT_VERSION@";
+
+/// The commit the binary was built from, or "unknown" outside a git checkout
+inline constexpr const char *git_commit_hash = "@GIT_COMMIT_HASH@";
+
+} // namespace mpqcli

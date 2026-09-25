@@ -3,37 +3,27 @@ name: Build
 on:
   workflow_call
 
+permissions:
+  contents: read
+
 jobs:
   build_linux:
     strategy:
+      # Report both architectures independently; one failing says nothing about
+      # the other, and cancelling hides half the answer
+      fail-fast: false
       matrix:
         include:
           # AMD64 builds on ubuntu-24.04
           - arch: amd64
-            libc: glibc
+            asset: mpqcli-linux-x86_64
             runner: ubuntu-24.04
-            dockerfile: Dockerfile.glibc
             platform: linux/amd64
-            binary_path: /usr/local/bin/mpqcli
-          - arch: amd64
-            libc: musl
-            runner: ubuntu-24.04
-            dockerfile: Dockerfile.musl
-            platform: linux/amd64
-            binary_path: /mpqcli
           # ARM64 builds on ubuntu-24.04-arm
           - arch: arm64
-            libc: glibc
+            asset: mpqcli-linux-aarch64
             runner: ubuntu-24.04-arm
-            dockerfile: Dockerfile.glibc
             platform: linux/arm64
-            binary_path: /usr/local/bin/mpqcli
-          - arch: arm64
-            libc: musl
-            runner: ubuntu-24.04-arm
-            dockerfile: Dockerfile.musl
-            platform: linux/arm64
-            binary_path: /mpqcli
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -42,29 +32,45 @@ jobs:
         with:
           submodules: true
 
-      - name: Build Docker image (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Build Docker image (${{ matrix.arch }})
         run: |
-          docker build --platform ${{ matrix.platform }} -t mpqcli-${{ matrix.arch }}-${{ matrix.libc }} -f ${{ matrix.dockerfile }} .
+          docker build --platform ${{ matrix.platform }} -t mpqcli-${{ matrix.arch }} .
 
       - name: Extract binary from Docker image
         run: |
-          # Create a temporary container from the image
-          CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }}-${{ matrix.libc }})
-          # Copy the binary from the container
-          docker cp $CONTAINER_ID:${{ matrix.binary_path }} ./mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
-          # Clean up the container
+          CONTAINER_ID=$(docker create mpqcli-${{ matrix.arch }})
+          docker cp $CONTAINER_ID:/mpqcli ./${{ matrix.asset }}
           docker rm $CONTAINER_ID
 
-      - name: Verify binary
+      # Run the bytes that will ship: a static binary missing its loader builds
+      # without complaint and only fails here
+      - name: Smoke-run the artefact
         run: |
-          file ./mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
-          echo "Binary created: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}"
+          chmod +x ./${{ matrix.asset }}
+          ./${{ matrix.asset }} version
 
-      - name: Upload binary as artifact
+      - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
-          name: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
-          path: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+          retention-days: 1
+
+      # The amd64 image is the one published. Saving it here rather than
+      # rebuilding it in a job of its own means release and prerelease push
+      # exactly the bytes this job smoke-ran
+      - name: Save Docker image as a tar file
+        if: matrix.arch == 'amd64'
+        run: |
+          docker tag mpqcli-${{ matrix.arch }} mpqcli
+          docker save mpqcli -o mpqcli-docker.tar
+
+      - name: Upload Docker image as artefact
+        if: matrix.arch == 'amd64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: mpqcli-docker
+          path: mpqcli-docker.tar
           retention-days: 1
 
   build_windows:
@@ -81,45 +87,21 @@ jobs:
           cmake -B build \
           -G "Visual Studio 17 2022" \
           -A x64 \
-          -DBUILD_MPQCLI=ON
+          -DMPQCLI_BUILD_APP=ON
 
       - name: Compile project
         run: cmake --build build --config Release
 
       - name: Check mpqcli version
-        run: build/bin/Release/mpqcli.exe version
+        run: build/bin/mpqcli.exe version
 
       - name: Copy mpqcli binary
-        run: cp build/bin/Release/mpqcli.exe build/bin/mpqcli-windows-amd64.exe
+        run: cp build/bin/mpqcli.exe build/bin/mpqcli-windows-x86_64.exe
 
-      - name: Upload Artifact
+      - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
-          name: mpqcli-windows-amd64.exe
-          path: build/bin/mpqcli-windows-amd64.exe
+          name: mpqcli-windows-x86_64.exe
+          path: build/bin/mpqcli-windows-x86_64.exe
           retention-days: 1
 
-  build_docker:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v6
-        with:
-          submodules: true
-
-      # For the distributable Docker image we use musl
-      # This results in a smaller image size
-      - name: Build Docker image (AMD64)
-        run: |
-          docker build --platform linux/amd64 -t mpqcli -f Dockerfile.musl .
-
-      - name: Save Docker image as a tar file
-        run: |
-          docker save mpqcli -o mpqcli-docker.tar
-
-      - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: mpqcli-docker
-          path: mpqcli-docker.tar
-          retention-days: 1

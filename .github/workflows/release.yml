@@ -3,9 +3,11 @@ name: Release
 on:
   workflow_call
 
+# id-token: write obtains the OIDC token gpipe uses for cosign keyless signing
 permissions:
   contents: write
   packages: write
+  id-token: write
 
 jobs:
   release_binaries:
@@ -16,34 +18,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Resolve release version
+      - name: Resolve release version from the tag
         id: version
-        run: echo "version=$(make get_project_version)" >> "$GITHUB_OUTPUT"
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          project_version="$(make get_version)"
+          if [ "$version" != "$project_version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match the project version ${project_version} in CMakeLists.txt"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Download Linux GLIBC binary
+      - name: Download all build artefacts
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-amd64-glibc
+          path: dist
+          merge-multiple: true
 
-      - name: Download Linux MUSL binary
-        uses: actions/download-artifact@v8
+      - uses: thomaslaurenson/gpipe@v1
         with:
-          name: mpqcli-linux-amd64-musl
-
-      - name: Download Linux ARM64 GLIBC binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-linux-arm64-glibc
-
-      - name: Download Linux ARM64 MUSL binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-linux-arm64-musl
-
-      - name: Download Windows binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-windows-amd64.exe
+          cosign_sign: true
 
       - name: Extract changelog for this tag
         id: changelog
@@ -59,11 +53,11 @@ jobs:
           gh release create ${{ github.ref_name }} \
             --title "${{ github.ref_name }}" \
             --notes "$CHANGELOG_CONTENT" \
-            mpqcli-linux-amd64-glibc \
-            mpqcli-linux-amd64-musl \
-            mpqcli-linux-arm64-glibc \
-            mpqcli-linux-arm64-musl \
-            mpqcli-windows-amd64.exe
+            dist/mpqcli-linux-x86_64 \
+            dist/mpqcli-linux-aarch64 \
+            dist/mpqcli-windows-x86_64.exe \
+            install.sh install.ps1 \
+            checksums.txt checksums.txt.sigstore.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHANGELOG_CONTENT: ${{ steps.changelog.outputs.content }}
@@ -72,7 +66,7 @@ jobs:
     needs: release_binaries
     runs-on: ubuntu-24.04
     steps:
-      - name: Download Docker image artifact
+      - name: Download Docker image artefact
         uses: actions/download-artifact@v8
         with:
           name: mpqcli-docker
@@ -87,7 +81,10 @@ jobs:
           docker tag mpqcli ghcr.io/thegraydot/mpqcli:latest
 
       - name: Push Docker image to GitHub Container Registry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
           docker push ghcr.io/thegraydot/mpqcli:${{ needs.release_binaries.outputs.version }}
           docker push ghcr.io/thegraydot/mpqcli:latest

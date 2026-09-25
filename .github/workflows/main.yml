@@ -10,15 +10,23 @@ on:
       - ".clang-format"
       - ".clang-tidy"
       - "src/**"
+      - "app/**"
+      - "cmake/**"
+      - "completion/**"
       - "extern/**"
       - "test/**"
       - "CMakeLists.txt"
-      - "Dockerfile.glibc"
-      - "Dockerfile.musl"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".gpipe.yml"
 
+# Never cancel on main. The prerelease job deletes the dev release, force-moves
+# the tag and pushes the image; a run cancelled part-way through leaves those
+# three disagreeing with each other, which costs more than the runner minutes
+# cancelling would save
 concurrency:
-  group: prerelease
-  cancel-in-progress: true
+  group: main-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write

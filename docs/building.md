@@ -28,13 +28,13 @@ $ cmake -B build
 $ cmake --build build --config Release
 ```
 
-The `mpqcli.exe` binary will be available in: `.\build\bin\Release\mpqcli.exe`
+The `mpqcli.exe` binary will be available in: `.\build\bin\mpqcli.exe`
 
 ## Dependencies
 
 ### StormLib
 
-This project requires the [StormLib](https://github.com/ladislav-zezula/StormLib) library. Many thanks to [Ladislav Zezula](https://github.com/ladislav-zezula) for authoring such a good library and releasing the code under an open-source license. The StormLib library has a number of requirements. However, the build method specifies using the libraries bundled with StormLib.
+This project requires the [StormLib](https://github.com/ladislav-zezula/StormLib) library. Many thanks to [Ladislav Zezula](https://github.com/ladislav-zezula) for authoring such a good library and releasing the code under an open-source licence. The StormLib library has a number of requirements. However, the build method specifies using the libraries bundled with StormLib.
 
 ### CLI11
 

@@ -10,7 +10,7 @@ Create an MPQ file from a target directory. Automatically adds `(listfile)` to t
 $ mpqcli create <target_directory>
 ```
 
-The default mode of operation for the `create` subcommand is to take everything from the "target" directory (and below) and recursively add it to the archive. The directory structure is retained. Windows-style backslash path separators are used (`\`), as per the observed behavior in most MPQ archives.
+The default mode of operation for the `create` subcommand is to take everything from the "target" directory (and below) and recursively add it to the archive. The directory structure is retained. Windows-style backslash path separators are used (`\`), as per the observed behaviour in most MPQ archives.
 
 ## Create an MPQ archive for a specific game
 

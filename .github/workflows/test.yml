@@ -13,17 +13,11 @@ jobs:
         include:
           # AMD64 tests on ubuntu-24.04
           - arch: amd64
-            libc: glibc
-            runner: ubuntu-24.04
-          - arch: amd64
-            libc: musl
+            asset: mpqcli-linux-x86_64
             runner: ubuntu-24.04
           # ARM64 tests on ubuntu-24.04-arm
           - arch: arm64
-            libc: glibc
-            runner: ubuntu-24.04-arm
-          - arch: arm64
-            libc: musl
+            asset: mpqcli-linux-aarch64
             runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
@@ -34,19 +28,19 @@ jobs:
         with:
           submodules: false
 
-      - name: Download Linux binary (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Download Linux binary (${{ matrix.arch }})
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }}
+          name: ${{ matrix.asset }}
           path: build/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/mpqcli-linux-${{ matrix.arch }}-${{ matrix.libc }} build/bin/mpqcli
+        run: mv build/bin/${{ matrix.asset }} build/bin/mpqcli
 
       - name: Make binary executable
         run: chmod +x ./build/bin/mpqcli
 
-      - name: Check mpqcli version (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Check mpqcli version (${{ matrix.arch }})
         run: ./build/bin/mpqcli version
 
       - name: Setup python
@@ -59,7 +53,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r test/requirements.txt
 
-      - name: Run tests (${{ matrix.arch }} ${{ matrix.libc }})
+      - name: Run tests (${{ matrix.arch }})
         run: |
           python3 -m pytest test
 
@@ -75,11 +69,11 @@ jobs:
       - name: Download Windows binary
         uses: actions/download-artifact@v8
         with:
-          name: mpqcli-windows-amd64.exe
-          path: build/bin/Release
+          name: mpqcli-windows-x86_64.exe
+          path: build/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/Release/mpqcli-windows-amd64.exe build/bin/mpqcli.exe
+        run: mv build/bin/mpqcli-windows-x86_64.exe build/bin/mpqcli.exe
 
       - name: Check mpqcli version
         run: ./build/bin/mpqcli.exe version

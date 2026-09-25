@@ -1,0 +1,14 @@
+// Generated from the scripts in completion/, do not edit
+#pragma once
+
+namespace mpqcli {
+
+inline constexpr char bash_completion_script[] = R"BASH_MPQCLI(@BASH_COMPLETION_SCRIPT@)BASH_MPQCLI";
+
+inline constexpr char zsh_completion_script[] = R"ZSH_MPQCLI(@ZSH_COMPLETION_SCRIPT@)ZSH_MPQCLI";
+
+inline constexpr char ps_completion_script[] = R"PS_MPQCLI(@PS_COMPLETION_SCRIPT@)PS_MPQCLI";
+
+inline constexpr char fish_completion_script[] = R"FISH_MPQCLI(@FISH_COMPLETION_SCRIPT@)FISH_MPQCLI";
+
+} // namespace mpqcli
