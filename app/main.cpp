@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <optional>
 #include <set>
@@ -9,6 +10,7 @@
 
 #include "cli/commands.h"
 #include "commands.h"
+#include "errors.h"
 #include "gamerules/rules.h"
 #include "validators.h"
 
@@ -272,6 +274,111 @@ int main(int argc, char **argv) {
 
     try {
         app.parse(argc, argv);
+
+        if (app.got_subcommand(version)) {
+            return HandleVersion();
+        }
+
+        if (app.got_subcommand(about)) {
+            return HandleAbout();
+        }
+
+        if (app.got_subcommand(info)) {
+            return HandleInfo(base_target, info_property);
+        }
+
+        if (app.got_subcommand(create)) {
+            return HandleCreate(
+                base_target, base_path, base_output, create_sign_archive, base_locale,
+                base_game_profile, create_mpq_version, create_stream_flags, create_sector_size,
+                create_raw_chunk_size, create_file_flags1, create_file_flags2, create_file_flags3,
+                create_attr_flags, file_flags, file_compression, file_compression_next);
+        }
+
+        if (app.got_subcommand(add)) {
+            std::vector<std::string> resolved_add_files;
+            for (const auto &f : add_files) {
+                if (f == "-") {
+                    std::string line;
+                    while (std::getline(std::cin, line)) {
+                        if (!line.empty())
+                            resolved_add_files.push_back(line);
+                    }
+                } else {
+                    resolved_add_files.push_back(f);
+                }
+            }
+            return HandleAdd(resolved_add_files, base_target, base_path, add_overwrite, add_update,
+                             base_locale, base_game_profile, file_flags, file_compression,
+                             file_compression_next);
+        }
+
+        if (app.got_subcommand(remove)) {
+            std::vector<std::string> resolved_remove_files;
+            for (const auto &f : remove_files) {
+                if (f == "-") {
+                    std::string line;
+                    while (std::getline(std::cin, line)) {
+                        if (!line.empty())
+                            resolved_remove_files.push_back(line);
+                    }
+                } else {
+                    resolved_remove_files.push_back(f);
+                }
+            }
+            return HandleRemove(resolved_remove_files, base_target, base_locale);
+        }
+
+        if (app.got_subcommand(rename)) {
+            return HandleRename(base_file, rename_new_file, base_target, base_locale);
+        }
+
+        if (app.got_subcommand(list)) {
+            return HandleList(base_target, base_listfile_name, list_all, list_detailed,
+                              list_properties);
+        }
+
+        if (app.got_subcommand(extract)) {
+            std::optional<std::string> extract_file =
+                base_file.empty() ? std::nullopt : std::make_optional(base_file);
+            return HandleExtract(base_target, base_output, extract_file,
+                                 extract_keep_folder_structure, base_listfile_name, base_locale);
+        }
+
+        if (app.got_subcommand(read)) {
+            return HandleRead(base_file, base_target, base_locale);
+        }
+
+        if (app.got_subcommand(verify)) {
+            return HandleVerify(base_target, verify_print_signature);
+        }
+
+        if (app.got_subcommand(compact)) {
+            return HandleCompact(base_target, base_listfile_name);
+        }
+
+        if (app.got_subcommand(completion)) {
+            if (completion->got_subcommand(completion_bash)) {
+                HandleCompletionBash();
+                return 0;
+            }
+            if (completion->got_subcommand(completion_zsh)) {
+                HandleCompletionZsh();
+                return 0;
+            }
+            if (completion->got_subcommand(completion_ps)) {
+                HandleCompletionPs();
+                return 0;
+            }
+            if (completion->got_subcommand(completion_fish)) {
+                HandleCompletionFish();
+                return 0;
+            }
+            std::cerr << completion->help();
+            return 1;
+        }
+
+        return 0;
     } catch (const CLI::ParseError &e) {
         // An empty command line is a request for help rather than a mistake. The argc
         // check is what keeps an unknown subcommand, which raises the same error, failing
@@ -280,110 +387,11 @@ int main(int argc, char **argv) {
             return 0;
         }
         return app.exit(e);
-    }
-
-    if (app.got_subcommand(version)) {
-        return HandleVersion();
-    }
-
-    if (app.got_subcommand(about)) {
-        return HandleAbout();
-    }
-
-    if (app.got_subcommand(info)) {
-        return HandleInfo(base_target, info_property);
-    }
-
-    if (app.got_subcommand(create)) {
-        return HandleCreate(base_target, base_path, base_output, create_sign_archive, base_locale,
-                            base_game_profile, create_mpq_version, create_stream_flags,
-                            create_sector_size, create_raw_chunk_size, create_file_flags1,
-                            create_file_flags2, create_file_flags3, create_attr_flags, file_flags,
-                            file_compression, file_compression_next);
-    }
-
-    if (app.got_subcommand(add)) {
-        std::vector<std::string> resolved_add_files;
-        for (const auto &f : add_files) {
-            if (f == "-") {
-                std::string line;
-                while (std::getline(std::cin, line)) {
-                    if (!line.empty())
-                        resolved_add_files.push_back(line);
-                }
-            } else {
-                resolved_add_files.push_back(f);
-            }
-        }
-        return HandleAdd(resolved_add_files, base_target, base_path, add_overwrite, add_update,
-                         base_locale, base_game_profile, file_flags, file_compression,
-                         file_compression_next);
-    }
-
-    if (app.got_subcommand(remove)) {
-        std::vector<std::string> resolved_remove_files;
-        for (const auto &f : remove_files) {
-            if (f == "-") {
-                std::string line;
-                while (std::getline(std::cin, line)) {
-                    if (!line.empty())
-                        resolved_remove_files.push_back(line);
-                }
-            } else {
-                resolved_remove_files.push_back(f);
-            }
-        }
-        return HandleRemove(resolved_remove_files, base_target, base_locale);
-    }
-
-    if (app.got_subcommand(rename)) {
-        return HandleRename(base_file, rename_new_file, base_target, base_locale);
-    }
-
-    if (app.got_subcommand(list)) {
-        return HandleList(base_target, base_listfile_name, list_all, list_detailed,
-                          list_properties);
-    }
-
-    if (app.got_subcommand(extract)) {
-        std::optional<std::string> extract_file =
-            base_file.empty() ? std::nullopt : std::make_optional(base_file);
-        return HandleExtract(base_target, base_output, extract_file, extract_keep_folder_structure,
-                             base_listfile_name, base_locale);
-    }
-
-    if (app.got_subcommand(read)) {
-        return HandleRead(base_file, base_target, base_locale);
-    }
-
-    if (app.got_subcommand(verify)) {
-        return HandleVerify(base_target, verify_print_signature);
-    }
-
-    if (app.got_subcommand(compact)) {
-        return HandleCompact(base_target, base_listfile_name);
-    }
-
-    if (app.got_subcommand(completion)) {
-        if (completion->got_subcommand(completion_bash)) {
-            HandleCompletionBash();
-            return 0;
-        }
-        if (completion->got_subcommand(completion_zsh)) {
-            HandleCompletionZsh();
-            return 0;
-        }
-        if (completion->got_subcommand(completion_ps)) {
-            HandleCompletionPs();
-            return 0;
-        }
-        if (completion->got_subcommand(completion_fish)) {
-            HandleCompletionFish();
-            return 0;
-        }
-        std::cerr << completion->help();
+    } catch (const mpqcli::Error &e) {
+        std::cerr << "[!] " << e.what() << std::endl;
         return 1;
+    } catch (const std::exception &e) {
+        std::cerr << "[!] Unexpected error: " << e.what() << std::endl;
+        return 2;
     }
-
-    return 0;
 }

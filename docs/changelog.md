@@ -8,10 +8,12 @@
 - Ship one static musl Linux binary per architecture instead of glibc and musl pairs
 - Publish install scripts and a signed checksums file with each release
 - Run the Docker image in /data so mounted paths need no prefix
+- Exit 2 with a message on an unexpected internal error instead of aborting
 
 ### Fixed
 
 - Fail with a non-zero exit code on an unknown subcommand or a missing argument
+- Fail with a non-zero exit code when closing, signing, listing or printing a signature fails
 - Offer every locale and game profile in zsh, keep filenames out of value lists in fish, and complete archives after a subcommand in PowerShell
 
 ## 0.11.0 - 2026-09-21

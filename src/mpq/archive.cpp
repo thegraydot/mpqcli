@@ -1,42 +1,92 @@
 #include "mpq/archive.h"
 
-#include <iostream>
+#include <cstdint>
+#include <filesystem>
 #include <string>
+#include <system_error>
 
 #include <StormLib.h>
 
-#include "util/format.h"
+#include "errors.h"
+#include "gamerules/rules.h"
+#include "gamerules/settings.h"
+
+namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool OpenMpqArchive(const std::string &filename, HANDLE *archive, const DWORD flags) {
-    if (!SFileOpenArchive(filename.c_str(), 0, flags, archive)) {
-        const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to open MPQ archive: " << filename << ": (" << error << ") "
-                  << StormErrorString(error) << std::endl;
-        return false;
+Archive Archive::Open(const std::string &filename, const DWORD flags) {
+    HANDLE handle = nullptr;
+    if (!SFileOpenArchive(filename.c_str(), 0, flags, &handle)) {
+        throw ArchiveOpenError(filename, SErrGetLastError());
     }
-    return true;
+    return Archive(handle);
 }
 
-bool CloseMpqArchive(HANDLE archive) {
-    if (!SFileCloseArchive(archive)) {
-        const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to close MPQ archive: (" << error << ") "
-                  << StormErrorString(error) << std::endl;
-        return false;
+Archive Archive::Create(const std::string &filename, const uint32_t file_count,
+                        const GameRules &game_rules) {
+    std::error_code ec;
+    if (fs::exists(filename, ec)) {
+        throw ArchiveError("File already exists: " + filename + " Exiting...");
     }
-    return true;
+
+    const MpqCreateSettings &settings = game_rules.GetCreateSettings();
+
+    SFILE_CREATE_MPQ create_info = {};
+    create_info.cbSize = sizeof(SFILE_CREATE_MPQ);
+    create_info.dwMpqVersion = settings.mpq_version;
+    create_info.dwStreamFlags = settings.stream_flags;
+    create_info.dwFileFlags1 = settings.file_flags1;
+    create_info.dwFileFlags2 = settings.file_flags2;
+    create_info.dwFileFlags3 = settings.file_flags3;
+    create_info.dwAttrFlags = settings.attr_flags;
+    create_info.dwSectorSize = settings.sector_size;
+    create_info.dwRawChunkSize = settings.raw_chunk_size;
+    create_info.dwMaxFileCount = file_count;
+
+    HANDLE handle = nullptr;
+    if (!SFileCreateArchive2(filename.c_str(), &create_info, &handle)) {
+        throw ArchiveCreateError(filename, SErrGetLastError());
+    }
+    return Archive(handle);
 }
 
-bool SignMpqArchive(HANDLE archive) {
-    if (!SFileSignArchive(archive, SIGNATURE_TYPE_WEAK)) {
-        const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to sign MPQ archive: (" << error << ") " << StormErrorString(error)
-                  << std::endl;
-        return false;
+Archive::Archive(Archive &&other) noexcept : handle_(other.handle_) {
+    other.handle_ = nullptr;
+}
+
+Archive &Archive::operator=(Archive &&other) noexcept {
+    if (this != &other) {
+        if (handle_ != nullptr) {
+            SFileCloseArchive(handle_);
+        }
+        handle_ = other.handle_;
+        other.handle_ = nullptr;
     }
-    return true;
+    return *this;
+}
+
+Archive::~Archive() {
+    if (handle_ != nullptr) {
+        SFileCloseArchive(handle_);
+    }
+}
+
+void Archive::Sign() {
+    if (!SFileSignArchive(handle_, SIGNATURE_TYPE_WEAK)) {
+        throw StormError("Failed to sign MPQ archive", SErrGetLastError());
+    }
+}
+
+void Archive::Close() {
+    if (!SFileCloseArchive(handle_)) {
+        // StormLib frees the handle even when its flush fails, so drop it before
+        // the throw or the destructor would close it a second time
+        const auto error = SErrGetLastError();
+        handle_ = nullptr;
+        throw StormError("Failed to close MPQ archive", error);
+    }
+    handle_ = nullptr;
 }
 
 } // namespace mpqcli

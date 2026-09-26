@@ -16,10 +16,7 @@ namespace mpqcli {
 
 int HandleRead(const std::string &file, const std::string &target,
                const std::optional<std::string> &locale) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
-        return 1;
-    }
+    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
     if (locale.has_value() && lcid == default_locale) {
@@ -28,15 +25,15 @@ int HandleRead(const std::string &file, const std::string &target,
     }
 
     uint32_t file_size;
-    auto file_content = ReadFile(archive, file.c_str(), &file_size, lcid);
+    auto file_content = ReadFile(archive.Handle(), file.c_str(), &file_size, lcid);
     if (!file_content) {
-        CloseMpqArchive(archive);
+        archive.Close();
         return 1;
     }
 
     PrintAsBinary(file_content.get(), file_size);
 
-    CloseMpqArchive(archive);
+    archive.Close();
     return 0;
 }
 

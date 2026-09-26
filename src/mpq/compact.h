@@ -8,7 +8,10 @@
 
 namespace mpqcli {
 
-int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name);
+/// Compacts the archive, resolving names it cannot from listfile_name when given
+///
+/// @throws StormError if StormLib cannot compact it
+void CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name);
 
 } // namespace mpqcli
 

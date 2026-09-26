@@ -6,21 +6,17 @@
 
 #include <StormLib.h>
 
-#include "util/format.h"
+#include "errors.h"
 
 namespace mpqcli {
 
-int CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name) {
+void CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name) {
     std::cout << "[*] Compacting archive. This may take some time..." << std::endl;
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     if (!SFileCompactArchive(archive, listfile, false)) {
-        const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to compact archive: (" << error << ") " << StormErrorString(error)
-                  << std::endl;
-        return 1;
+        throw StormError("Failed to compact archive", SErrGetLastError());
     }
-    return 0;
 }
 
 } // namespace mpqcli

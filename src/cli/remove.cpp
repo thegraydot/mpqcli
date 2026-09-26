@@ -15,10 +15,7 @@ namespace mpqcli {
 
 int HandleRemove(const std::vector<std::string> &files, const std::string &target,
                  const std::optional<std::string> &locale) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, 0)) {
-        return 1;
-    }
+    Archive archive = Archive::Open(target, 0);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
     std::unordered_set<std::string> seen;
@@ -27,12 +24,12 @@ int HandleRemove(const std::vector<std::string> &files, const std::string &targe
         if (!seen.insert(f).second) {
             continue;
         }
-        int result = RemoveFile(archive, f, lcid);
+        int result = RemoveFile(archive.Handle(), f, lcid);
         if (result != 0) {
             overall_result = result;
         }
     }
-    CloseMpqArchive(archive);
+    archive.Close();
     return overall_result;
 }
 

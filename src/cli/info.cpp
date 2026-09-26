@@ -11,12 +11,9 @@
 namespace mpqcli {
 
 int HandleInfo(const std::string &target, const std::optional<std::string> &property) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
-        return 1;
-    }
-    PrintMpqInfo(archive, property);
-    CloseMpqArchive(archive);
+    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
+    PrintMpqInfo(archive.Handle(), property);
+    archive.Close();
     return 0;
 }
 

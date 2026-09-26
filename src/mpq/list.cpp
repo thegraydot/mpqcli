@@ -12,6 +12,7 @@
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "mpq/flags.h"
 #include "mpq/query.h"
 #include "util/format.h"
@@ -19,15 +20,14 @@
 
 namespace mpqcli {
 
-int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
-              bool list_detailed, const std::vector<std::string> &properties) {
+void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
+               bool list_detailed, const std::vector<std::string> &properties) {
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
     if (find_handle == nullptr) {
-        std::cerr << "[!] Failed to find first file in MPQ archive." << std::endl;
-        return -1;
+        throw ArchiveError("Failed to find first file in MPQ archive.");
     }
 
     std::vector<std::string> properties_to_print =
@@ -159,7 +159,6 @@ int ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, b
     } while (SFileFindNextFile(find_handle, &find_data));
 
     SFileFindClose(find_handle);
-    return 0;
 }
 
 } // namespace mpqcli

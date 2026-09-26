@@ -13,12 +13,9 @@ namespace mpqcli {
 
 int HandleList(const std::string &target, const std::optional<std::string> &listfile_name,
                bool list_all, bool list_detailed, const std::vector<std::string> &properties) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
-        return 1;
-    }
-    ListFiles(archive, listfile_name, list_all, list_detailed, properties);
-    CloseMpqArchive(archive);
+    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
+    ListFiles(archive.Handle(), listfile_name, list_all, list_detailed, properties);
+    archive.Close();
     return 0;
 }
 

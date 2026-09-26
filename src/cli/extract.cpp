@@ -54,10 +54,7 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
                   << effective_output << std::endl;
     }
 
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
-        return 1;
-    }
+    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
     if (locale.has_value() && lcid == default_locale) {
@@ -67,11 +64,12 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
 
     int result;
     if (file.has_value()) {
-        result = ExtractFile(archive, effective_output, file.value(), keep_folder_structure, lcid);
+        result = ExtractFile(archive.Handle(), effective_output, file.value(),
+                             keep_folder_structure, lcid);
     } else {
-        result = ExtractFiles(archive, effective_output, listfile_name, lcid);
+        result = ExtractFiles(archive.Handle(), effective_output, listfile_name, lcid);
     }
-    CloseMpqArchive(archive);
+    archive.Close();
 
     if (result != 0) {
         std::cerr << std::endl << "[!] Failed to extract all files." << std::endl;

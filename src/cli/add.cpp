@@ -25,10 +25,7 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               const std::optional<std::string> &locale,
               const std::optional<std::string> &game_profile, int64_t file_flags,
               int64_t file_compression, int64_t file_compression_next) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, 0)) {
-        return 1;
-    }
+    Archive archive = Archive::Open(target, 0);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
 
@@ -76,14 +73,14 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
                 continue;
             }
             std::string prefix = path.value_or("");
-            result |= AddFiles(archive, directory_files, f, prefix, lcid, game_rules, add_overrides,
-                               overwrite, update, &files_skipped);
+            result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules,
+                               add_overrides, overwrite, update, &files_skipped);
 
         } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
-            result |= AddFile(archive, f, archive_path, lcid, game_rules, add_overrides, overwrite,
-                              update, &files_skipped);
+            result |= AddFile(archive.Handle(), f, archive_path, lcid, game_rules, add_overrides,
+                              overwrite, update, &files_skipped);
 
         } else {
             std::cerr << "[!] Not a file or directory: " << f << std::endl;
@@ -100,7 +97,7 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
                   << std::endl;
     }
 
-    CloseMpqArchive(archive);
+    archive.Close();
     return result;
 }
 

@@ -11,19 +11,16 @@
 namespace mpqcli {
 
 int HandleVerify(const std::string &target, bool print_signature) {
-    HANDLE archive;
-    if (!OpenMpqArchive(target, &archive, MPQ_OPEN_READ_ONLY)) {
-        return 1;
-    }
+    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
 
     int result;
-    switch (VerifyMpqArchive(archive)) {
+    switch (VerifyMpqArchive(archive.Handle())) {
     case ERROR_WEAK_SIGNATURE_OK:
     case ERROR_STRONG_SIGNATURE_OK:
         if (print_signature) {
             // If printing the signature, don't print success message
             // because the user might want to pipe/redirect the signature data
-            PrintMpqSignature(archive, target);
+            PrintMpqSignature(archive.Handle(), target);
         } else {
             std::cout << "[*] Verify success" << std::endl;
         }
@@ -35,7 +32,7 @@ int HandleVerify(const std::string &target, bool print_signature) {
         if (print_signature) {
             // Print the (invalid) signature bytes for forensic inspection,
             // but still fail: the archive content no longer matches it
-            PrintMpqSignature(archive, target);
+            PrintMpqSignature(archive.Handle(), target);
         }
         std::cerr << "[!] Verify failed: signature is present but invalid" << std::endl;
         result = 1;
@@ -51,7 +48,7 @@ int HandleVerify(const std::string &target, bool print_signature) {
         result = 1;
         break;
     }
-    CloseMpqArchive(archive);
+    archive.Close();
     return result;
 }
 

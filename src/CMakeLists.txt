@@ -43,7 +43,6 @@ add_library(mpqcli_core STATIC
     mpq/add.cpp
     mpq/archive.cpp
     mpq/compact.cpp
-    mpq/create.cpp
     mpq/extract.cpp
     mpq/flags.cpp
     mpq/info.cpp

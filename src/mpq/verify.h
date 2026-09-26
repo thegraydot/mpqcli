@@ -9,7 +9,11 @@
 namespace mpqcli {
 
 uint32_t VerifyMpqArchive(HANDLE archive);
-int32_t PrintMpqSignature(HANDLE archive, const std::string &target);
+
+/// Writes the archive's weak or strong signature bytes to stdout
+///
+/// @throws ArchiveError if the signature cannot be read
+void PrintMpqSignature(HANDLE archive, const std::string &target);
 
 } // namespace mpqcli
 

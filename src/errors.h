@@ -1,0 +1,68 @@
+#ifndef ERRORS_H
+#define ERRORS_H
+
+#include <cstdint>
+#include <filesystem>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+#include "util/format.h"
+
+namespace mpqcli {
+
+/// Base for every exception thrown by mpqcli
+class Error : public std::runtime_error {
+public:
+    explicit Error(const std::string &message) : std::runtime_error(message) {}
+};
+
+/// Base for failures reading or writing an archive
+class ArchiveError : public Error {
+public:
+    explicit ArchiveError(const std::string &message) : Error(message) {}
+};
+
+/// Thrown when a StormLib call fails; the message ends with the code and its text
+class StormError : public ArchiveError {
+public:
+    StormError(const std::string &what_failed, uint32_t error_code)
+        : ArchiveError(what_failed + ": (" + std::to_string(error_code) + ") " +
+                       StormErrorString(error_code)),
+          error_code_(error_code) {}
+
+    uint32_t ErrorCode() const { return error_code_; }
+
+private:
+    uint32_t error_code_;
+};
+
+/// Thrown when an archive cannot be opened
+class ArchiveOpenError : public StormError {
+public:
+    ArchiveOpenError(std::filesystem::path path, uint32_t error_code)
+        : StormError("Failed to open MPQ archive: " + path.string(), error_code),
+          path_(std::move(path)) {}
+
+    const std::filesystem::path &Path() const { return path_; }
+
+private:
+    std::filesystem::path path_;
+};
+
+/// Thrown when an archive cannot be created
+class ArchiveCreateError : public StormError {
+public:
+    ArchiveCreateError(std::filesystem::path path, uint32_t error_code)
+        : StormError("Failed to create MPQ archive: " + path.string(), error_code),
+          path_(std::move(path)) {}
+
+    const std::filesystem::path &Path() const { return path_; }
+
+private:
+    std::filesystem::path path_;
+};
+
+} // namespace mpqcli
+
+#endif

@@ -5,13 +5,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <system_error>
 #include <vector>
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "mpq/query.h"
 #include "mpq/read.h"
 #include "util/format.h"
@@ -25,22 +25,21 @@ uint32_t VerifyMpqArchive(HANDLE archive) {
     return SFileVerifyArchive(archive);
 }
 
-int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
+void PrintMpqSignature(HANDLE archive, const std::string &target) {
     // Determine if we have a strong or weak digital signature
     int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
 
     std::vector<char> signature_content;
 
     if (signature_type == SIGNATURE_TYPE_NONE) {
-        return 1;
+        return;
     } else if (signature_type == SIGNATURE_TYPE_WEAK) {
         const char *file_name = "(signature)";
         uint32_t file_size;
         auto file_content = ReadFile(archive, file_name, &file_size, default_locale);
 
         if (!file_content) {
-            std::cerr << "[!] Failed to read weak signature file." << std::endl;
-            return -1;
+            throw ArchiveError("Failed to read weak signature file.");
         }
         signature_content.resize(file_size);
         std::copy(file_content.get(), file_content.get() + file_size, signature_content.begin());
@@ -58,9 +57,8 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         std::error_code ec;
         const auto file_size = static_cast<int64_t>(fs::file_size(archive_path, ec));
         if (ec) {
-            std::cerr << "[!] Failed to read archive size: (" << ec.value() << ") " << ec.message()
-                      << ": " << target << std::endl;
-            return -1;
+            throw ArchiveError("Failed to read archive size: (" + std::to_string(ec.value()) +
+                               ") " + ec.message() + ": " + target);
         }
         // fs::file_size returns uintmax_t, so without the cast the subtraction runs
         // unsigned and a legitimately negative length reaches the check below only
@@ -68,8 +66,7 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
         const int64_t signature_length = file_size - archive_offset - archive_size;
 
         if (signature_length <= 0) {
-            std::cerr << "[!] Invalid signature length: " << signature_length << std::endl;
-            return -1;
+            throw ArchiveError("Invalid signature length: " + std::to_string(signature_length));
         }
 
         std::ifstream file_mpq(archive_path, std::ios::binary);
@@ -81,8 +78,6 @@ int32_t PrintMpqSignature(HANDLE archive, const std::string &target) {
 
         PrintAsBinary(signature_content.data(), static_cast<uint32_t>(signature_content.size()));
     }
-
-    return 0;
 }
 
 } // namespace mpqcli

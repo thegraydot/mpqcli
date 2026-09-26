@@ -1,5 +1,3 @@
-#include "mpq/create.h"
-
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
@@ -102,36 +100,32 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
         CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
 
     // Create the MPQ archive and add files
+    Archive archive = Archive::Create(output_file, file_count, game_rules);
+    LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
+
+    // Apply AddFileSettings overrides if provided
+    CompressionSettingsOverrides add_overrides;
+    if (file_flags >= 0)
+        add_overrides.flags = static_cast<DWORD>(file_flags);
+    if (file_compression >= 0)
+        add_overrides.compression = static_cast<DWORD>(file_compression);
+    if (file_compression_next >= 0)
+        add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
+
     int result = 0;
-    HANDLE archive = CreateMpqArchive(output_file, file_count, game_rules);
-    if (archive) {
-        LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
-
-        // Apply AddFileSettings overrides if provided
-        CompressionSettingsOverrides add_overrides;
-        if (file_flags >= 0)
-            add_overrides.flags = static_cast<DWORD>(file_flags);
-        if (file_compression >= 0)
-            add_overrides.compression = static_cast<DWORD>(file_compression);
-        if (file_compression_next >= 0)
-            add_overrides.compression_next = static_cast<DWORD>(file_compression_next);
-
-        if (is_directory) {
-            const std::string prefix = path.value_or("");
-            result |= AddFiles(archive, files, target, prefix, lcid, game_rules, add_overrides);
-        } else {
-            std::string archive_path = ResolveArchiveName(target, path);
-            result |= AddFile(archive, target, archive_path, lcid, game_rules, add_overrides);
-        }
-
-        if (sign_archive) {
-            SignMpqArchive(archive);
-        }
-        CloseMpqArchive(archive);
+    if (is_directory) {
+        const std::string prefix = path.value_or("");
+        result |=
+            AddFiles(archive.Handle(), files, target, prefix, lcid, game_rules, add_overrides);
     } else {
-        std::cerr << "[!] Failed to create MPQ archive." << std::endl;
-        return 1;
+        std::string archive_path = ResolveArchiveName(target, path);
+        result |= AddFile(archive.Handle(), target, archive_path, lcid, game_rules, add_overrides);
     }
+
+    if (sign_archive) {
+        archive.Sign();
+    }
+    archive.Close();
 
     return result;
 }
