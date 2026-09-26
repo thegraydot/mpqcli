@@ -11,10 +11,9 @@ namespace mpqcli {
 
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale,
-                 std::ostream &out, std::ostream &err);
+                 std::ostream &err);
 int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
-                bool keep_folder_structure, LCID preferred_locale, std::ostream &out,
-                std::ostream &err);
+                bool keep_folder_structure, LCID preferred_locale, std::ostream &err);
 
 } // namespace mpqcli
 

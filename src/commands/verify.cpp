@@ -21,7 +21,7 @@ bool Verify(const VerifyOptions &options, std::ostream &out, std::ostream &err) 
             // because the user might want to pipe/redirect the signature data
             PrintMpqSignature(archive.Handle(), options.target, out, err);
         } else {
-            out << "[*] Verify success" << std::endl;
+            err << "[*] Verify success" << std::endl;
         }
         verified = true;
         break;

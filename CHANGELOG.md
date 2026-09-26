@@ -9,6 +9,7 @@
 - Publish install scripts and a signed checksums file with each release
 - Run the Docker image in /data so mounted paths need no prefix
 - Exit 2 with a message on an unexpected internal error instead of aborting
+- Print progress and warnings on stderr, leaving stdout for results alone
 
 ### Fixed
 

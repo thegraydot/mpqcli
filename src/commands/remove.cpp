@@ -12,7 +12,7 @@
 
 namespace mpqcli {
 
-bool Remove(const RemoveOptions &options, std::ostream &out, std::ostream &err) {
+bool Remove(const RemoveOptions &options, std::ostream &err) {
     Archive archive = Archive::Open(options.archive, 0);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
@@ -22,7 +22,7 @@ bool Remove(const RemoveOptions &options, std::ostream &out, std::ostream &err) 
         if (!seen.insert(f).second) {
             continue;
         }
-        if (RemoveFile(archive.Handle(), f, lcid, out, err) != 0) {
+        if (RemoveFile(archive.Handle(), f, lcid, err) != 0) {
             all_removed = false;
         }
     }

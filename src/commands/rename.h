@@ -16,7 +16,7 @@ struct RenameOptions {
 };
 
 /// Renames a file inside an archive, returning false if it could not be renamed
-bool Rename(const RenameOptions &options, std::ostream &out, std::ostream &err);
+bool Rename(const RenameOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

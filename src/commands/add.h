@@ -23,7 +23,7 @@ struct AddOptions {
 };
 
 /// Adds files and directories to an archive, returning false if any of them failed
-bool Add(const AddOptions &options, std::ostream &out, std::ostream &err);
+bool Add(const AddOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

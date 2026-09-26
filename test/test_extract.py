@@ -58,7 +58,7 @@ def test_extract_mpq_default_options(binary_path, generate_test_files):
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -120,7 +120,7 @@ def test_extract_mpq_output_directory_specified(binary_path, generate_test_files
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -179,7 +179,7 @@ def test_extract_file_from_mpq_output_directory_specified(binary_path, generate_
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -228,15 +228,15 @@ def test_extract_file_from_mpq_with_locale(binary_path, generate_locales_mpq_tes
         text=True
     )
 
-    expected_stdout = {
+    expected_stderr = {
         "[*] Extracted: " + file_to_extract
     }
     output_file = output_dir / file_to_extract
     expected_content = "Este es un archivo sobre gatos."
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
     assert output_file.exists(), "Output directory was not created"
     assert output_file.read_text(encoding="utf-8") == expected_content, "Unexpected file content"
 
@@ -265,15 +265,15 @@ def test_extract_file_from_mpq_with_default_locale(binary_path, generate_locales
         text=True
     )
 
-    expected_stdout = {
+    expected_stderr = {
         "[*] Extracted: " + file_to_extract
     }
     output_file = output_dir / file_to_extract
     expected_content = "This is a file about cats."
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
     assert output_file.exists(), "Output directory was not created"
     assert output_file.read_text(encoding="utf-8") == expected_content, "Unexpected file content"
 
@@ -303,16 +303,16 @@ def test_extract_file_from_mpq_with_illegal_locale(binary_path, generate_locales
         text=True
     )
 
-    expected_stdout = {
-        "[!] Warning: The locale 'nosuchlocale' is unknown. Will use default locale instead.",
+    expected_stderr = {
+        "[!] The locale 'nosuchlocale' is unknown. Will use default locale instead.",
         "[*] Extracted: " + file_to_extract
     }
     output_file = output_dir / file_to_extract
     expected_content = "This is a file about cats."
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
     assert output_file.exists(), "Output directory was not created"
     assert output_file.read_text(encoding="utf-8") == expected_content, "Unexpected file content"
 
@@ -341,15 +341,15 @@ def test_extract_file_from_mpq_with_locale_not_in_file(binary_path, generate_loc
         text=True
     )
 
-    expected_stdout = {
+    expected_stderr = {
         "[*] Extracted: " + file_to_extract
     }
     output_file = output_dir / file_to_extract
     expected_content = "This is a file about cats."
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
     assert output_file.exists(), "Output directory was not created"
     assert output_file.read_text(encoding="utf-8") == expected_content, "Unexpected file content"
 
@@ -467,7 +467,7 @@ def test_extract_all_files_from_mpq_without_providing_listfile(binary_path, gene
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -513,7 +513,7 @@ def test_extract_all_files_from_mpq_without_providing_listfile_and_with_given_lo
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -557,7 +557,7 @@ def test_extract_single_file_from_mpq_without_providing_listfile(binary_path, ge
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -604,7 +604,7 @@ def test_extract_all_files_from_mpq_providing_partial_external_listfile(binary_p
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -652,7 +652,7 @@ def test_extract_all_files_from_mpq_providing_partial_external_listfile_and_with
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -699,7 +699,7 @@ def test_extract_all_files_from_mpq_providing_complete_external_listfile(binary_
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -747,7 +747,7 @@ def test_extract_all_files_from_mpq_providing_complete_external_listfile_and_wit
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = {line for line in result.stderr.splitlines() if line.startswith("[*] Extracted: ")}
 
     # Create expected_lines set based on expected output with prefix
     expected_lines = {f"[*] Extracted: {line}" for line in expected_output}
@@ -787,11 +787,10 @@ def test_extract_path_traversal_is_blocked(binary_path, generate_path_traversal_
         text=True
     )
 
-    expected_stdout = {
+    expected_stdout = set()
+    expected_stderr = {
         "[*] Extracted: safe.txt",
         "[*] Extracted: (listfile)",
-    }
-    expected_stderr = {
         "[!] Blocked: path traversal attempt detected: " + os.path.normpath("../../sneaky.txt"),
         "",
         "[!] Failed to extract all files.",
@@ -863,11 +862,11 @@ def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
         text=True
     )
 
-    expected_stdout = {"[*] Extracted: cats.txt"}
-    output_lines = set(result.stdout.splitlines())
+    expected_stderr = {"[*] Extracted: cats.txt"}
+    output_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
 
     extracted_file = output_dir / "cats.txt"
     assert extracted_file.exists(), "Extracted nested file does not exist"

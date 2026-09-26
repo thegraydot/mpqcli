@@ -20,7 +20,7 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Create(const CreateOptions &options, std::ostream &out, std::ostream &err) {
+bool Create(const CreateOptions &options, std::ostream &err) {
     std::error_code ec;
     fs::path output_file_path;
     if (options.output.has_value()) {
@@ -49,7 +49,7 @@ bool Create(const CreateOptions &options, std::ostream &out, std::ostream &err) 
     }
     GameRules game_rules(profile);
 
-    out << "[*] Game profile: " << options.game_profile.value_or("default")
+    err << "[*] Game profile: " << options.game_profile.value_or("default")
         << ", Output file: " << output_file << std::endl;
 
     game_rules.OverrideCreateSettings(options.create_overrides);
@@ -78,12 +78,12 @@ bool Create(const CreateOptions &options, std::ostream &out, std::ostream &err) 
     int result = 0;
     if (is_directory) {
         const std::string prefix = options.path.value_or("");
-        result |= AddFiles(archive.Handle(), files, options.target, prefix, lcid, game_rules, out,
-                           err, options.compression_overrides);
+        result |= AddFiles(archive.Handle(), files, options.target, prefix, lcid, game_rules, err,
+                           options.compression_overrides);
     } else {
         std::string archive_path = ResolveArchiveName(options.target, options.path);
-        result |= AddFile(archive.Handle(), options.target, archive_path, lcid, game_rules, out,
-                          err, options.compression_overrides);
+        result |= AddFile(archive.Handle(), options.target, archive_path, lcid, game_rules, err,
+                          options.compression_overrides);
     }
 
     if (options.sign) {

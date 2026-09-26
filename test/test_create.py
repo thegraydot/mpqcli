@@ -163,8 +163,8 @@ def test_create_mpq_with_weak_signature(binary_path, generate_test_files):
         text=True
     )
     assert verify_result.returncode == 0, f"Signature verification failed: {verify_result.stderr}"
-    assert "[*] Verify success" in verify_result.stdout, \
-        f"Unexpected verify output: {verify_result.stdout}"
+    assert "[*] Verify success" in verify_result.stderr, \
+        f"Unexpected verify output: {verify_result.stderr}"
 
 
 def test_create_mpq_already_exists(binary_path, generate_test_files):
@@ -377,7 +377,7 @@ def test_create_mpq_with_game_profile(binary_path, generate_test_files):
         assert result.returncode == 0, f"mpqcli failed with error for profile {profile}: {result.stderr}"
         assert output_file.exists(), f"MPQ file was not created for profile {profile}"
         assert output_file.stat().st_size > 0, f"MPQ file is empty for profile {profile}"
-        assert f"[*] Game profile: {profile}" in result.stdout, f"Game profile message not found for {profile}"
+        assert f"[*] Game profile: {profile}" in result.stderr, f"Game profile message not found for {profile}"
 
         # Verify the MPQ version
         version_result = subprocess.run(
@@ -480,7 +480,7 @@ def test_create_mpq_with_all_game_profiles(binary_path, generate_test_files):
 
         assert result.returncode == 0, f"mpqcli failed for profile {profile}: {result.stderr}"
         assert output_file.exists(), f"MPQ file was not created for profile {profile}"
-        assert f"[*] Game profile: {profile}" in result.stdout, f"Game profile message not found for {profile}"
+        assert f"[*] Game profile: {profile}" in result.stderr, f"Game profile message not found for {profile}"
 
         # Verify the MPQ version
         version_result = subprocess.run(

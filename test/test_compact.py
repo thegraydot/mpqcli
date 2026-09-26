@@ -74,8 +74,8 @@ def test_compact_mpq_without_listfile(binary_path, generate_mpq_without_internal
     output_lines = result.stderr.splitlines()
 
     assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
-    assert len(output_lines) == 1, f"Unexpected output: {output_lines}"
-    assert output_lines[0].startswith(expected_prefix), f"Unexpected output: {output_lines}"
+    assert len(output_lines) == 2, f"Unexpected output: {output_lines}"
+    assert output_lines[1].startswith(expected_prefix), f"Unexpected output: {output_lines}"
 
 
 def test_compact_mpq_with_listfile(binary_path, generate_mpq_without_internal_listfile):
@@ -101,7 +101,7 @@ def test_compact_mpq_with_listfile(binary_path, generate_mpq_without_internal_li
         text=True
     )
 
-    output_lines = result.stdout.splitlines()
+    output_lines = result.stderr.splitlines()
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"

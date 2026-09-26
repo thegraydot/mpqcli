@@ -58,13 +58,13 @@ def test_add_file_to_mpq_archive(binary_path, generate_test_files):
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[+] Adding file: test.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[+] Adding file: test.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -98,8 +98,8 @@ def test_add_multiple_files_to_mpq_archive(binary_path, generate_test_files):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "[+] Adding file: alpha.txt" in result.stdout
-    assert "[+] Adding file: beta.txt" in result.stdout
+    assert "[+] Adding file: alpha.txt" in result.stderr
+    assert "[+] Adding file: beta.txt" in result.stderr
 
     expected_content = {
         "enUS  bytes",
@@ -245,14 +245,14 @@ def test_add_existing_file_with_overwrite_should_succeed(binary_path, generate_t
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[+] File already exists in MPQ archive: cats.txt - Overwriting...",
-        "[+] Adding file: cats.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[+] File already exists in MPQ archive: cats.txt - Overwriting...",
+        "[+] Adding file: cats.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -278,13 +278,13 @@ def test_add_nonexisting_file_with_overwrite_should_succeed(binary_path, generat
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[+] Adding file: test.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[+] Adding file: test.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -343,13 +343,13 @@ def test_create_mpq_with_locale(binary_path, generate_test_files):
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[+] Adding file for locale esES: cats.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[+] Adding file for locale esES: cats.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -392,8 +392,8 @@ def test_add_file_with_game_profile(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed for profile {profile}: {result.stderr}"
-        assert f"Using game profile: {profile}" in result.stdout, f"Game profile message not found for {profile}"
-        assert f"Adding file: test_{profile}.txt" in result.stdout
+        assert f"Using game profile: {profile}" in result.stderr, f"Game profile message not found for {profile}"
+        assert f"Adding file: test_{profile}.txt" in result.stderr
 
         list_result = subprocess.run(
             [str(binary_path), "list", str(target_file), "-d", "-p", "flags"],
@@ -459,7 +459,7 @@ def test_add_file_with_all_game_profiles(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed for profile {profile}: {result.stderr}"
-        assert f"Using game profile: {profile}" in result.stdout, f"Game profile message not found for {profile}"
+        assert f"Using game profile: {profile}" in result.stderr, f"Game profile message not found for {profile}"
 
         list_result = subprocess.run(
             [str(binary_path), "list", str(target_file)],
@@ -517,14 +517,14 @@ def test_add_existing_locale_file_with_overwrite_should_succeed(binary_path, gen
         text=True
     )
 
-    expected_stdout = {
+    expected_stderr = {
         "[+] File for locale esES already exists in MPQ archive: cats.txt - Overwriting...",
         "[+] Adding file for locale esES: cats.txt",
     }
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
 
     verify_file_in_mpq_has_content(
         binary_path, target_file, "cats.txt",
@@ -569,11 +569,11 @@ def test_add_file_after_all_locale_variants_removed(binary_path, generate_locale
         text=True
     )
 
-    expected_stdout = {"[+] Adding file: cats.txt"}
-    output_lines = set(result.stdout.splitlines())
+    expected_stderr = {"[+] Adding file: cats.txt"}
+    output_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 0, f"Re-add after full removal failed: {result.stderr}"
-    assert output_lines == expected_stdout, f"Unexpected output: {output_lines}"
+    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
 
     verify_file_in_mpq_has_content(
         binary_path, target_file, "cats.txt",
@@ -603,8 +603,8 @@ def test_add_directory_to_mpq_archive(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: sub\\a.txt" in result.stdout
-        assert "[+] Adding file: b.txt" in result.stdout
+        assert "[+] Adding file: sub\\a.txt" in result.stderr
+        assert "[+] Adding file: b.txt" in result.stderr
 
         list_result = subprocess.run(
             [str(binary_path), "list", str(target_mpq)],
@@ -677,7 +677,7 @@ def test_add_directory_with_overwrite(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] File already exists in MPQ archive: cats.txt - Overwriting..." in result.stdout
+        assert "[+] File already exists in MPQ archive: cats.txt - Overwriting..." in result.stderr
 
         verify_file_in_mpq_has_content(binary_path, target_mpq, "cats.txt", {"This is the replaced cats file."})
     finally:
@@ -737,10 +737,10 @@ def test_add_update_skips_unchanged_files(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stdout
-        assert "[~] Skipping unchanged file: dogs.txt (MD5 matches)" in result.stdout
-        assert "files added" in result.stdout
-        assert "files skipped" in result.stdout
+        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stderr
+        assert "[~] Skipping unchanged file: dogs.txt (MD5 matches)" in result.stderr
+        assert "files added" in result.stderr
+        assert "files skipped" in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -766,10 +766,10 @@ def test_add_update_adds_changed_files(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: cats.txt" in result.stdout
-        assert "[~] Skipping unchanged file: dogs.txt" in result.stdout
-        assert "1 files added" in result.stdout
-        assert "1 files skipped" in result.stdout
+        assert "[+] Adding file: cats.txt" in result.stderr
+        assert "[~] Skipping unchanged file: dogs.txt" in result.stderr
+        assert "1 files added" in result.stderr
+        assert "1 files skipped" in result.stderr
 
         verify_file_in_mpq_has_content(
             binary_path, target_mpq, "cats.txt",
@@ -804,8 +804,8 @@ def test_add_update_second_run_skips_all(binary_path, generate_test_files):
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file:" not in result.stdout
-        assert "0 files added" in result.stdout
+        assert "[+] Adding file:" not in result.stderr
+        assert "0 files added" in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -833,8 +833,8 @@ def test_add_update_single_file_skips_when_unchanged(binary_path, generate_test_
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stdout
-        assert "[+] Adding file: cats.txt" not in result.stdout
+        assert "[~] Skipping unchanged file: cats.txt (MD5 matches)" in result.stderr
+        assert "[+] Adding file: cats.txt" not in result.stderr
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
 
@@ -860,7 +860,7 @@ def test_add_update_single_file_replaces_when_changed(binary_path, generate_test
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: cats.txt" in result.stdout
+        assert "[+] Adding file: cats.txt" in result.stderr
 
         verify_file_in_mpq_has_content(
             binary_path, target_mpq, "cats.txt",
@@ -915,8 +915,8 @@ def test_add_update_skips_unchanged_files_via_crc32(binary_path, generate_test_f
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[~] Skipping unchanged file: cats.txt (CRC32 matches)" in result.stdout
-        assert "files skipped" in result.stdout
+        assert "[~] Skipping unchanged file: cats.txt (CRC32 matches)" in result.stderr
+        assert "files skipped" in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -944,8 +944,8 @@ def test_add_update_adds_changed_files_via_crc32(binary_path, generate_test_file
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: cats.txt" in result.stdout
-        assert "Skipping unchanged" not in result.stdout
+        assert "[+] Adding file: cats.txt" in result.stderr
+        assert "Skipping unchanged" not in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -974,8 +974,8 @@ def test_add_update_skips_unchanged_files_via_timestamp(binary_path, generate_te
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[~] Skipping unchanged file: cats.txt (Timestamp matches)" in result.stdout
-        assert "files skipped" in result.stdout
+        assert "[~] Skipping unchanged file: cats.txt (Timestamp matches)" in result.stderr
+        assert "files skipped" in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -1006,8 +1006,8 @@ def test_add_update_adds_changed_files_via_timestamp(binary_path, generate_test_
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: cats.txt" in result.stdout
-        assert "Skipping unchanged" not in result.stdout
+        assert "[+] Adding file: cats.txt" in result.stderr
+        assert "Skipping unchanged" not in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -1034,8 +1034,8 @@ def test_add_update_always_adds_without_attributes(binary_path, generate_test_fi
         )
 
         assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-        assert "[+] Adding file: cats.txt" in result.stdout
-        assert "Skipping unchanged" not in result.stdout
+        assert "[+] Adding file: cats.txt" in result.stderr
+        assert "Skipping unchanged" not in result.stderr
     finally:
         shutil.rmtree(update_dir, ignore_errors=True)
 
@@ -1063,8 +1063,8 @@ def test_add_files_via_stdin(binary_path, generate_test_files):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "[+] Adding file: stdin_a.txt" in result.stdout
-    assert "[+] Adding file: stdin_b.txt" in result.stdout
+    assert "[+] Adding file: stdin_a.txt" in result.stderr
+    assert "[+] Adding file: stdin_b.txt" in result.stderr
 
     list_result = subprocess.run(
         [str(binary_path), "list", str(target_mpq)],

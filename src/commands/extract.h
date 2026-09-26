@@ -18,7 +18,7 @@ struct ExtractOptions {
 };
 
 /// Extracts one file or every file, returning false if any of them failed
-bool Extract(const ExtractOptions &options, std::ostream &out, std::ostream &err);
+bool Extract(const ExtractOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

@@ -22,7 +22,7 @@ struct CreateOptions {
 };
 
 /// Creates an archive from a file or directory, returning false if any file failed to add
-bool Create(const CreateOptions &options, std::ostream &out, std::ostream &err);
+bool Create(const CreateOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

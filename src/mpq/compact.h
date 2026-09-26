@@ -13,7 +13,7 @@ namespace mpqcli {
 ///
 /// @throws StormError if StormLib cannot compact it
 void CompactMpqArchive(HANDLE archive, const std::optional<std::string> &listfile_name,
-                       std::ostream &out);
+                       std::ostream &err);
 
 } // namespace mpqcli
 

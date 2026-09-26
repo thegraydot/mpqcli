@@ -22,6 +22,6 @@ void RegisterExtract(CLI::App &app, Context &context) {
     sub->add_option("--locale", options->locale, "Preferred locale for extracted file");
 
     sub->callback([options, &context]() {
-        context.exit_code = mpqcli::Extract(*options, context.out, context.err) ? 0 : 1;
+        context.exit_code = mpqcli::Extract(*options, context.err) ? 0 : 1;
     });
 }

@@ -14,7 +14,7 @@ struct CompactOptions {
 };
 
 /// Compacts the archive
-bool Compact(const CompactOptions &options, std::ostream &out);
+bool Compact(const CompactOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

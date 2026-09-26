@@ -87,7 +87,7 @@ def test_verify_weak_signature(binary_path):
         text=True
     )
 
-    output_lines = set(result.stdout.splitlines())
+    output_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"

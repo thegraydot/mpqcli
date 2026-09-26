@@ -20,7 +20,7 @@ namespace mpqcli {
 
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale,
-                 std::ostream &out, std::ostream &err) {
+                 std::ostream &err) {
     SFileSetLocale(preferred_locale);
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
@@ -35,7 +35,7 @@ int ExtractFiles(HANDLE archive, const std::string &output,
     do {
         result |= ExtractFile(archive, output, find_data.cFileName,
                               true, // Keep folder structure
-                              preferred_locale, out, err);
+                              preferred_locale, err);
     } while (SFileFindNextFile(find_handle, &find_data));
 
     SFileFindClose(find_handle);
@@ -43,8 +43,7 @@ int ExtractFiles(HANDLE archive, const std::string &output,
 }
 
 int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
-                bool keep_folder_structure, LCID preferred_locale, std::ostream &out,
-                std::ostream &err) {
+                bool keep_folder_structure, LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
         !FileExistsInArchiveForLocale(archive, file_name.c_str(), default_locale)) {
@@ -113,7 +112,7 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     std::string output_file_name{output_file_path_name.u8string()};
 
     if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
-        out << "[*] Extracted: " << file_name_string << std::endl;
+        err << "[*] Extracted: " << file_name_string << std::endl;
     } else {
         const auto error = SErrGetLastError();
         err << "[!] Failed: (" << error << ") " << StormErrorString(error) << ": " << file_name

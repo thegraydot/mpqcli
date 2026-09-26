@@ -19,6 +19,6 @@ void RegisterRename(CLI::App &app, Context &context) {
     sub->add_option("--locale", options->locale, "Locale of file to rename")->check(locale_valid);
 
     sub->callback([options, &context]() {
-        context.exit_code = mpqcli::Rename(*options, context.out, context.err) ? 0 : 1;
+        context.exit_code = mpqcli::Rename(*options, context.err) ? 0 : 1;
     });
 }

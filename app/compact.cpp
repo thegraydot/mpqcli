@@ -17,6 +17,6 @@ void RegisterCompact(CLI::App &app, Context &context) {
         ->check(CLI::ExistingFile);
 
     sub->callback([options, &context]() {
-        context.exit_code = mpqcli::Compact(*options, context.out) ? 0 : 1;
+        context.exit_code = mpqcli::Compact(*options, context.err) ? 0 : 1;
     });
 }

@@ -16,7 +16,7 @@ struct RemoveOptions {
 };
 
 /// Removes files from an archive, returning false if any of them could not be removed
-bool Remove(const RemoveOptions &options, std::ostream &out, std::ostream &err);
+bool Remove(const RemoveOptions &options, std::ostream &err);
 
 } // namespace mpqcli
 

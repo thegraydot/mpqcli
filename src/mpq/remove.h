@@ -8,7 +8,7 @@
 
 namespace mpqcli {
 
-int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale, std::ostream &out,
+int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale,
                std::ostream &err);
 
 } // namespace mpqcli

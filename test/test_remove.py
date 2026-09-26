@@ -44,13 +44,12 @@ def test_remove_target_file_does_not_exist(binary_path, generate_locales_mpq_tes
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[-] Removing file: does-not-exist.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
     expected_stderr_output = {
+        "[-] Removing file: does-not-exist.txt",
         "[!] Failed: File doesn't exist for locale enUS: does-not-exist.txt",
     }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
@@ -92,13 +91,12 @@ def test_remove_file_from_mpq_archive_with_wrong_locale_given(
         )
 
         output_lines = set(result.stdout.splitlines())
-        expected_output = {
-            "[-] Removing file for locale ptPT: " + test_file,
-        }
+        expected_output = set()
         assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
         output_lines = set(result.stderr.splitlines())
         expected_stderr_output = {
+            "[-] Removing file for locale ptPT: " + test_file,
             "[!] Failed: File doesn't exist for locale ptPT: " + test_file,
         }
         assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
@@ -127,13 +125,13 @@ def test_remove_default_locale_file_from_mpq_archive_unique_name(binary_path, ge
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_output = {
-        "[-] Removing file: capybaras.txt",
-    }
+    expected_output = set()
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[-] Removing file: capybaras.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -311,7 +309,7 @@ def test_remove_files_via_stdin(binary_path, generate_locales_mpq_test_files):
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "[-] Removing file: cats.txt" in result.stdout
+    assert "[-] Removing file: cats.txt" in result.stderr
 
     expected_output = {
         "deDE  cats.txt",

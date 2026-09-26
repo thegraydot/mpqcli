@@ -11,10 +11,10 @@
 
 namespace mpqcli {
 
-int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale, std::ostream &out,
+int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale,
                std::ostream &err) {
     SFileSetLocale(locale);
-    out << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": "
+    err << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": "
         << archive_file_path << std::endl;
 
     if (!FileExistsInArchiveForLocale(archive, archive_file_path, locale)) {

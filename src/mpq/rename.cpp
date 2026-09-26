@@ -13,11 +13,10 @@
 namespace mpqcli {
 
 int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
-               const std::string &new_archive_file_path, LCID locale, std::ostream &out,
-               std::ostream &err) {
+               const std::string &new_archive_file_path, LCID locale, std::ostream &err) {
     SFileSetLocale(locale);
     const std::string new_stored_path = WindowsifyFilePath(new_archive_file_path);
-    out << "[~] Renaming file" << PrettyPrintLocale(locale, " for locale ") << ": "
+    err << "[~] Renaming file" << PrettyPrintLocale(locale, " for locale ") << ": "
         << old_archive_file_path << " -> " << new_stored_path << std::endl;
 
     if (!FileExistsInArchiveForLocale(archive, old_archive_file_path, locale)) {

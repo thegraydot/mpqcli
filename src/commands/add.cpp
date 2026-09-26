@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Add(const AddOptions &options, std::ostream &out, std::ostream &err) {
+bool Add(const AddOptions &options, std::ostream &err) {
     Archive archive = Archive::Open(options.archive, 0);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
@@ -26,7 +26,7 @@ bool Add(const AddOptions &options, std::ostream &out, std::ostream &err) {
     GameProfile profile;
     if (options.game_profile.has_value()) {
         profile = GameRules::StringToProfile(options.game_profile.value());
-        out << "[*] Using game profile: " << options.game_profile.value() << std::endl;
+        err << "[*] Using game profile: " << options.game_profile.value() << std::endl;
     } else {
         profile = GameRules::GetDefaultProfile();
     }
@@ -59,14 +59,14 @@ bool Add(const AddOptions &options, std::ostream &out, std::ostream &err) {
                 continue;
             }
             std::string prefix = options.path.value_or("");
-            result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules, out,
-                               err, options.compression_overrides, options.overwrite,
-                               options.update, &files_skipped);
+            result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules, err,
+                               options.compression_overrides, options.overwrite, options.update,
+                               &files_skipped);
 
         } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || options.files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, options.path, treat_as_directory);
-            result |= AddFile(archive.Handle(), f, archive_path, lcid, game_rules, out, err,
+            result |= AddFile(archive.Handle(), f, archive_path, lcid, game_rules, err,
                               options.compression_overrides, options.overwrite, options.update,
                               &files_skipped);
 

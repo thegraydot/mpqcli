@@ -14,7 +14,7 @@ def test_rename_file_in_mpq_archive(binary_path, generate_mpq_without_internal_l
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "[~] Renaming file: capybaras.txt -> renamed.txt" in result.stdout
+    assert "[~] Renaming file: capybaras.txt -> renamed.txt" in result.stderr
 
     result = subprocess.run(
         [str(binary_path), "list", str(target_file), "--listfile", str(listfile)],
@@ -78,13 +78,12 @@ def test_rename_target_file_does_not_exist(binary_path, generate_locales_mpq_tes
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_stdout_output = {
-        "[~] Renaming file: does-not-exist.txt -> renamed.txt",
-    }
+    expected_stdout_output = set()
     assert output_lines == expected_stdout_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
     expected_stderr_output = {
+        "[~] Renaming file: does-not-exist.txt -> renamed.txt",
         "[!] Failed: File doesn't exist for locale enUS: does-not-exist.txt",
     }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
@@ -126,13 +125,12 @@ def test_rename_file_from_mpq_archive_with_wrong_locale_given(
         )
 
         output_lines = set(result.stdout.splitlines())
-        expected_output = {
-            "[~] Renaming file for locale ptPT: " + test_file + " -> renamed.txt",
-        }
+        expected_output = set()
         assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
         output_lines = set(result.stderr.splitlines())
         expected_stderr_output = {
+            "[~] Renaming file for locale ptPT: " + test_file + " -> renamed.txt",
             "[!] Failed: File doesn't exist for locale ptPT: " + test_file,
         }
         assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
@@ -161,13 +159,13 @@ def test_rename_default_locale_file_from_mpq_archive_unique_name(binary_path, ge
     )
 
     output_lines = set(result.stdout.splitlines())
-    expected_output = {
-        "[~] Renaming file: capybaras.txt -> renamed.txt",
-    }
+    expected_output = set()
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
     output_lines = set(result.stderr.splitlines())
-    expected_stderr_output = set()
+    expected_stderr_output = {
+        "[~] Renaming file: capybaras.txt -> renamed.txt",
+    }
     assert output_lines == expected_stderr_output, f"Unexpected output: {output_lines}"
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
@@ -338,7 +336,7 @@ def test_rename_to_existing_name_fails(binary_path, generate_mpq_without_interna
     )
 
     assert result.returncode == 1, f"mpqcli unexpectedly succeeded: {result.stdout}"
-    assert "[~] Renaming file: capybaras.txt -> elephants.txt" in result.stdout
+    assert "[~] Renaming file: capybaras.txt -> elephants.txt" in result.stderr
     assert "[!] Failed: File cannot be renamed for locale enUS: capybaras.txt -> elephants.txt" in result.stderr
 
     # Verify the archive is unchanged: both files should still exist under their original names.
@@ -386,7 +384,7 @@ def test_rename_converts_forward_slashes_to_backslashes(binary_path, generate_mp
     )
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "[~] Renaming file: capybaras.txt -> deep\\renamed.txt" in result.stdout
+    assert "[~] Renaming file: capybaras.txt -> deep\\renamed.txt" in result.stderr
 
     result = subprocess.run(
         [str(binary_path), "list", str(target_file), "--listfile", str(listfile)],

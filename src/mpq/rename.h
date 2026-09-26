@@ -9,8 +9,7 @@
 namespace mpqcli {
 
 int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
-               const std::string &new_archive_file_path, LCID locale, std::ostream &out,
-               std::ostream &err);
+               const std::string &new_archive_file_path, LCID locale, std::ostream &err);
 
 } // namespace mpqcli
 

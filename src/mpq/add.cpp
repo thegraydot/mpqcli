@@ -24,8 +24,8 @@ namespace mpqcli {
 
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
              const std::string &path_prefix, LCID locale, const GameRules &game_rules,
-             std::ostream &out, std::ostream &err, const CompressionSettingsOverrides &overrides,
-             bool overwrite, bool update, int *skipped) {
+             std::ostream &err, const CompressionSettingsOverrides &overrides, bool overwrite,
+             bool update, int *skipped) {
     int files_added = 0;
     int files_skipped = 0;
     int files_failed = 0;
@@ -46,13 +46,13 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
 
         if (std::find(special_mpq_files.begin(), special_mpq_files.end(), archive_file_path) !=
             special_mpq_files.end()) {
-            out << "[*] Skipping special MPQ file: " << archive_file_path << std::endl;
+            err << "[*] Skipping special MPQ file: " << archive_file_path << std::endl;
             continue;
         }
 
         int file_skipped = 0;
-        if (AddFile(archive, file, archive_file_path, locale, game_rules, out, err, overrides,
-                    overwrite, update, &file_skipped) != 0) {
+        if (AddFile(archive, file, archive_file_path, locale, game_rules, err, overrides, overwrite,
+                    update, &file_skipped) != 0) {
             files_failed++;
         } else if (file_skipped > 0) {
             files_skipped++;
@@ -62,7 +62,7 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
     }
 
     if (update) {
-        out << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
+        err << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
             << files_skipped << " files skipped, " << files_failed << " files failed." << std::endl;
     }
 
@@ -74,7 +74,7 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
 }
 
 int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
-            const LCID locale, const GameRules &game_rules, std::ostream &out, std::ostream &err,
+            const LCID locale, const GameRules &game_rules, std::ostream &err,
             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
             int *skipped) {
     // Return if file doesn't exist on disk
@@ -96,7 +96,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             SFileCloseFile(file);
 
             if (unchanged) {
-                out << "[~] Skipping unchanged file: " << archive_file_path << " (" << match_reason
+                err << "[~] Skipping unchanged file: " << archive_file_path << " (" << match_reason
                     << ")" << std::endl;
                 if (skipped != nullptr) {
                     (*skipped)++;
@@ -116,14 +116,14 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
                 return 0;
             }
 
-            out << "[+] File" << PrettyPrintLocale(locale, " for locale ")
+            err << "[+] File" << PrettyPrintLocale(locale, " for locale ")
                 << " already exists in MPQ archive: " << archive_file_path << " - Overwriting..."
                 << std::endl;
         } else {
             SFileCloseFile(file);
         }
     }
-    out << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
+    err << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
         << archive_file_path << std::endl;
 
     // Verify that we are not exceeding maxFile size of the archive, and if we do, increase it
@@ -149,7 +149,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
         return 1;
     }
     if (raw_file_size > std::numeric_limits<DWORD>::max()) {
-        err << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
+        err << "[!] File exceeds 4GB, size-based compression rules may not apply "
                "correctly: "
             << local_file << std::endl;
     }

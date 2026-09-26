@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Extract(const ExtractOptions &options, std::ostream &out, std::ostream &err) {
+bool Extract(const ExtractOptions &options, std::ostream &err) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
     std::error_code ec;
@@ -45,7 +45,7 @@ bool Extract(const ExtractOptions &options, std::ostream &out, std::ostream &err
     // real paths; warn once up front on volumes where it cannot (RAM disks)
     static_cast<void>(fs::canonical(effective_output, ec));
     if (ec) {
-        out << "[!] Warning: Output directory cannot be fully resolved, symlinks will not "
+        err << "[!] Output directory cannot be fully resolved, symlinks will not "
                "be checked during extraction: "
             << effective_output << std::endl;
     }
@@ -54,16 +54,16 @@ bool Extract(const ExtractOptions &options, std::ostream &out, std::ostream &err
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
     if (options.locale.has_value() && lcid == default_locale) {
-        out << "[!] Warning: The locale '" << options.locale.value()
+        err << "[!] The locale '" << options.locale.value()
             << "' is unknown. Will use default locale instead." << std::endl;
     }
 
     int result;
     if (options.file.has_value()) {
         result = ExtractFile(archive.Handle(), effective_output, options.file.value(),
-                             options.keep_folder_structure, lcid, out, err);
+                             options.keep_folder_structure, lcid, err);
     } else {
-        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, out, err);
+        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, err);
     }
     archive.Close();
 

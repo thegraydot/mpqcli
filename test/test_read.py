@@ -128,13 +128,16 @@ def test_read_file_from_mpq_with_illegal_locale(binary_path, generate_locales_mp
     )
 
     expected_content = {
-        "[!] Warning: The locale 'nosuchlocale' is unknown. Will use default locale instead.",
         "This is a file about cats.",
+    }
+    expected_warning = {
+        "[!] The locale 'nosuchlocale' is unknown. Will use default locale instead.",
     }
 
     output_lines = set(result.stdout.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_content, f"Unexpected output: {output_lines}"
+    assert set(result.stderr.splitlines()) == expected_warning, f"Unexpected stderr: {result.stderr}"
 
 
 def test_read_file_from_mpq_with_locale_not_in_file(binary_path, generate_locales_mpq_test_files):
