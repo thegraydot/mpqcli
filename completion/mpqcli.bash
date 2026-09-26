@@ -1,26 +1,73 @@
-# Use _filedir when available, otherwise fall back to compgen.
-# Pass an extension (e.g. "mpq") to restrict completions to that type plus directories.
+# Bash completion for mpqcli. Uses the bash-completion helpers when they are
+# loaded and falls back to plain compgen otherwise, so it also runs on bash 3.2
+
+# Fill COMPREPLY with the words in $1 that match the current word
+_mpqcli_words() {
+    local word
+    COMPREPLY=()
+    while IFS= read -r word; do
+        COMPREPLY+=("$word")
+    done < <(compgen -W "$1" -- "$cur")
+}
+
+# Complete filesystem paths. With no argument every path is offered, with -d
+# only directories, and with an extension such as mpq only files of that type
+# in either case plus directories, so an archive can be reached by descending
 _mpqcli_filedir() {
     if declare -f _filedir > /dev/null 2>&1; then
         _filedir "${1-}"
+        return
+    fi
+
+    local path upper
+    COMPREPLY=()
+    compopt -o filenames 2> /dev/null
+    if [[ "${1-}" == -d ]]; then
+        while IFS= read -r path; do
+            COMPREPLY+=("$path")
+        done < <(compgen -d -- "$cur")
+    elif [[ -n "${1-}" ]]; then
+        upper=$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')
+        while IFS= read -r path; do
+            if [[ -d "$path" || "$path" == *."$1" || "$path" == *."$upper" ]]; then
+                COMPREPLY+=("$path")
+            fi
+        done < <(compgen -f -- "$cur")
     else
-        if [[ -n "${1-}" ]]; then
-            local -a _f _d
-            mapfile -t _f < <(compgen -f -X "!*.$1" -- "$cur")
-            mapfile -t _d < <(compgen -d -- "$cur")
-            COMPREPLY=("${_f[@]}" "${_d[@]}")
-        else
-            mapfile -t COMPREPLY < <(compgen -f -- "$cur")
-        fi
+        while IFS= read -r path; do
+            COMPREPLY+=("$path")
+        done < <(compgen -f -- "$cur")
     fi
 }
 
-_mpqcli() {
-    local cur prev words cword
+# Set pos to the index, from zero, of the positional argument under the cursor.
+# Every option is assumed to take a value in the following word, except the
+# flags passed as arguments, and a lone - counts as a positional (stdin)
+_mpqcli_positional_index() {
+    local i flag
+    pos=0
+    for ((i = 2; i < cword; i++)); do
+        case "${words[i]}" in
+            -) pos=$((pos + 1)) ;;
+            --*=*) ;;
+            -*)
+                for flag in "$@"; do
+                    [[ "${words[i]}" == "$flag" ]] && continue 2
+                done
+                i=$((i + 1))
+                ;;
+            *) pos=$((pos + 1)) ;;
+        esac
+    done
+}
 
-    # Use bash-completion helpers when available, fall back to COMP_* variables
+_mpqcli() {
+    local cur prev words cword pos
+
+    # Use bash-completion helpers when available, fall back to COMP_* variables.
+    # The -s splits --option=value so the value completes like a separate word
     if declare -f _init_completion > /dev/null 2>&1; then
-        _init_completion || return
+        _init_completion -s || return
     else
         COMPREPLY=()
         cur="${COMP_WORDS[COMP_CWORD]}"
@@ -38,7 +85,7 @@ _mpqcli() {
         generic
         diablo1 diablo d1
         lordsofmagic lomse
-        starcraft starcraft1 sc1
+        starcraft starcraft1 sc sc1
         warcraft2 wc2 war2
         diablo2 d2
         warcraft3 wc3 war3
@@ -62,176 +109,179 @@ _mpqcli() {
     )
 
     if [[ $cword -eq 1 ]]; then
-        mapfile -t COMPREPLY < <(compgen -W "$subcommands" -- "$cur")
+        _mpqcli_words "$subcommands"
         return
     fi
 
-    local subcmd="${words[1]}"
-
-    case "$subcmd" in
+    case "${words[1]}" in
         info)
             case "$prev" in
-                -p|--property)
-                    mapfile -t COMPREPLY < <(compgen -W "${info_properties[*]}" -- "$cur")
-                    return ;;
+                -p|--property) _mpqcli_words "${info_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-p --property" -- "$cur")
+                _mpqcli_words "-p --property"
             else
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         create)
             case "$prev" in
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
-                -g|--game)
-                    mapfile -t COMPREPLY < <(compgen -W "${games[*]}" -- "$cur")
-                    return ;;
-                --version)
-                    mapfile -t COMPREPLY < <(compgen -W "1 2 3 4" -- "$cur")
-                    return ;;
-                -p|--path|-o|--output|--stream-flags|--sector-size|\
-                --raw-chunk-size|--file-flags1|--file-flags2|--file-flags3|--attr-flags|\
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -g|--game) _mpqcli_words "${games[*]}"; return ;;
+                --version) _mpqcli_words "1 2 3 4"; return ;;
+                -o|--output) _mpqcli_filedir; return ;;
+                -p|--path|--stream-flags|--sector-size|--raw-chunk-size|\
+                --file-flags1|--file-flags2|--file-flags3|--attr-flags|\
                 --flags|--compression|--compression-next)
                     return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-p --path -o --output -s --sign \
---locale -g --game --version --stream-flags --sector-size --raw-chunk-size \
---file-flags1 --file-flags2 --file-flags3 --attr-flags \
---flags --compression --compression-next" -- "$cur")
+                _mpqcli_words "-p --path -o --output -s --sign --locale -g --game --version \
+--stream-flags --sector-size --raw-chunk-size --file-flags1 --file-flags2 --file-flags3 \
+--attr-flags --flags --compression --compression-next"
             else
-                _mpqcli_filedir
+                _mpqcli_positional_index -s --sign
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir
+                fi
             fi
             ;;
 
         add)
             case "$prev" in
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
-                -g|--game)
-                    mapfile -t COMPREPLY < <(compgen -W "${games[*]}" -- "$cur")
-                    return ;;
-                -p|--path|--flags|--compression|--compression-next)
-                    return ;;
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -g|--game) _mpqcli_words "${games[*]}"; return ;;
+                -p|--path|--flags|--compression|--compression-next) return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-p --path -w --overwrite -u --update \
---locale -g --game \
---flags --compression --compression-next" -- "$cur")
+                _mpqcli_words "-p --path -w --overwrite -u --update --locale -g --game \
+--flags --compression --compression-next"
             else
-                _mpqcli_filedir
+                # Positional 1 is the archive; the rest are files or directories to add
+                _mpqcli_positional_index -w --overwrite -u --update
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                else
+                    _mpqcli_filedir
+                fi
             fi
             ;;
 
         remove)
             case "$prev" in
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
+                _mpqcli_words "--locale"
             else
-                _mpqcli_filedir
+                # Positional 1 is the archive; the rest are in-archive paths, so
+                # they get no filesystem completion
+                _mpqcli_positional_index
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         rename)
             case "$prev" in
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
-            elif [[ $cword -eq 2 ]]; then
+                _mpqcli_words "--locale"
+            else
                 # Positional 1 is the archive; positionals 2 and 3 are in-archive
                 # paths, so they get no filesystem completion
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         list)
             case "$prev" in
-                -l|--listfile)
-                    _mpqcli_filedir
-                    return ;;
-                -p|--property)
-                    mapfile -t COMPREPLY < <(compgen -W "${list_properties[*]}" -- "$cur")
-                    return ;;
+                -l|--listfile) _mpqcli_filedir; return ;;
+                -p|--property) _mpqcli_words "${list_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-l --listfile -d --detailed -a --all -p --property" -- "$cur")
+                _mpqcli_words "-l --listfile -d --detailed -a --all -p --property"
             else
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index -d --detailed -a --all
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         extract)
             case "$prev" in
-                -o|--output)
-                    _mpqcli_filedir
-                    return ;;
-                -l|--listfile)
-                    _mpqcli_filedir
-                    return ;;
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
-                -f|--file)
-                    return ;;
+                -o|--output) _mpqcli_filedir -d; return ;;
+                -l|--listfile) _mpqcli_filedir; return ;;
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -f|--file) return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-o --output -f --file -k --keep -l --listfile --locale" -- "$cur")
+                _mpqcli_words "-o --output -f --file -k --keep -l --listfile --locale"
             else
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index -k --keep
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         read)
             case "$prev" in
-                --locale)
-                    mapfile -t COMPREPLY < <(compgen -W "${locales[*]}" -- "$cur")
-                    return ;;
+                --locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "--locale" -- "$cur")
-            elif [[ $cword -ge 3 ]]; then
-                # Positional 1 is an in-archive path (no filesystem completion);
-                # positional 2+ is the archive file
-                _mpqcli_filedir mpq
+                _mpqcli_words "--locale"
+            else
+                # Positional 1 is an in-archive path, so it gets no filesystem
+                # completion; positional 2 is the archive
+                _mpqcli_positional_index
+                if [[ $pos -eq 1 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         verify)
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-p --print" -- "$cur")
+                _mpqcli_words "-p --print"
             else
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index -p --print
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         compact)
             case "$prev" in
-                -l|--listfile)
-                    _mpqcli_filedir
-                    return ;;
+                -l|--listfile) _mpqcli_filedir; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "-l --listfile" -- "$cur")
+                _mpqcli_words "-l --listfile"
             else
-                _mpqcli_filedir mpq
+                _mpqcli_positional_index
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_filedir mpq
+                fi
             fi
             ;;
 
         completion)
             if [[ "$cur" != -* ]]; then
-                mapfile -t COMPREPLY < <(compgen -W "bash zsh powershell fish" -- "$cur")
+                _mpqcli_positional_index
+                if [[ $pos -eq 0 ]]; then
+                    _mpqcli_words "bash zsh powershell fish"
+                fi
             fi
             ;;
 

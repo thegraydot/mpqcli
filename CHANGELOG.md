@@ -12,6 +12,7 @@
 ### Fixed
 
 - Fail with a non-zero exit code on an unknown subcommand or a missing argument
+- Offer every locale and game profile in zsh, keep filenames out of value lists in fish, and complete archives after a subcommand in PowerShell
 
 ## 0.11.0 - 2026-09-21
 

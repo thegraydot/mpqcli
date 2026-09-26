@@ -9,10 +9,9 @@
     arguments fall back to PowerShell's native filesystem completion.
 
 .NOTES
-    Source it from your $PROFILE:
-        . /path/to/mpqcli-completion.ps1
+    Append it to your profile so it loads at startup:
+        mpqcli completion powershell >> $PROFILE
 
-    Or copy it into a module / profile script that loads at startup.
     Works for any executable named 'mpqcli' or 'mpqcli.exe'.
 #>
 
@@ -41,7 +40,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'generic',
         'diablo1', 'diablo', 'd1',
         'lordsofmagic', 'lomse',
-        'starcraft', 'starcraft1', 'sc1',
+        'starcraft', 'starcraft1', 'sc', 'sc1',
         'warcraft2', 'wc2', 'war2',
         'diablo2', 'd2',
         'warcraft3', 'wc3', 'war3',
@@ -72,14 +71,14 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'flags', 'encryption-key', 'encryption-key-raw'
     )
 
-    # Options available per subcommand. Each value is a hashtable mapping the
-    # option token to a short help string.
+    # Options available per subcommand. Each value maps the option token to a
+    # short help string, in the order the help text lists them
     $optionSpec = @{
-        'info' = @{
+        'info' = [ordered]@{
             '-p'         = 'Print only a specific property value'
             '--property' = 'Print only a specific property value'
         }
-        'create' = @{
+        'create' = [ordered]@{
             '-p'              = 'Archive path for a single file, or prefix for a directory'
             '--path'          = 'Archive path for a single file, or prefix for a directory'
             '-o'              = 'Output MPQ archive'
@@ -101,12 +100,12 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression'       = 'Override compression for first sector'
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
-        'add' = @{
+        'add' = [ordered]@{
             '-p'          = 'Archive path for a single file, or prefix for a directory'
             '--path'      = 'Archive path for a single file, or prefix for a directory'
-            '-w'          = 'Overwrite file if it already is in MPQ archive'
+            '-w'          = 'Replace every file that already exists in the archive'
             '--overwrite' = 'Replace every file that already exists in the archive'
-            '-u'          = 'Skip unchanged files when adding a directory'
+            '-u'          = 'Replace only files that changed'
             '--update'    = 'Replace only files that changed'
             '--locale'    = 'Locale to use for added file'
             '-g'          = 'Game profile for compression rules'
@@ -115,13 +114,13 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression'       = 'Override compression for first sector'
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
-        'remove' = @{
+        'remove' = [ordered]@{
             '--locale' = 'Locale of file to remove'
         }
-        'rename' = @{
+        'rename' = [ordered]@{
             '--locale' = 'Locale of file to rename'
         }
-        'list' = @{
+        'list' = [ordered]@{
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
             '-d'         = 'File listing with additional columns'
@@ -131,7 +130,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '-p'         = 'Print only specific property values'
             '--property' = 'Print only specific property values'
         }
-        'extract' = @{
+        'extract' = [ordered]@{
             '-o'         = 'Output directory'
             '--output'   = 'Output directory'
             '-f'         = 'Target file to extract'
@@ -142,14 +141,14 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--listfile' = 'File listing content of an MPQ archive'
             '--locale'   = 'Preferred locale for extracted file'
         }
-        'read' = @{
+        'read' = [ordered]@{
             '--locale' = 'Preferred locale for read file'
         }
-        'verify' = @{
+        'verify' = [ordered]@{
             '-p'      = 'Print the digital signature (in hex)'
             '--print' = 'Print the digital signature (in hex)'
         }
-        'compact' = @{
+        'compact' = [ordered]@{
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
         }
@@ -163,6 +162,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         '--locale'   = $locales
         '-g'         = $gameProfiles
         '--game'     = $gameProfiles
+        '--version'  = @('1', '2', '3', '4')
     }
     # Property options depend on the subcommand (info vs list), handled below
 
@@ -170,11 +170,13 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
     $elements = @($commandAst.CommandElements | Select-Object -Skip 1 |
         ForEach-Object { $_.ToString() })
 
-    # Identify the active subcommand (first element that is a known subcommand)
+    # Identify the active subcommand: the first token, provided it is not the
+    # word still being typed. The @() keeps a single token from collapsing to
+    # a string, whose [0] would be its first character
+    $prior = @(if ([string]::IsNullOrEmpty($wordToComplete)) { $elements }
+               else { $elements | Select-Object -SkipLast 1 })
     $subcommand = $null
-    foreach ($el in $elements) {
-        if ($subcommands.Contains($el)) { $subcommand = $el; break }
-    }
+    if ($prior.Count -ge 1 -and $subcommands.Contains($prior[0])) { $subcommand = $prior[0] }
 
     # The token immediately preceding the cursor (the one we may be an arg to)
     $prevToken = $null
@@ -224,7 +226,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         return
     }
 
-    # 4) Completing the argument to a value-bearing option
+    # 3) Completing the argument to a value-bearing option
     if ($prevToken) {
         # Locale / game profile options
         if ($valueOptions.ContainsKey($prevToken)) {
@@ -256,21 +258,17 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         }
     }
 
-    # 5) Completing an option for the current subcommand
-    if ($wordToComplete -like '-*' -or [string]::IsNullOrEmpty($wordToComplete)) {
+    # 4) Completing an option for the current subcommand
+    if ($wordToComplete -like '-*') {
         $opts = $optionSpec[$subcommand]
         if ($opts) {
             $items = foreach ($k in $opts.Keys) {
                 [pscustomobject]@{ Value = $k; Tip = $opts[$k] }
             }
-            $results = & $emit $items 'ParameterName'
-            if ($wordToComplete -like '-*') { return $results }
-            # When word is empty we still also allow path completion, so only
-            # return option results if the user has started a dash.
-            if ($results) { return $results }
+            return & $emit $items 'ParameterName'
         }
     }
 
-    # 6) Fall back to native filesystem completion (archives/files)
+    # 5) Fall back to native filesystem completion (archives/files)
     return
 }
