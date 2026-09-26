@@ -1,6 +1,7 @@
 #ifndef COMMANDS_CREATE_H
 #define COMMANDS_CREATE_H
 
+#include <atomic>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -22,7 +23,7 @@ struct CreateOptions {
 };
 
 /// Creates an archive from a file or directory, returning false if any file failed to add
-bool Create(const CreateOptions &options, std::ostream &err);
+bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli
 

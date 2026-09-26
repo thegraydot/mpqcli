@@ -2,6 +2,10 @@
 
 ## 0.12.0 - 2026-09-25
 
+### Added
+
+- Stop cleanly on Ctrl-C, leaving no partial archive behind
+
 ### Changed
 
 - Rename the release assets to mpqcli-linux-x86_64, mpqcli-linux-aarch64 and mpqcli-windows-x86_64.exe

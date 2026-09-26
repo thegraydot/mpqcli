@@ -1,5 +1,6 @@
 #include "commands/create.h"
 
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <ostream>
@@ -9,6 +10,7 @@
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "gamerules/rules.h"
 #include "mpq/add.h"
 #include "mpq/archive.h"
@@ -20,7 +22,24 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Create(const CreateOptions &options, std::ostream &err) {
+namespace {
+
+/// Removes the archive being written on the way out unless it was moved into place
+struct PartialArchive {
+    fs::path path;
+    bool keep = false;
+
+    ~PartialArchive() {
+        if (!keep) {
+            std::error_code ec;
+            fs::remove(path, ec);
+        }
+    }
+};
+
+} // namespace
+
+bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
     std::error_code ec;
     fs::path output_file_path;
     if (options.output.has_value()) {
@@ -40,6 +59,9 @@ bool Create(const CreateOptions &options, std::ostream &err) {
         output_file_path.replace_extension(".mpq");
     }
     std::string output_file = output_file_path.u8string();
+    if (fs::exists(output_file_path, ec)) {
+        throw ArchiveError("File already exists: " + output_file + " Exiting...");
+    }
 
     GameProfile profile;
     if (options.game_profile.has_value()) {
@@ -71,15 +93,23 @@ bool Create(const CreateOptions &options, std::ostream &err) {
     const uint32_t file_count =
         CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
 
-    // Create the MPQ archive and add files
-    Archive archive = Archive::Create(output_file, file_count, game_rules);
+    // The archive is invalid until it is closed, so it is written beside the output
+    // and renamed into place once complete; an interrupt or error before that leaves
+    // nothing at the output path. A partial left by an earlier interrupted run would
+    // otherwise be refused as an existing file
+    fs::path partial_path = output_file_path;
+    partial_path += ".partial";
+    fs::remove(partial_path, ec);
+    PartialArchive partial{partial_path};
+
+    Archive archive = Archive::Create(partial_path.u8string(), file_count, game_rules);
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
 
     int result = 0;
     if (is_directory) {
         const std::string prefix = options.path.value_or("");
         result |= AddFiles(archive.Handle(), files, options.target, prefix, lcid, game_rules, err,
-                           options.compression_overrides);
+                           cancelled, options.compression_overrides);
     } else {
         std::string archive_path = ResolveArchiveName(options.target, options.path);
         result |= AddFile(archive.Handle(), options.target, archive_path, lcid, game_rules, err,
@@ -90,6 +120,14 @@ bool Create(const CreateOptions &options, std::ostream &err) {
         archive.Sign();
     }
     archive.Close();
+
+    // A failed rename must not delete the complete archive it was about to move
+    partial.keep = true;
+    fs::rename(partial_path, output_file_path, ec);
+    if (ec) {
+        throw ArchiveError("Failed to move " + partial_path.u8string() + " to " + output_file +
+                           ": (" + std::to_string(ec.value()) + ") " + ec.message());
+    }
 
     return result == 0;
 }

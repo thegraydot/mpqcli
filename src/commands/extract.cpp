@@ -1,5 +1,6 @@
 #include "commands/extract.h"
 
+#include <atomic>
 #include <filesystem>
 #include <ostream>
 #include <string>
@@ -15,7 +16,7 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Extract(const ExtractOptions &options, std::ostream &err) {
+bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
     std::error_code ec;
@@ -63,7 +64,8 @@ bool Extract(const ExtractOptions &options, std::ostream &err) {
         result = ExtractFile(archive.Handle(), effective_output, options.file.value(),
                              options.keep_folder_structure, lcid, err);
     } else {
-        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, err);
+        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, err,
+                              cancelled);
     }
     archive.Close();
 

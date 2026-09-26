@@ -1,6 +1,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+#include <atomic>
 #include <istream>
 #include <ostream>
 
@@ -11,6 +12,7 @@ struct Context {
     std::ostream &out;
     std::ostream &err;
     std::istream &in;
+    const std::atomic<bool> &cancelled;
     int exit_code = 0;
 };
 

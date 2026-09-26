@@ -1,6 +1,7 @@
 #include "mpq/add.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <limits>
@@ -11,6 +12,7 @@
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "gamerules/rules.h"
 #include "mpq/query.h"
 #include "util/capacity.h"
@@ -24,13 +26,16 @@ namespace mpqcli {
 
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
              const std::string &path_prefix, LCID locale, const GameRules &game_rules,
-             std::ostream &err, const CompressionSettingsOverrides &overrides, bool overwrite,
-             bool update, int *skipped) {
+             std::ostream &err, const std::atomic<bool> &cancelled,
+             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
+             int *skipped) {
     int files_added = 0;
     int files_skipped = 0;
     int files_failed = 0;
 
     for (const auto &file : files) {
+        ThrowIfCancelled(cancelled);
+
         // Determine relative path lexically rather than with fs::relative, which
         // resolves paths through the OS and throws on volumes that cannot report
         // real paths (RAM disks, some network shares).

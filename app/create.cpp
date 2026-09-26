@@ -70,6 +70,6 @@ void RegisterCreate(CLI::App &app, Context &context) {
             options->create.create_overrides.mpq_version =
                 static_cast<DWORD>(options->version.value() - 1);
         }
-        context.exit_code = mpqcli::Create(options->create, context.err) ? 0 : 1;
+        context.exit_code = mpqcli::Create(options->create, context.err, context.cancelled) ? 0 : 1;
     });
 }

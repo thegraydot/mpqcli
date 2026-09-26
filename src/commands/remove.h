@@ -1,6 +1,7 @@
 #ifndef COMMANDS_REMOVE_H
 #define COMMANDS_REMOVE_H
 
+#include <atomic>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -16,7 +17,7 @@ struct RemoveOptions {
 };
 
 /// Removes files from an archive, returning false if any of them could not be removed
-bool Remove(const RemoveOptions &options, std::ostream &err);
+bool Remove(const RemoveOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli
 

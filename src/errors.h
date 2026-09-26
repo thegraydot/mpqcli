@@ -1,6 +1,7 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -16,6 +17,19 @@ class Error : public std::runtime_error {
 public:
     explicit Error(const std::string &message) : std::runtime_error(message) {}
 };
+
+/// Thrown when the cancellation flag was set part-way through a command
+class Interrupted : public Error {
+public:
+    Interrupted() : Error("Interrupted") {}
+};
+
+/// Throws Interrupted once cancelled is set; polled once per item at the top of a long loop
+inline void ThrowIfCancelled(const std::atomic<bool> &cancelled) {
+    if (cancelled.load(std::memory_order_relaxed)) {
+        throw Interrupted{};
+    }
+}
 
 /// Base for failures reading or writing an archive
 class ArchiveError : public Error {

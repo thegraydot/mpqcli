@@ -46,6 +46,6 @@ void RegisterAdd(CLI::App &app, Context &context) {
 
     sub->callback([options, &context]() {
         options->files = mpqcli::ExpandStdinMarker(options->files, context.in);
-        context.exit_code = mpqcli::Add(*options, context.err) ? 0 : 1;
+        context.exit_code = mpqcli::Add(*options, context.err, context.cancelled) ? 0 : 1;
     });
 }

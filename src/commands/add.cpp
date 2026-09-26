@@ -1,5 +1,6 @@
 #include "commands/add.h"
 
+#include <atomic>
 #include <filesystem>
 #include <ostream>
 #include <string>
@@ -8,6 +9,7 @@
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "gamerules/rules.h"
 #include "mpq/add.h"
 #include "mpq/archive.h"
@@ -18,7 +20,7 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-bool Add(const AddOptions &options, std::ostream &err) {
+bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
     Archive archive = Archive::Open(options.archive, 0);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
@@ -44,6 +46,8 @@ bool Add(const AddOptions &options, std::ostream &err) {
     int result = 0;
     int files_skipped = 0;
     for (const auto &f : options.files) {
+        ThrowIfCancelled(cancelled);
+
         if (!fs::exists(f, ec)) {
             err << "[!] Path does not exist: " << f << std::endl;
             result |= 1;
@@ -60,8 +64,8 @@ bool Add(const AddOptions &options, std::ostream &err) {
             }
             std::string prefix = options.path.value_or("");
             result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules, err,
-                               options.compression_overrides, options.overwrite, options.update,
-                               &files_skipped);
+                               cancelled, options.compression_overrides, options.overwrite,
+                               options.update, &files_skipped);
 
         } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || options.files.size() > 1;

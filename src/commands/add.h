@@ -1,6 +1,7 @@
 #ifndef COMMANDS_ADD_H
 #define COMMANDS_ADD_H
 
+#include <atomic>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -23,7 +24,7 @@ struct AddOptions {
 };
 
 /// Adds files and directories to an archive, returning false if any of them failed
-bool Add(const AddOptions &options, std::ostream &err);
+bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli
 

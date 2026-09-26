@@ -1,5 +1,6 @@
 #include "mpq/extract.h"
 
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -9,6 +10,7 @@
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "mpq/query.h"
 #include "util/format.h"
 #include "util/locales.h"
@@ -20,7 +22,7 @@ namespace mpqcli {
 
 int ExtractFiles(HANDLE archive, const std::string &output,
                  const std::optional<std::string> &listfile_name, LCID preferred_locale,
-                 std::ostream &err) {
+                 std::ostream &err, const std::atomic<bool> &cancelled) {
     SFileSetLocale(preferred_locale);
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
@@ -33,6 +35,12 @@ int ExtractFiles(HANDLE archive, const std::string &output,
 
     int32_t result = 0;
     do {
+        // Closed by hand rather than through ThrowIfCancelled, so the find handle
+        // does not leak on the way out
+        if (cancelled.load(std::memory_order_relaxed)) {
+            SFileFindClose(find_handle);
+            throw Interrupted{};
+        }
         result |= ExtractFile(archive, output, find_data.cFileName,
                               true, // Keep folder structure
                               preferred_locale, err);
