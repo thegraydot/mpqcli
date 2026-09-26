@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <limits>
+#include <ostream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -24,8 +24,8 @@ namespace mpqcli {
 
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
              const std::string &path_prefix, LCID locale, const GameRules &game_rules,
-             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
-             int *skipped) {
+             std::ostream &out, std::ostream &err, const CompressionSettingsOverrides &overrides,
+             bool overwrite, bool update, int *skipped) {
     int files_added = 0;
     int files_skipped = 0;
     int files_failed = 0;
@@ -46,13 +46,13 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
 
         if (std::find(special_mpq_files.begin(), special_mpq_files.end(), archive_file_path) !=
             special_mpq_files.end()) {
-            std::cout << "[*] Skipping special MPQ file: " << archive_file_path << std::endl;
+            out << "[*] Skipping special MPQ file: " << archive_file_path << std::endl;
             continue;
         }
 
         int file_skipped = 0;
-        if (AddFile(archive, file, archive_file_path, locale, game_rules, overrides, overwrite,
-                    update, &file_skipped) != 0) {
+        if (AddFile(archive, file, archive_file_path, locale, game_rules, out, err, overrides,
+                    overwrite, update, &file_skipped) != 0) {
             files_failed++;
         } else if (file_skipped > 0) {
             files_skipped++;
@@ -62,9 +62,8 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
     }
 
     if (update) {
-        std::cout << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
-                  << files_skipped << " files skipped, " << files_failed << " files failed."
-                  << std::endl;
+        out << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
+            << files_skipped << " files skipped, " << files_failed << " files failed." << std::endl;
     }
 
     if (skipped != nullptr) {
@@ -75,13 +74,13 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
 }
 
 int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archive_file_path,
-            const LCID locale, const GameRules &game_rules,
+            const LCID locale, const GameRules &game_rules, std::ostream &out, std::ostream &err,
             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
             int *skipped) {
     // Return if file doesn't exist on disk
     std::error_code ec;
     if (!fs::exists(local_file, ec)) {
-        std::cerr << "[!] File doesn't exist on disk: " << local_file << std::endl;
+        err << "[!] File doesn't exist on disk: " << local_file << std::endl;
         return 1;
     }
 
@@ -97,8 +96,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             SFileCloseFile(file);
 
             if (unchanged) {
-                std::cout << "[~] Skipping unchanged file: " << archive_file_path << " ("
-                          << match_reason << ")" << std::endl;
+                out << "[~] Skipping unchanged file: " << archive_file_path << " (" << match_reason
+                    << ")" << std::endl;
                 if (skipped != nullptr) {
                     (*skipped)++;
                 }
@@ -108,24 +107,24 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             // Without either flag, leaving the archived copy in place is the documented
             // default, so this is a skip rather than a failure.
             if (!overwrite && !update) {
-                std::cerr << "[!] File" << PrettyPrintLocale(locale, " for locale ")
-                          << " already exists in MPQ archive: " << archive_file_path
-                          << " - Skipping..." << std::endl;
+                err << "[!] File" << PrettyPrintLocale(locale, " for locale ")
+                    << " already exists in MPQ archive: " << archive_file_path << " - Skipping..."
+                    << std::endl;
                 if (skipped != nullptr) {
                     (*skipped)++;
                 }
                 return 0;
             }
 
-            std::cout << "[+] File" << PrettyPrintLocale(locale, " for locale ")
-                      << " already exists in MPQ archive: " << archive_file_path
-                      << " - Overwriting..." << std::endl;
+            out << "[+] File" << PrettyPrintLocale(locale, " for locale ")
+                << " already exists in MPQ archive: " << archive_file_path << " - Overwriting..."
+                << std::endl;
         } else {
             SFileCloseFile(file);
         }
     }
-    std::cout << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
-              << archive_file_path << std::endl;
+    out << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
+        << archive_file_path << std::endl;
 
     // Verify that we are not exceeding maxFile size of the archive, and if we do, increase it
     int32_t number_of_files = GetFileInfo<int32_t>(archive, SFileMpqNumberOfFiles);
@@ -136,8 +135,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
         bool set_max_file_count = SFileSetMaxFileCount(archive, new_max_files);
         if (!set_max_file_count) {
             const auto error = SErrGetLastError();
-            std::cerr << "[!] Failed to increase new max file count to " << new_max_files << ": ("
-                      << error << ") " << StormErrorString(error) << std::endl;
+            err << "[!] Failed to increase new max file count to " << new_max_files << ": ("
+                << error << ") " << StormErrorString(error) << std::endl;
             return 1;
         }
     }
@@ -145,14 +144,14 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     // Get file size for rule matching
     const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
     if (ec) {
-        std::cerr << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
-                  << local_file << std::endl;
+        err << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
+            << local_file << std::endl;
         return 1;
     }
     if (raw_file_size > std::numeric_limits<DWORD>::max()) {
-        std::cerr << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
-                     "correctly: "
-                  << local_file << std::endl;
+        err << "[!] Warning: file exceeds 4GB, size-based compression rules may not apply "
+               "correctly: "
+            << local_file << std::endl;
     }
     const DWORD file_size = static_cast<DWORD>(
         std::min(raw_file_size, static_cast<std::uintmax_t>(std::numeric_limits<DWORD>::max())));
@@ -177,8 +176,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
 
     if (!added_file) {
         const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed to add: " << archive_file_path << ": (" << error << ") "
-                  << StormErrorString(error) << std::endl;
+        err << "[!] Failed to add: " << archive_file_path << ": (" << error << ") "
+            << StormErrorString(error) << std::endl;
         return 1;
     }
 

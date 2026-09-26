@@ -1,6 +1,7 @@
 #include "mpq/info.h"
 
 #include <optional>
+#include <ostream>
 #include <string>
 
 #include <StormLib.h>
@@ -10,9 +11,10 @@
 
 namespace mpqcli {
 
-int HandleInfo(const std::string &target, const std::optional<std::string> &property) {
+int HandleInfo(const std::string &target, const std::optional<std::string> &property,
+               std::ostream &out) {
     Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
-    PrintMpqInfo(archive.Handle(), property);
+    PrintMpqInfo(archive.Handle(), property, out);
     archive.Close();
     return 0;
 }

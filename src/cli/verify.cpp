@@ -1,6 +1,6 @@
 #include "mpq/verify.h"
 
-#include <iostream>
+#include <ostream>
 #include <string>
 
 #include <StormLib.h>
@@ -10,7 +10,8 @@
 
 namespace mpqcli {
 
-int HandleVerify(const std::string &target, bool print_signature) {
+int HandleVerify(const std::string &target, bool print_signature, std::ostream &out,
+                 std::ostream &err) {
     Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
 
     int result;
@@ -20,9 +21,9 @@ int HandleVerify(const std::string &target, bool print_signature) {
         if (print_signature) {
             // If printing the signature, don't print success message
             // because the user might want to pipe/redirect the signature data
-            PrintMpqSignature(archive.Handle(), target);
+            PrintMpqSignature(archive.Handle(), target, out, err);
         } else {
-            std::cout << "[*] Verify success" << std::endl;
+            out << "[*] Verify success" << std::endl;
         }
         result = 0;
         break;
@@ -32,19 +33,19 @@ int HandleVerify(const std::string &target, bool print_signature) {
         if (print_signature) {
             // Print the (invalid) signature bytes for forensic inspection,
             // but still fail: the archive content no longer matches it
-            PrintMpqSignature(archive.Handle(), target);
+            PrintMpqSignature(archive.Handle(), target, out, err);
         }
-        std::cerr << "[!] Verify failed: signature is present but invalid" << std::endl;
+        err << "[!] Verify failed: signature is present but invalid" << std::endl;
         result = 1;
         break;
 
     case ERROR_NO_SIGNATURE:
-        std::cerr << "[!] Verify failed: archive has no signature" << std::endl;
+        err << "[!] Verify failed: archive has no signature" << std::endl;
         result = 1;
         break;
 
     default: // ERROR_VERIFY_FAILED or any other value
-        std::cerr << "[!] Verify failed" << std::endl;
+        err << "[!] Verify failed" << std::endl;
         result = 1;
         break;
     }

@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <system_error>
 
@@ -19,14 +19,15 @@ namespace fs = std::filesystem;
 namespace mpqcli {
 
 int ExtractFiles(HANDLE archive, const std::string &output,
-                 const std::optional<std::string> &listfile_name, LCID preferred_locale) {
+                 const std::optional<std::string> &listfile_name, LCID preferred_locale,
+                 std::ostream &out, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
     if (find_handle == nullptr) {
-        std::cerr << "[!] Failed to find first file in MPQ archive." << std::endl;
+        err << "[!] Failed to find first file in MPQ archive." << std::endl;
         return 1;
     }
 
@@ -34,7 +35,7 @@ int ExtractFiles(HANDLE archive, const std::string &output,
     do {
         result |= ExtractFile(archive, output, find_data.cFileName,
                               true, // Keep folder structure
-                              preferred_locale);
+                              preferred_locale, out, err);
     } while (SFileFindNextFile(find_handle, &find_data));
 
     SFileFindClose(find_handle);
@@ -42,13 +43,14 @@ int ExtractFiles(HANDLE archive, const std::string &output,
 }
 
 int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
-                bool keep_folder_structure, LCID preferred_locale) {
+                bool keep_folder_structure, LCID preferred_locale, std::ostream &out,
+                std::ostream &err) {
     SFileSetLocale(preferred_locale);
     if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
         !FileExistsInArchiveForLocale(archive, file_name.c_str(), default_locale)) {
-        std::cerr << "[!] Failed: File doesn't exist"
-                  << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << file_name
-                  << std::endl;
+        err << "[!] Failed: File doesn't exist"
+            << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << file_name
+            << std::endl;
         return 1;
     }
 
@@ -65,8 +67,8 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     std::error_code ec;
     fs::path output_path_base = fs::absolute(output, ec).lexically_normal();
     if (ec) {
-        std::cerr << "[!] Failed to resolve output directory: (" << ec.value() << ") "
-                  << ec.message() << ": " << output << std::endl;
+        err << "[!] Failed to resolve output directory: (" << ec.value() << ") " << ec.message()
+            << ": " << output << std::endl;
         return 1;
     }
     if (output_path_base.filename().empty()) {
@@ -77,17 +79,15 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     // ".." entry is rejected before anything is created on disk
     fs::path output_file_path_name = (output_path_base / file_name_string).lexically_normal();
     if (!IsWithinDirectory(output_path_base, output_file_path_name)) {
-        std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
-                  << std::endl;
+        err << "[!] Blocked: path traversal attempt detected: " << file_name_string << std::endl;
         return 1;
     }
 
     // Ensure sub-directories for folder-nested files exist before resolving
     fs::create_directories(output_file_path_name.parent_path(), ec);
     if (ec) {
-        std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
-                  << ec.message() << ": " << output_file_path_name.parent_path().u8string()
-                  << std::endl;
+        err << "[!] Failed to create output directory: (" << ec.value() << ") " << ec.message()
+            << ": " << output_file_path_name.parent_path().u8string() << std::endl;
         return 1;
     }
 
@@ -99,13 +99,13 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
         fs::path resolved_output = fs::canonical(output_file_path_name.parent_path(), ec) /
                                    output_file_path_name.filename();
         if (ec) {
-            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
-                      << ec.message() << ": " << output_file_path_name.u8string() << std::endl;
+            err << "[!] Failed to resolve output path: (" << ec.value() << ") " << ec.message()
+                << ": " << output_file_path_name.u8string() << std::endl;
             return 1;
         }
         if (!IsWithinDirectory(resolved_base, resolved_output)) {
-            std::cerr << "[!] Blocked: path traversal attempt detected: " << file_name_string
-                      << std::endl;
+            err << "[!] Blocked: path traversal attempt detected: " << file_name_string
+                << std::endl;
             return 1;
         }
     }
@@ -113,11 +113,11 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     std::string output_file_name{output_file_path_name.u8string()};
 
     if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
-        std::cout << "[*] Extracted: " << file_name_string << std::endl;
+        out << "[*] Extracted: " << file_name_string << std::endl;
     } else {
         const auto error = SErrGetLastError();
-        std::cerr << "[!] Failed: (" << error << ") " << StormErrorString(error) << ": "
-                  << file_name << std::endl;
+        err << "[!] Failed: (" << error << ") " << StormErrorString(error) << ": " << file_name
+            << std::endl;
         return 1;
     }
 

@@ -2,6 +2,7 @@
 #include <exception>
 #include <iostream>
 #include <optional>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -17,6 +18,9 @@
 using namespace mpqcli;
 
 int main(int argc, char **argv) {
+    std::ostream &out = std::cout;
+    std::ostream &err = std::cerr;
+
     CLI::App app{
         "A command line tool to create, add, remove, list, extract, read, rename, and verify MPQ "
         "archives "
@@ -284,7 +288,7 @@ int main(int argc, char **argv) {
         }
 
         if (app.got_subcommand(info)) {
-            return HandleInfo(base_target, info_property);
+            return HandleInfo(base_target, info_property, out);
         }
 
         if (app.got_subcommand(create)) {
@@ -292,7 +296,7 @@ int main(int argc, char **argv) {
                 base_target, base_path, base_output, create_sign_archive, base_locale,
                 base_game_profile, create_mpq_version, create_stream_flags, create_sector_size,
                 create_raw_chunk_size, create_file_flags1, create_file_flags2, create_file_flags3,
-                create_attr_flags, file_flags, file_compression, file_compression_next);
+                create_attr_flags, file_flags, file_compression, file_compression_next, out, err);
         }
 
         if (app.got_subcommand(add)) {
@@ -310,7 +314,7 @@ int main(int argc, char **argv) {
             }
             return HandleAdd(resolved_add_files, base_target, base_path, add_overwrite, add_update,
                              base_locale, base_game_profile, file_flags, file_compression,
-                             file_compression_next);
+                             file_compression_next, out, err);
         }
 
         if (app.got_subcommand(remove)) {
@@ -326,35 +330,36 @@ int main(int argc, char **argv) {
                     resolved_remove_files.push_back(f);
                 }
             }
-            return HandleRemove(resolved_remove_files, base_target, base_locale);
+            return HandleRemove(resolved_remove_files, base_target, base_locale, out, err);
         }
 
         if (app.got_subcommand(rename)) {
-            return HandleRename(base_file, rename_new_file, base_target, base_locale);
+            return HandleRename(base_file, rename_new_file, base_target, base_locale, out, err);
         }
 
         if (app.got_subcommand(list)) {
             return HandleList(base_target, base_listfile_name, list_all, list_detailed,
-                              list_properties);
+                              list_properties, out, err);
         }
 
         if (app.got_subcommand(extract)) {
             std::optional<std::string> extract_file =
                 base_file.empty() ? std::nullopt : std::make_optional(base_file);
             return HandleExtract(base_target, base_output, extract_file,
-                                 extract_keep_folder_structure, base_listfile_name, base_locale);
+                                 extract_keep_folder_structure, base_listfile_name, base_locale,
+                                 out, err);
         }
 
         if (app.got_subcommand(read)) {
-            return HandleRead(base_file, base_target, base_locale);
+            return HandleRead(base_file, base_target, base_locale, out, err);
         }
 
         if (app.got_subcommand(verify)) {
-            return HandleVerify(base_target, verify_print_signature);
+            return HandleVerify(base_target, verify_print_signature, out, err);
         }
 
         if (app.got_subcommand(compact)) {
-            return HandleCompact(base_target, base_listfile_name);
+            return HandleCompact(base_target, base_listfile_name, out);
         }
 
         if (app.got_subcommand(completion)) {

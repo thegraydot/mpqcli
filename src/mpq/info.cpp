@@ -2,9 +2,9 @@
 
 #include <cstdint>
 #include <functional>
-#include <iostream>
 #include <map>
 #include <optional>
+#include <ostream>
 #include <string>
 
 #include <StormLib.h>
@@ -14,7 +14,8 @@
 
 namespace mpqcli {
 
-void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_property) {
+void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_property,
+                  std::ostream &out) {
     std::map<std::string, std::function<void(bool)>> property_actions = {
         {"format-version",
          [&](bool print_name) {
@@ -22,61 +23,61 @@ void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_propert
              uint16_t format_version =
                  header.wFormatVersion + 1; // Add +1 because StormLib starts at 0
              if (print_name) {
-                 std::cout << "Format version: ";
+                 out << "Format version: ";
              }
-             std::cout << format_version << std::endl;
+             out << format_version << std::endl;
          }},
         {"header-offset",
          [&](bool print_name) {
              int64_t header_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
              if (print_name) {
-                 std::cout << "Header offset: ";
+                 out << "Header offset: ";
              }
-             std::cout << header_offset << std::endl;
+             out << header_offset << std::endl;
          }},
         {"header-size",
          [&](bool print_name) {
              int64_t header_size = GetFileInfo<int64_t>(archive, SFileMpqHeaderSize);
              if (print_name) {
-                 std::cout << "Header size: ";
+                 out << "Header size: ";
              }
-             std::cout << header_size << std::endl;
+             out << header_size << std::endl;
          }},
         {"archive-size",
          [&](bool print_name) {
              int64_t archive_size = GetFileInfo<int64_t>(archive, SFileMpqArchiveSize64);
              if (print_name) {
-                 std::cout << "Archive size: ";
+                 out << "Archive size: ";
              }
-             std::cout << archive_size << std::endl;
+             out << archive_size << std::endl;
          }},
         {"file-count",
          [&](bool print_name) {
              int32_t number_of_files = GetFileInfo<int32_t>(archive, SFileMpqNumberOfFiles);
              if (print_name) {
-                 std::cout << "File count: ";
+                 out << "File count: ";
              }
-             std::cout << number_of_files << std::endl;
+             out << number_of_files << std::endl;
          }},
         {"max-files",
          [&](bool print_name) {
              int32_t max_files = GetFileInfo<int32_t>(archive, SFileMpqMaxFileCount);
              if (print_name) {
-                 std::cout << "Max files: ";
+                 out << "Max files: ";
              }
-             std::cout << max_files << std::endl;
+             out << max_files << std::endl;
          }},
         {"signature-type", [&](bool print_name) {
              int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
              if (print_name) {
-                 std::cout << "Signature type: ";
+                 out << "Signature type: ";
              }
              if (signature_type == SIGNATURE_TYPE_NONE) {
-                 std::cout << "None" << std::endl;
+                 out << "None" << std::endl;
              } else if (signature_type == SIGNATURE_TYPE_WEAK) {
-                 std::cout << "Weak" << std::endl;
+                 out << "Weak" << std::endl;
              } else if (signature_type == SIGNATURE_TYPE_STRONG) {
-                 std::cout << "Strong" << std::endl;
+                 out << "Strong" << std::endl;
              }
          }}};
 

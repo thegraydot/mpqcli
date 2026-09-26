@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -24,7 +24,8 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
               const std::optional<std::string> &path, bool overwrite, bool update,
               const std::optional<std::string> &locale,
               const std::optional<std::string> &game_profile, int64_t file_flags,
-              int64_t file_compression, int64_t file_compression_next) {
+              int64_t file_compression, int64_t file_compression_next, std::ostream &out,
+              std::ostream &err) {
     Archive archive = Archive::Open(target, 0);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
@@ -32,7 +33,7 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     GameProfile profile;
     if (game_profile.has_value()) {
         profile = GameRules::StringToProfile(game_profile.value());
-        std::cout << "[*] Using game profile: " << game_profile.value() << std::endl;
+        out << "[*] Using game profile: " << game_profile.value() << std::endl;
     } else {
         profile = GameRules::GetDefaultProfile();
     }
@@ -59,7 +60,7 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     int files_skipped = 0;
     for (const auto &f : files) {
         if (!fs::exists(f, ec)) {
-            std::cerr << "[!] Path does not exist: " << f << std::endl;
+            err << "[!] Path does not exist: " << f << std::endl;
             result |= 1;
             continue;
         }
@@ -67,23 +68,23 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
         if (fs::is_directory(f, ec)) {
             std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
             if (ec) {
-                std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
-                          << ": " << f << std::endl;
+                err << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                    << ": " << f << std::endl;
                 result |= 1;
                 continue;
             }
             std::string prefix = path.value_or("");
-            result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules,
-                               add_overrides, overwrite, update, &files_skipped);
+            result |= AddFiles(archive.Handle(), directory_files, f, prefix, lcid, game_rules, out,
+                               err, add_overrides, overwrite, update, &files_skipped);
 
         } else if (fs::is_regular_file(f, ec)) {
             const bool treat_as_directory = has_directory || files.size() > 1;
             std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
-            result |= AddFile(archive.Handle(), f, archive_path, lcid, game_rules, add_overrides,
-                              overwrite, update, &files_skipped);
+            result |= AddFile(archive.Handle(), f, archive_path, lcid, game_rules, out, err,
+                              add_overrides, overwrite, update, &files_skipped);
 
         } else {
-            std::cerr << "[!] Not a file or directory: " << f << std::endl;
+            err << "[!] Not a file or directory: " << f << std::endl;
             result |= 1;
         }
     }
@@ -91,10 +92,10 @@ int HandleAdd(const std::vector<std::string> &files, const std::string &target,
     // Skipping pre-existing files is the default, so point at the flags that change it
     // rather than letting the run look like it silently did nothing.
     if (!overwrite && !update && files_skipped > 0) {
-        std::cerr << "[*] " << files_skipped
-                  << " file(s) already in the archive were skipped. Use --overwrite to replace "
-                     "them, or --update to replace only the ones that changed."
-                  << std::endl;
+        err << "[*] " << files_skipped
+            << " file(s) already in the archive were skipped. Use --overwrite to replace "
+               "them, or --update to replace only the ones that changed."
+            << std::endl;
     }
 
     archive.Close();

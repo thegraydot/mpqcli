@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ostream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -25,7 +26,8 @@ uint32_t VerifyMpqArchive(HANDLE archive) {
     return SFileVerifyArchive(archive);
 }
 
-void PrintMpqSignature(HANDLE archive, const std::string &target) {
+void PrintMpqSignature(HANDLE archive, const std::string &target, std::ostream &out,
+                       std::ostream &err) {
     // Determine if we have a strong or weak digital signature
     int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
 
@@ -36,7 +38,7 @@ void PrintMpqSignature(HANDLE archive, const std::string &target) {
     } else if (signature_type == SIGNATURE_TYPE_WEAK) {
         const char *file_name = "(signature)";
         uint32_t file_size;
-        auto file_content = ReadFile(archive, file_name, &file_size, default_locale);
+        auto file_content = ReadFile(archive, file_name, &file_size, default_locale, err);
 
         if (!file_content) {
             throw ArchiveError("Failed to read weak signature file.");
@@ -44,7 +46,7 @@ void PrintMpqSignature(HANDLE archive, const std::string &target) {
         signature_content.resize(file_size);
         std::copy(file_content.get(), file_content.get() + file_size, signature_content.begin());
 
-        PrintAsBinary(file_content.get(), file_size);
+        WriteBinary(out, file_content.get(), file_size);
 
     } else if (signature_type == SIGNATURE_TYPE_STRONG) {
         // StormLib does not expose the strong signature via SFileGetFileInfo into a
@@ -76,7 +78,7 @@ void PrintMpqSignature(HANDLE archive, const std::string &target) {
                       static_cast<std::streamsize>(signature_content.size()));
         file_mpq.close();
 
-        PrintAsBinary(signature_content.data(), static_cast<uint32_t>(signature_content.size()));
+        WriteBinary(out, signature_content.data(), static_cast<uint32_t>(signature_content.size()));
     }
 }
 

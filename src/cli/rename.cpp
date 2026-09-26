@@ -1,6 +1,7 @@
 #include "mpq/rename.h"
 
 #include <optional>
+#include <ostream>
 #include <string>
 
 #include <StormLib.h>
@@ -12,11 +13,12 @@
 namespace mpqcli {
 
 int HandleRename(const std::string &old_file, const std::string &new_file,
-                 const std::string &target, const std::optional<std::string> &locale) {
+                 const std::string &target, const std::optional<std::string> &locale,
+                 std::ostream &out, std::ostream &err) {
     Archive archive = Archive::Open(target, 0);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
-    const int result = RenameFile(archive.Handle(), old_file, new_file, lcid);
+    const int result = RenameFile(archive.Handle(), old_file, new_file, lcid, out, err);
     archive.Close();
     return result;
 }

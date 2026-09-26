@@ -4,6 +4,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <ostream>
 #include <string>
 
 #ifdef _WIN32
@@ -69,11 +70,15 @@ std::string StormErrorString(uint32_t err) {
     }
 }
 
-void PrintAsBinary(const char *buffer, uint32_t size) {
+void WriteBinary(std::ostream &out, const char *buffer, uint32_t size) {
 #ifdef _WIN32
-    _setmode(_fileno(stdout), _O_BINARY);
+    // The mode belongs to the file descriptor rather than the stream, so switching
+    // it for a captured stream would change the real stdout for the rest of the run
+    if (&out == &std::cout) {
+        _setmode(_fileno(stdout), _O_BINARY);
+    }
 #endif
-    std::cout.write(buffer, size);
+    out.write(buffer, size);
 }
 
 } // namespace mpqcli

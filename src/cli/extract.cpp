@@ -1,8 +1,8 @@
 #include "mpq/extract.h"
 
 #include <filesystem>
-#include <iostream>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <system_error>
 
@@ -19,7 +19,7 @@ namespace mpqcli {
 int HandleExtract(const std::string &target, const std::optional<std::string> &output,
                   const std::optional<std::string> &file, bool keep_folder_structure,
                   const std::optional<std::string> &listfile_name,
-                  const std::optional<std::string> &locale) {
+                  const std::optional<std::string> &locale, std::ostream &out, std::ostream &err) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
     std::error_code ec;
@@ -27,8 +27,8 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
     if (!output.has_value()) {
         fs::path target_path = fs::absolute(target, ec);
         if (ec) {
-            std::cerr << "[!] Failed to resolve archive path: (" << ec.value() << ") "
-                      << ec.message() << ": " << target << std::endl;
+            err << "[!] Failed to resolve archive path: (" << ec.value() << ") " << ec.message()
+                << ": " << target << std::endl;
             return 1;
         }
         effective_output = (target_path.parent_path() / target_path.stem()).u8string();
@@ -39,8 +39,8 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
     if (ec) {
         std::error_code query_ec;
         if (!fs::is_directory(effective_output, query_ec)) {
-            std::cerr << "[!] Failed to create output directory: (" << ec.value() << ") "
-                      << ec.message() << ": " << effective_output << std::endl;
+            err << "[!] Failed to create output directory: (" << ec.value() << ") " << ec.message()
+                << ": " << effective_output << std::endl;
             return 1;
         }
     }
@@ -49,30 +49,30 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
     // real paths; warn once up front on volumes where it cannot (RAM disks)
     static_cast<void>(fs::canonical(effective_output, ec));
     if (ec) {
-        std::cout << "[!] Warning: Output directory cannot be fully resolved, symlinks will not "
-                     "be checked during extraction: "
-                  << effective_output << std::endl;
+        out << "[!] Warning: Output directory cannot be fully resolved, symlinks will not "
+               "be checked during extraction: "
+            << effective_output << std::endl;
     }
 
     Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
     if (locale.has_value() && lcid == default_locale) {
-        std::cout << "[!] Warning: The locale '" << locale.value()
-                  << "' is unknown. Will use default locale instead." << std::endl;
+        out << "[!] Warning: The locale '" << locale.value()
+            << "' is unknown. Will use default locale instead." << std::endl;
     }
 
     int result;
     if (file.has_value()) {
         result = ExtractFile(archive.Handle(), effective_output, file.value(),
-                             keep_folder_structure, lcid);
+                             keep_folder_structure, lcid, out, err);
     } else {
-        result = ExtractFiles(archive.Handle(), effective_output, listfile_name, lcid);
+        result = ExtractFiles(archive.Handle(), effective_output, listfile_name, lcid, out, err);
     }
     archive.Close();
 
     if (result != 0) {
-        std::cerr << std::endl << "[!] Failed to extract all files." << std::endl;
+        err << std::endl << "[!] Failed to extract all files." << std::endl;
     }
     return result;
 }

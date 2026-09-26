@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <iomanip>
-#include <iostream>
 #include <map>
 #include <optional>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -21,7 +21,8 @@
 namespace mpqcli {
 
 void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
-               bool list_detailed, const std::vector<std::string> &properties) {
+               bool list_detailed, const std::vector<std::string> &properties, std::ostream &out,
+               std::ostream &err) {
     const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
@@ -89,13 +90,13 @@ void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, 
                 file_locales[0] = default_locale;
 
             } else if (result == ERROR_INVALID_HANDLE || result == ERROR_NOT_SUPPORTED) {
-                std::cerr << "[!] Internal error for file: " << find_data.cFileName << std::endl;
+                err << "[!] Internal error for file: " << find_data.cFileName << std::endl;
                 continue;
 
             } else if (result == ERROR_INSUFFICIENT_BUFFER) {
-                std::cerr << "[!] There are more than " << max_locales
-                          << " locales for the file: " << find_data.cFileName
-                          << ". Will only list the " << max_locales << " first files." << std::endl;
+                err << "[!] There are more than " << max_locales
+                    << " locales for the file: " << find_data.cFileName << ". Will only list the "
+                    << max_locales << " first files." << std::endl;
             }
 
             for (DWORD i = 0; i < max_locales; i++) {
@@ -104,7 +105,7 @@ void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, 
                 HANDLE file;
 
                 if (!SFileOpenFileEx(archive, find_data.cFileName, SFILE_OPEN_FROM_MPQ, &file)) {
-                    std::cerr << "[!] Failed to open file: " << find_data.cFileName << std::endl;
+                    err << "[!] Failed to open file: " << find_data.cFileName << std::endl;
                     continue;
                 }
 
@@ -114,46 +115,45 @@ void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, 
                         continue;
 
                     if (prop == "hash-index" || prop == "file-index") {
-                        std::cout << std::setw(5) << GetFileInfo<int32_t>(file, it->second) << " ";
+                        out << std::setw(5) << GetFileInfo<int32_t>(file, it->second) << " ";
                     } else if (prop == "name-hash1" || prop == "name-hash2") {
-                        std::cout << std::setfill('0') << std::hex << std::setw(8)
-                                  << GetFileInfo<int32_t>(file, it->second) << std::setfill(' ')
-                                  << std::dec << " ";
+                        out << std::setfill('0') << std::hex << std::setw(8)
+                            << GetFileInfo<int32_t>(file, it->second) << std::setfill(' ')
+                            << std::dec << " ";
                     } else if (prop == "name-hash3") {
-                        std::cout << std::setfill('0') << std::hex << std::setw(16)
-                                  << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
-                                  << std::dec << " ";
+                        out << std::setfill('0') << std::hex << std::setw(16)
+                            << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
+                            << std::dec << " ";
                     } else if (prop == "locale") {
                         // StormLib packs the hash entry's platform byte into bits 16 to 23 of
                         // the LCID (SFILE_MAKE_LCID); only the low 16 bits are the locale
                         const LCID file_locale = SFILE_LOCALE(GetFileInfo<LCID>(file, it->second));
-                        std::cout << std::setw(4) << LocaleToLang(file_locale) << " ";
+                        out << std::setw(4) << LocaleToLang(file_locale) << " ";
                     } else if (prop == "byte-offset") {
-                        std::cout << std::hex << std::setw(8)
-                                  << GetFileInfo<int64_t>(file, it->second) << std::dec << " ";
+                        out << std::hex << std::setw(8) << GetFileInfo<int64_t>(file, it->second)
+                            << std::dec << " ";
                     } else if (prop == "file-time") {
-                        std::cout << std::setw(19)
-                                  << FileTimeToLsTime(GetFileInfo<int64_t>(file, it->second))
-                                  << " ";
+                        out << std::setw(19)
+                            << FileTimeToLsTime(GetFileInfo<int64_t>(file, it->second)) << " ";
                     } else if (prop == "file-size" || prop == "compressed-size") {
-                        std::cout << std::setw(8) << GetFileInfo<uint32_t>(file, it->second) << " ";
+                        out << std::setw(8) << GetFileInfo<uint32_t>(file, it->second) << " ";
                     } else if (prop == "flags") {
-                        std::cout << std::setw(8)
-                                  << GetFlagString(GetFileInfo<uint32_t>(file, it->second)) << " ";
+                        out << std::setw(8)
+                            << GetFlagString(GetFileInfo<uint32_t>(file, it->second)) << " ";
                     } else if (prop == "encryption-key" || prop == "encryption-key-raw") {
-                        std::cout << std::setfill('0') << std::hex << std::setw(8)
-                                  << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
-                                  << std::dec << " ";
+                        out << std::setfill('0') << std::hex << std::setw(8)
+                            << GetFileInfo<int64_t>(file, it->second) << std::setfill(' ')
+                            << std::dec << " ";
                     }
                 }
 
-                std::cout << " " << find_data.cFileName << std::endl;
+                out << " " << find_data.cFileName << std::endl;
                 SFileCloseFile(file);
             }
             SFileSetLocale(default_locale); // Reset locale to default after changing it
         } else {
             // Print just the filename (like default ls command output)
-            std::cout << find_data.cFileName << std::endl;
+            out << find_data.cFileName << std::endl;
         }
 
     } while (SFileFindNextFile(find_handle, &find_data));

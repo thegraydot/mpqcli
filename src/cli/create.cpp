@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -26,14 +26,15 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
                  const std::optional<std::string> &game_profile, int32_t mpq_version,
                  int64_t stream_flags, int64_t sector_size, int64_t raw_chunk_size,
                  int64_t file_flags1, int64_t file_flags2, int64_t file_flags3, int64_t attr_flags,
-                 int64_t file_flags, int64_t file_compression, int64_t file_compression_next) {
+                 int64_t file_flags, int64_t file_compression, int64_t file_compression_next,
+                 std::ostream &out, std::ostream &err) {
     std::error_code ec;
     fs::path output_file_path;
     if (output.has_value()) {
         output_file_path = fs::absolute(output.value(), ec);
         if (ec) {
-            std::cerr << "[!] Failed to resolve output path: (" << ec.value() << ") "
-                      << ec.message() << ": " << output.value() << std::endl;
+            err << "[!] Failed to resolve output path: (" << ec.value() << ") " << ec.message()
+                << ": " << output.value() << std::endl;
             return 1;
         }
     } else {
@@ -55,8 +56,8 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
     }
     GameRules game_rules(profile);
 
-    std::cout << "[*] Game profile: " << game_profile.value_or("default")
-              << ", Output file: " << output_file << std::endl;
+    out << "[*] Game profile: " << game_profile.value_or("default")
+        << ", Output file: " << output_file << std::endl;
 
     if (mpq_version > 0) {
         mpq_version--; // We label versions 1-4, but StormLib uses 0-3
@@ -88,12 +89,12 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
     if (is_directory) {
         files = ListFilesRecursive(target, ec);
         if (ec) {
-            std::cerr << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
-                      << ": " << target << std::endl;
+            err << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message() << ": "
+                << target << std::endl;
             return 1;
         }
     } else if (!fs::is_regular_file(target, ec)) {
-        std::cerr << "[!] Not a file or directory: " << target << std::endl;
+        err << "[!] Not a file or directory: " << target << std::endl;
         return 1;
     }
     const uint32_t file_count =
@@ -115,11 +116,12 @@ int HandleCreate(const std::string &target, const std::optional<std::string> &pa
     int result = 0;
     if (is_directory) {
         const std::string prefix = path.value_or("");
-        result |=
-            AddFiles(archive.Handle(), files, target, prefix, lcid, game_rules, add_overrides);
+        result |= AddFiles(archive.Handle(), files, target, prefix, lcid, game_rules, out, err,
+                           add_overrides);
     } else {
         std::string archive_path = ResolveArchiveName(target, path);
-        result |= AddFile(archive.Handle(), target, archive_path, lcid, game_rules, add_overrides);
+        result |= AddFile(archive.Handle(), target, archive_path, lcid, game_rules, out, err,
+                          add_overrides);
     }
 
     if (sign_archive) {
