@@ -32,16 +32,16 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: ${{ matrix.asset }}
-          path: build/bin
+          path: build/dev/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/${{ matrix.asset }} build/bin/mpqcli
+        run: mv build/dev/bin/${{ matrix.asset }} build/dev/bin/mpqcli
 
       - name: Make binary executable
-        run: chmod +x ./build/bin/mpqcli
+        run: chmod +x ./build/dev/bin/mpqcli
 
       - name: Check mpqcli version (${{ matrix.arch }})
-        run: ./build/bin/mpqcli version
+        run: ./build/dev/bin/mpqcli version
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -70,13 +70,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: mpqcli-windows-x86_64.exe
-          path: build/bin
+          path: build/dev/bin
 
       - name: Rename binary to "mpqcli"
-        run: mv build/bin/mpqcli-windows-x86_64.exe build/bin/mpqcli.exe
+        run: mv build/dev/bin/mpqcli-windows-x86_64.exe build/dev/bin/mpqcli.exe
 
       - name: Check mpqcli version
-        run: ./build/bin/mpqcli.exe version
+        run: ./build/dev/bin/mpqcli.exe version
 
       - name: Setup python
         uses: actions/setup-python@v6

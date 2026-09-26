@@ -102,7 +102,7 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     fs::remove(partial_path, ec);
     PartialArchive partial{partial_path};
 
-    Archive archive = Archive::Create(partial_path.u8string(), file_count, game_rules);
+    Archive archive = Archive::Create(partial_path, file_count, game_rules);
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
 
     int result = 0;

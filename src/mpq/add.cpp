@@ -82,7 +82,6 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             const LCID locale, const GameRules &game_rules, std::ostream &err,
             const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
             int *skipped) {
-    // Return if file doesn't exist on disk
     std::error_code ec;
     if (!fs::exists(local_file, ec)) {
         err << "[!] File doesn't exist on disk: " << local_file << std::endl;
@@ -146,7 +145,6 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
         }
     }
 
-    // Get file size for rule matching
     const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
     if (ec) {
         err << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
@@ -161,10 +159,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     const DWORD file_size = static_cast<DWORD>(
         std::min(raw_file_size, static_cast<std::uintmax_t>(std::numeric_limits<DWORD>::max())));
 
-    // Get game-specific rules
     const auto settings = game_rules.GetCompressionSettings(archive_file_path, file_size);
 
-    // Apply overrides where specified, otherwise use game rules
     DWORD flags = overrides.flags.value_or(settings.mpq_flags);
     DWORD compression = overrides.compression.value_or(settings.compression_first);
     DWORD compression_next = overrides.compression_next.value_or(settings.compression_next);

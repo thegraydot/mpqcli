@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -69,7 +69,7 @@ endif()
 
 # Use StormLib's bundled zlib/bzip2/libtommath sources instead of requiring
 # system packages. This keeps mpqcli buildable everywhere (musl/glibc Docker
-# images, MSVC, plain `cmake -B build`) without extra system dependencies.
+# images, MSVC, plain `cmake -B build/dev`) without extra system dependencies.
 set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)

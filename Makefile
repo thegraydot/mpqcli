@@ -19,7 +19,7 @@ CLANG_TIDY   ?= $(shell command -v clang-tidy-$(CLANG_VERSION) 2>/dev/null || ec
 # clang-tidy resolves headers through the compiler that produced
 # compile_commands.json. Pointed at a GCC build it cannot find libstdc++ and
 # emits confident diagnostics from a broken AST, so it gets its own tree.
-LINT_DIR         ?= build-lint
+LINT_DIR         ?= build/lint
 GCC_INSTALL_DIR  := $(shell dirname "$(shell gcc -print-libgcc-file-name)")
 
 VERSION          := $(shell awk '/project\(MPQCLI VERSION/ {gsub(/\)/, "", $$3); print $$3}' CMakeLists.txt)
@@ -33,34 +33,30 @@ help: ## Show this help message
 		/^[a-zA-Z_-]+:.*## / {printf "  %-22s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 ##@ BUILD
-.PHONY: install_clang_tools
-install_clang_tools: ## Install clang lint dependencies
-	sudo apt-get install -y clang-$(CLANG_VERSION) clang-format-$(CLANG_VERSION) clang-tidy-$(CLANG_VERSION)
-
 .PHONY: configure
 configure: ## Configure cmake build (debug, with compile_commands.json)
-	cmake -B build \
+	cmake -B build/dev \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
 		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
 
 .PHONY: build
 build: ## Build via cmake
-	cmake --build build --parallel $(JOBS)
+	cmake --build build/dev --parallel $(JOBS)
 
 .PHONY: build_linux
 build_linux: ## Build for Linux using cmake
-	cmake -B build \
+	cmake -B build/dev \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
-	cmake --build build --parallel $(JOBS)
+	cmake --build build/dev --parallel $(JOBS)
 
 .PHONY: build_windows
 build_windows: ## Build for Windows using cmake
-	cmake -B build \
+	cmake -B build/dev \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
-	cmake --build build --config $(CMAKE_BUILD_TYPE) --parallel $(JOBS)
+	cmake --build build/dev --config $(CMAKE_BUILD_TYPE) --parallel $(JOBS)
 
 ##@ DOCKER
 .PHONY: docker_build
@@ -138,8 +134,19 @@ check_lint: configure_lint ## Run clang-tidy static analysis
 	| grep -v " warnings generated"; \
 	exit $${PIPESTATUS[0]}
 
+.PHONY: check_embed
+check_embed: ## Syntax-check the embedded completion scripts with every shell present
+	bash -n completion/mpqcli.bash
+	@if command -v zsh >/dev/null; then zsh -n completion/mpqcli.zsh; \
+	  else echo "[*] zsh not installed, skipped"; fi
+	@if command -v fish >/dev/null; then fish --no-execute completion/mpqcli.fish; \
+	  else echo "[*] fish not installed, skipped"; fi
+	@if command -v pwsh >/dev/null; then pwsh -NoProfile -Command \
+	  '[scriptblock]::Create((Get-Content -Raw completion/mpqcli.ps1)) | Out-Null'; \
+	  else echo "[*] pwsh not installed, skipped"; fi
+
 .PHONY: check_all
-check_all: check_format check_lint ## Run every static check
+check_all: check_format check_lint check_embed ## Run every static check
 
 .PHONY: ci
 ci: configure build check_all test ## Run all CI checks locally
@@ -147,7 +154,7 @@ ci: configure build check_all test ## Run all CI checks locally
 ##@ CLEAN
 .PHONY: clean
 clean: test_clean docs_clean ## Remove all build, test, docs and release artefacts
-	rm -rf build $(LINT_DIR) dist install.sh install.ps1 checksums.txt checksums.txt.sigstore.json
+	rm -rf build dist install.sh install.ps1 checksums.txt checksums.txt.sigstore.json
 
 ##@ GENERATE
 # The docs site builds from the committed copy, so this is run deliberately and the

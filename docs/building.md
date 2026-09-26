@@ -13,22 +13,22 @@
 ```bash
 $ git clone --recursive https://github.com/thegraydot/mpqcli.git
 $ cd mpqcli
-$ cmake -B build
-$ cmake --build build
+$ cmake -B build/release -DCMAKE_BUILD_TYPE=Release
+$ cmake --build build/release
 ```
 
-The `mpqcli` binary will be available in: `./build/bin/mpqcli`
+The `mpqcli` binary will be available in: `./build/release/bin/mpqcli`
 
 ## Windows
 
 ```bash
 $ git clone --recursive https://github.com/thegraydot/mpqcli.git
 $ cd mpqcli
-$ cmake -B build
-$ cmake --build build --config Release
+$ cmake -B build/release
+$ cmake --build build/release --config Release
 ```
 
-The `mpqcli.exe` binary will be available in: `.\build\bin\mpqcli.exe`
+The `mpqcli.exe` binary will be available in: `.\build\release\bin\mpqcli.exe`
 
 ## Dependencies
 

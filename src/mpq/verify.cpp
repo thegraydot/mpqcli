@@ -28,7 +28,6 @@ uint32_t VerifyMpqArchive(HANDLE archive) {
 
 void PrintMpqSignature(HANDLE archive, const std::string &target, std::ostream &out,
                        std::ostream &err) {
-    // Determine if we have a strong or weak digital signature
     int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
 
     std::vector<char> signature_content;
@@ -38,7 +37,7 @@ void PrintMpqSignature(HANDLE archive, const std::string &target, std::ostream &
     } else if (signature_type == SIGNATURE_TYPE_WEAK) {
         const char *file_name = "(signature)";
         uint32_t file_size;
-        auto file_content = ReadFile(archive, file_name, &file_size, default_locale, err);
+        auto file_content = ReadArchivedFile(archive, file_name, &file_size, default_locale, err);
 
         if (!file_content) {
             throw ArchiveError("Failed to read weak signature file.");

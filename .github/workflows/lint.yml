@@ -15,10 +15,7 @@ jobs:
         with:
           submodules: true
 
-      - run: make install_clang_tools
+      - name: Install clang tools
+        run: sudo apt-get install -y clang-18 clang-format-18 clang-tidy-18
 
-      - run: make configure_lint
-
-      - run: make check_format
-
-      - run: make check_lint
+      - run: make check_all

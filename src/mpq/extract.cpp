@@ -61,11 +61,9 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
         return 1;
     }
 
-    // Change forward slashes on non-Windows systems
     fs::path file_name_path(file_name);
     std::string file_name_string = NormalizeFilePath(file_name_path);
 
-    // Remove folder structure if keepFolderStructure is false
     if (!keep_folder_structure) {
         file_name_path = fs::path(file_name_string);
         file_name_string = file_name_path.filename().u8string();

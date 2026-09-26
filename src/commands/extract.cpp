@@ -17,8 +17,6 @@ namespace fs = std::filesystem;
 namespace mpqcli {
 
 bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
-    // If no output directory specified, use MPQ path without extension
-    // If output directory specified, create it if it doesn't exist
     std::error_code ec;
     std::string effective_output;
     if (!options.output.has_value()) {

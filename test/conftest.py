@@ -14,9 +14,9 @@ def binary_path():
     script_dir = Path(__file__).parent
 
     if platform.system() == "Windows":
-        binary = script_dir.parent / "build" / "bin" / "mpqcli.exe"
+        binary = script_dir.parent / "build" / "dev" / "bin" / "mpqcli.exe"
     else:
-        binary = script_dir.parent / "build" / "bin" / "mpqcli"
+        binary = script_dir.parent / "build" / "dev" / "bin" / "mpqcli"
 
     if not binary.exists():
         pytest.fail(f"Binary not found at {binary}")

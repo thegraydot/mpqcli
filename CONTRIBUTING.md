@@ -18,10 +18,10 @@ cd mpqcli
 git submodule update --init --recursive
 ```
 
-Install the clang lint tools:
+Install the clang lint tools, pinned to the major version the checks are formatted against:
 
 ```
-make install_clang_tools
+sudo apt-get install -y clang-18 clang-format-18 clang-tidy-18
 ```
 
 ## Makefile Reference
@@ -30,17 +30,17 @@ Run `make help` to list all available targets. Common ones:
 
 | Target                     | Description                                                          |
 |----------------------------|----------------------------------------------------------------------|
-| `make install_clang_tools` | Install clang, clang-format and clang-tidy via apt                   |
 | `make configure`           | Configure the cmake build (uses the default compiler)                |
 | `make build_linux`         | Build for Linux using cmake                                          |
 | `make build_windows`       | Build for Windows using cmake                                        |
 | `make test_create_venv`    | Create Python venv and install test dependencies (first-time only)   |
 | `make test_mpqcli`         | Run the pytest test suite                                            |
-| `make check_all`           | Run every static check (clang-format + clang-tidy)                   |
+| `make check_all`           | Run every static check (clang-format, clang-tidy, completion scripts) |
 | `make check_format`        | Check formatting only (dry run)                                      |
 | `make format`              | Auto-fix formatting in-place                                         |
-| `make configure_lint`      | Configure build-lint/ with clang++ for clang-tidy                    |
+| `make configure_lint`      | Configure build/lint with clang++ for clang-tidy                     |
 | `make check_lint`          | Run clang-tidy static analysis                                       |
+| `make check_embed`         | Syntax-check the embedded completion scripts                         |
 | `make clean`               | Remove all build, test and docs artefacts                            |
 
 ## Requirements for a Pull Request
@@ -73,7 +73,7 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 ### 4. Linting must pass
 
-All C++ code is formatted with clang-format and analysed with clang-tidy. `make check_all` runs both checks. It configures a clang build tree of its own for clang-tidy, so it needs no prior `make configure`:
+All C++ code is formatted with clang-format and analysed with clang-tidy, and the completion scripts are parsed by their shells. `make check_all` runs all three checks. It configures a clang build tree of its own for clang-tidy, so it needs no prior `make configure`:
 
 ```
 make check_all
@@ -131,7 +131,7 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 
 1. Fork the repository and create a branch for your change
 2. Run `git submodule update --init --recursive` after cloning
-3. Run `make install_clang_tools` to install lint dependencies
+3. Install the clang tools as shown above
 4. Make your changes and verify they build: `make build_linux`
 5. Run `make check_all`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass

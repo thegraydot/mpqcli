@@ -8,8 +8,9 @@
 
 namespace mpqcli {
 
-std::unique_ptr<char[]> ReadFile(HANDLE archive, const char *file_name, unsigned int *file_size,
-                                 LCID preferred_locale, std::ostream &err);
+std::unique_ptr<char[]> ReadArchivedFile(HANDLE archive, const char *file_name,
+                                         unsigned int *file_size, LCID preferred_locale,
+                                         std::ostream &err);
 
 } // namespace mpqcli
 

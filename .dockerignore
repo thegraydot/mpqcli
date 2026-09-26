@@ -1,6 +1,5 @@
 # Local build, docs and test output: large, stale and never read by the image build
 build/
-build-lint/
 book/
 .venv/
 test/data/

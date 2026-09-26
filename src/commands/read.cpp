@@ -22,7 +22,8 @@ bool Read(const ReadOptions &options, std::ostream &out, std::ostream &err) {
     }
 
     uint32_t file_size;
-    auto file_content = ReadFile(archive.Handle(), options.file.c_str(), &file_size, lcid, err);
+    auto file_content =
+        ReadArchivedFile(archive.Handle(), options.file.c_str(), &file_size, lcid, err);
     if (!file_content) {
         archive.Close();
         return false;

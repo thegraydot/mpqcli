@@ -84,24 +84,24 @@ jobs:
       - name: Run cmake
         shell: bash
         run: |
-          cmake -B build \
+          cmake -B build/dev \
           -G "Visual Studio 17 2022" \
           -A x64 \
           -DMPQCLI_BUILD_APP=ON
 
       - name: Compile project
-        run: cmake --build build --config Release
+        run: cmake --build build/dev --config Release
 
       - name: Check mpqcli version
-        run: build/bin/mpqcli.exe version
+        run: build/dev/bin/mpqcli.exe version
 
       - name: Copy mpqcli binary
-        run: cp build/bin/mpqcli.exe build/bin/mpqcli-windows-x86_64.exe
+        run: cp build/dev/bin/mpqcli.exe build/dev/bin/mpqcli-windows-x86_64.exe
 
       - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
           name: mpqcli-windows-x86_64.exe
-          path: build/bin/mpqcli-windows-x86_64.exe
+          path: build/dev/bin/mpqcli-windows-x86_64.exe
           retention-days: 1
 

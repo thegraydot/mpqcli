@@ -2,7 +2,7 @@
 #define MPQ_ARCHIVE_H
 
 #include <cstdint>
-#include <string>
+#include <filesystem>
 
 #include <StormLib.h>
 
@@ -16,13 +16,13 @@ public:
     /// Opens an existing archive with StormLib's MPQ_OPEN_* flags
     ///
     /// @throws ArchiveOpenError if StormLib cannot open it
-    static Archive Open(const std::string &filename, DWORD flags);
+    static Archive Open(const std::filesystem::path &path, DWORD flags);
 
     /// Creates an archive sized for file_count files with the profile's settings
     ///
-    /// @throws ArchiveError if a file already exists at filename
+    /// @throws ArchiveError if a file already exists at path
     /// @throws ArchiveCreateError if StormLib cannot create it
-    static Archive Create(const std::string &filename, uint32_t file_count,
+    static Archive Create(const std::filesystem::path &path, uint32_t file_count,
                           const GameRules &game_rules);
 
     Archive(const Archive &) = delete;

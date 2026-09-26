@@ -15,19 +15,19 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-Archive Archive::Open(const std::string &filename, const DWORD flags) {
+Archive Archive::Open(const fs::path &path, const DWORD flags) {
     HANDLE handle = nullptr;
-    if (!SFileOpenArchive(filename.c_str(), 0, flags, &handle)) {
-        throw ArchiveOpenError(filename, SErrGetLastError());
+    if (!SFileOpenArchive(path.string().c_str(), 0, flags, &handle)) {
+        throw ArchiveOpenError(path, SErrGetLastError());
     }
     return Archive(handle);
 }
 
-Archive Archive::Create(const std::string &filename, const uint32_t file_count,
+Archive Archive::Create(const fs::path &path, const uint32_t file_count,
                         const GameRules &game_rules) {
     std::error_code ec;
-    if (fs::exists(filename, ec)) {
-        throw ArchiveError("File already exists: " + filename + " Exiting...");
+    if (fs::exists(path, ec)) {
+        throw ArchiveError("File already exists: " + path.string() + " Exiting...");
     }
 
     const MpqCreateSettings &settings = game_rules.GetCreateSettings();
@@ -45,8 +45,8 @@ Archive Archive::Create(const std::string &filename, const uint32_t file_count,
     create_info.dwMaxFileCount = file_count;
 
     HANDLE handle = nullptr;
-    if (!SFileCreateArchive2(filename.c_str(), &create_info, &handle)) {
-        throw ArchiveCreateError(filename, SErrGetLastError());
+    if (!SFileCreateArchive2(path.string().c_str(), &create_info, &handle)) {
+        throw ArchiveCreateError(path, SErrGetLastError());
     }
     return Archive(handle);
 }
