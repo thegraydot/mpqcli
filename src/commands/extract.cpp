@@ -1,39 +1,35 @@
-#include "mpq/extract.h"
+#include "commands/extract.h"
 
 #include <filesystem>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <system_error>
 
 #include <StormLib.h>
 
-#include "cli/commands.h"
 #include "mpq/archive.h"
+#include "mpq/extract.h"
 #include "util/locales.h"
 
 namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-int HandleExtract(const std::string &target, const std::optional<std::string> &output,
-                  const std::optional<std::string> &file, bool keep_folder_structure,
-                  const std::optional<std::string> &listfile_name,
-                  const std::optional<std::string> &locale, std::ostream &out, std::ostream &err) {
+bool Extract(const ExtractOptions &options, std::ostream &out, std::ostream &err) {
     // If no output directory specified, use MPQ path without extension
     // If output directory specified, create it if it doesn't exist
     std::error_code ec;
     std::string effective_output;
-    if (!output.has_value()) {
-        fs::path target_path = fs::absolute(target, ec);
+    if (!options.output.has_value()) {
+        fs::path target_path = fs::absolute(options.target, ec);
         if (ec) {
             err << "[!] Failed to resolve archive path: (" << ec.value() << ") " << ec.message()
-                << ": " << target << std::endl;
-            return 1;
+                << ": " << options.target << std::endl;
+            return false;
         }
         effective_output = (target_path.parent_path() / target_path.stem()).u8string();
     } else {
-        effective_output = output.value();
+        effective_output = options.output.value();
     }
     fs::create_directory(effective_output, ec);
     if (ec) {
@@ -41,7 +37,7 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
         if (!fs::is_directory(effective_output, query_ec)) {
             err << "[!] Failed to create output directory: (" << ec.value() << ") " << ec.message()
                 << ": " << effective_output << std::endl;
-            return 1;
+            return false;
         }
     }
 
@@ -54,27 +50,27 @@ int HandleExtract(const std::string &target, const std::optional<std::string> &o
             << effective_output << std::endl;
     }
 
-    Archive archive = Archive::Open(target, MPQ_OPEN_READ_ONLY);
+    Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);
 
-    LCID lcid = locale.has_value() ? LangToLocale(locale.value()) : default_locale;
-    if (locale.has_value() && lcid == default_locale) {
-        out << "[!] Warning: The locale '" << locale.value()
+    LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
+    if (options.locale.has_value() && lcid == default_locale) {
+        out << "[!] Warning: The locale '" << options.locale.value()
             << "' is unknown. Will use default locale instead." << std::endl;
     }
 
     int result;
-    if (file.has_value()) {
-        result = ExtractFile(archive.Handle(), effective_output, file.value(),
-                             keep_folder_structure, lcid, out, err);
+    if (options.file.has_value()) {
+        result = ExtractFile(archive.Handle(), effective_output, options.file.value(),
+                             options.keep_folder_structure, lcid, out, err);
     } else {
-        result = ExtractFiles(archive.Handle(), effective_output, listfile_name, lcid, out, err);
+        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, out, err);
     }
     archive.Close();
 
     if (result != 0) {
         err << std::endl << "[!] Failed to extract all files." << std::endl;
     }
-    return result;
+    return result == 0;
 }
 
 } // namespace mpqcli

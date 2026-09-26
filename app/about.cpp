@@ -1,18 +1,22 @@
-#include <iostream>
 #include <mpqcli/version.h>
+#include <ostream>
+
+#include <CLI/CLI.hpp>
 
 #include "commands.h"
 
-int HandleAbout() {
-    std::cout << "Name: mpqcli" << std::endl;
-    std::cout << "Version: " << mpqcli::version_string << "-" << mpqcli::git_commit_hash
-              << std::endl;
-    std::cout << "Author: Thomas Laurenson" << std::endl;
-    std::cout << "License: MIT" << std::endl;
-    std::cout << "GitHub: https://github.com/thegraydot/mpqcli" << std::endl;
-    std::cout << "Dependencies:" << std::endl;
-    std::cout << " - StormLib (https://github.com/ladislav-zezula/StormLib)" << std::endl;
-    std::cout << " - CLI11 (https://github.com/CLIUtils/CLI11)" << std::endl;
-    std::cout << " - hash-library (https://github.com/stbrumme/hash-library)" << std::endl;
-    return 0;
+void RegisterAbout(CLI::App &app, Context &context) {
+    auto *sub = app.add_subcommand("about", "Prints program information");
+    sub->callback([&context]() {
+        context.out << "Name: mpqcli" << std::endl;
+        context.out << "Version: " << mpqcli::version_string << "-" << mpqcli::git_commit_hash
+                    << std::endl;
+        context.out << "Author: Thomas Laurenson" << std::endl;
+        context.out << "License: MIT" << std::endl;
+        context.out << "GitHub: https://github.com/thegraydot/mpqcli" << std::endl;
+        context.out << "Dependencies:" << std::endl;
+        context.out << " - StormLib (https://github.com/ladislav-zezula/StormLib)" << std::endl;
+        context.out << " - CLI11 (https://github.com/CLIUtils/CLI11)" << std::endl;
+        context.out << " - hash-library (https://github.com/stbrumme/hash-library)" << std::endl;
+    });
 }

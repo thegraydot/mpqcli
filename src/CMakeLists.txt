@@ -30,16 +30,16 @@ configure_file(
 # recompiles the sources instead is a second build that drifts from the
 # shipped one.
 add_library(mpqcli_core STATIC
-    cli/add.cpp
-    cli/compact.cpp
-    cli/create.cpp
-    cli/extract.cpp
-    cli/info.cpp
-    cli/list.cpp
-    cli/read.cpp
-    cli/remove.cpp
-    cli/rename.cpp
-    cli/verify.cpp
+    commands/add.cpp
+    commands/compact.cpp
+    commands/create.cpp
+    commands/extract.cpp
+    commands/info.cpp
+    commands/list.cpp
+    commands/read.cpp
+    commands/remove.cpp
+    commands/rename.cpp
+    commands/verify.cpp
     mpq/add.cpp
     mpq/archive.cpp
     mpq/compact.cpp

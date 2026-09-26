@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <istream>
 #include <optional>
 #include <string>
 #include <sys/stat.h>
@@ -50,6 +51,24 @@ std::vector<fs::path> ListFilesRecursive(const fs::path &directory, std::error_c
     }
     std::sort(files.begin(), files.end());
     return files;
+}
+
+std::vector<std::string> ExpandStdinMarker(const std::vector<std::string> &paths,
+                                           std::istream &in) {
+    std::vector<std::string> expanded;
+    for (const auto &arg : paths) {
+        if (arg != "-") {
+            expanded.push_back(arg);
+            continue;
+        }
+        std::string line;
+        while (std::getline(in, line)) {
+            if (!line.empty()) {
+                expanded.push_back(line);
+            }
+        }
+    }
+    return expanded;
 }
 
 uint64_t LocalFileTimestamp(const fs::path &path) {

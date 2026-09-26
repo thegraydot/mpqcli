@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <istream>
 #include <optional>
 #include <string>
 #include <system_error>
@@ -22,6 +23,9 @@ std::string ResolveArchiveName(const std::string &f, const std::optional<std::st
 
 std::vector<std::filesystem::path> ListFilesRecursive(const std::filesystem::path &directory,
                                                       std::error_code &ec);
+
+/// Replaces each "-" in paths with the non-empty lines read from in
+std::vector<std::string> ExpandStdinMarker(const std::vector<std::string> &paths, std::istream &in);
 
 /// Returns the file's last-modification time as a Windows FILETIME value
 /// (100-nanosecond intervals since 1601-01-01 UTC), or 0 if it cannot be read

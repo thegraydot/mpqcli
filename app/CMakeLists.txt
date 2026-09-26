@@ -18,8 +18,18 @@ configure_file(
 add_executable(mpqcli
     main.cpp
     about.cpp
+    add.cpp
+    compact.cpp
     completion.cpp
+    create.cpp
+    extract.cpp
+    info.cpp
+    list.cpp
+    read.cpp
+    remove.cpp
+    rename.cpp
     validators.cpp
+    verify.cpp
     version.cpp
 )
 
