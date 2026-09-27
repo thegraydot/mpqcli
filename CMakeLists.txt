@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(MPQCLI VERSION 0.12.0)
+project(mpqcli VERSION 0.12.0)
 
 # An option() name is global to the CMake cache, including a consumer's, so these
 # carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.
@@ -22,6 +22,8 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+
+include("${PROJECT_SOURCE_DIR}/cmake/mark_system.cmake")
 
 # Multi-config generators (Visual Studio, Xcode) append the config name to the
 # output directory, so the bare variable above would put the binary in
@@ -73,6 +75,7 @@ endif()
 set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
+mark_system(storm)
 
 # Handle CLI11 dependency. Only app/ parses arguments, so the core never sees it.
 if(MPQCLI_BUILD_APP)
@@ -101,11 +104,12 @@ Did you forget to execute the following commands?
 endif()
 
 # hash-library ships no CMakeLists; compile only the two algorithms we use
-add_library(hash-library STATIC
+add_library(mpqcli_hash_library STATIC
     extern/hash-library/crc32.cpp
     extern/hash-library/md5.cpp
 )
-target_include_directories(hash-library SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern")
+target_include_directories(mpqcli_hash_library SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern")
+add_library(mpqcli::hash_library ALIAS mpqcli_hash_library)
 
 # Unconditional: building the core without the app is what proves nothing in
 # src/ has picked up a dependency on app/.

@@ -70,11 +70,8 @@ target_include_directories(mpqcli_core PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${PROJECT_BINARY_DIR}/include"
 )
-target_include_directories(mpqcli_core SYSTEM PUBLIC
-    "${PROJECT_SOURCE_DIR}/extern/StormLib/src"
-)
 
-target_link_libraries(mpqcli_core PUBLIC storm hash-library)
+target_link_libraries(mpqcli_core PUBLIC storm mpqcli::hash_library)
 target_link_libraries(mpqcli_core PRIVATE mpqcli::warnings)
 
 # Nothing outside this repository links the core. The alias is for the

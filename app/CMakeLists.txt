@@ -33,8 +33,4 @@ add_executable(mpqcli
     version.cpp
 )
 
-# An include tree rather than PROJECT_BINARY_DIR itself, which would expose
-# every generated file in the build tree to #include
-target_include_directories(mpqcli PRIVATE "${PROJECT_BINARY_DIR}/include")
-
 target_link_libraries(mpqcli PRIVATE mpqcli::core CLI11::CLI11 mpqcli::warnings)
