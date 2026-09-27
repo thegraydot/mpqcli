@@ -6,23 +6,21 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: write
-  packages: write
-  id-token: write
+  contents: read
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yml
   lint:
     uses: ./.github/workflows/lint.yml
-    needs: build
   test:
     uses: ./.github/workflows/test.yml
-    needs: build
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      artifacts: true
   release:
     uses: ./.github/workflows/release.yml
-    needs:
-      - build
-      - lint
-      - test
-    secrets: inherit
+    needs: [build, lint, test]
+    permissions:
+      contents: write
+      packages: write
+      id-token: write

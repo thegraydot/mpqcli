@@ -27,12 +27,12 @@ concurrency:
 permissions:
   contents: read
 
+# No needs between the three: lint configures its own tree, test builds what it
+# runs, and nothing reads build's artefacts until a release
 jobs:
-  build:
-    uses: ./.github/workflows/build.yml
   lint:
     uses: ./.github/workflows/lint.yml
-    needs: build
   test:
     uses: ./.github/workflows/test.yml
-    needs: build
+  build:
+    uses: ./.github/workflows/build.yml

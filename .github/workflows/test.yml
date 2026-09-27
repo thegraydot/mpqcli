@@ -8,75 +8,51 @@ permissions:
 
 jobs:
   test_linux:
+    name: test_linux (${{ matrix.compiler }}, ${{ matrix.build_type }}, ${{ matrix.arch }})
     strategy:
+      # Report every entry independently. Cancelling one on another's failure
+      # hides half the findings on exactly the runs where they matter
+      fail-fast: false
       matrix:
         include:
-          # AMD64 tests on ubuntu-24.04
-          - arch: amd64
-            asset: mpqcli-linux-x86_64
+          - compiler: gcc
+            cxx: g++
+            build_type: Debug
+            arch: amd64
             runner: ubuntu-24.04
-          # ARM64 tests on ubuntu-24.04-arm
-          - arch: arm64
-            asset: mpqcli-linux-aarch64
+          # Release paired with one compiler rather than a third amd64 job: NDEBUG
+          # and the optimiser are what ships, and nothing else exercises them
+          - compiler: clang
+            cxx: clang++-18
+            build_type: Release
+            arch: amd64
+            runner: ubuntu-24.04
+          # build.yml ships an arm64 binary, so arm64 is tested natively as well
+          - compiler: gcc
+            cxx: g++
+            build_type: Release
+            arch: arm64
             runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
+    # BUILD_TYPE goes in the environment, not on the configure line: build re-runs
+    # configure through its prerequisite chain, and an invocation without it would
+    # reset the cache to the Debug default, so the Release entries would quietly
+    # test Debug and report green
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
     steps:
-      # Only need repo content to install test/requirements.txt
       - name: Check out repository code
         uses: actions/checkout@v6
         with:
-          submodules: false
+          submodules: true
 
-      - name: Download Linux binary (${{ matrix.arch }})
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ matrix.asset }}
-          path: build/dev/bin
+      - name: Install clang
+        if: matrix.compiler == 'clang'
+        run: sudo apt-get install -y clang-18
 
-      - name: Rename binary to "mpqcli"
-        run: mv build/dev/bin/${{ matrix.asset }} build/dev/bin/mpqcli
-
-      - name: Make binary executable
-        run: chmod +x ./build/dev/bin/mpqcli
-
-      - name: Check mpqcli version (${{ matrix.arch }})
-        run: ./build/dev/bin/mpqcli version
-
-      - name: Setup python
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r test/requirements.txt
-
-      - name: Run tests (${{ matrix.arch }})
-        run: |
-          python3 -m pytest test
-
-  test_windows:
-    runs-on: windows-2022
-    steps:
-      # Only need repo content to install test/requirements.txt
-      - name: Check out repository code
-        uses: actions/checkout@v6
-        with:
-          submodules: false
-
-      - name: Download Windows binary
-        uses: actions/download-artifact@v8
-        with:
-          name: mpqcli-windows-x86_64.exe
-          path: build/dev/bin
-
-      - name: Rename binary to "mpqcli"
-        run: mv build/dev/bin/mpqcli-windows-x86_64.exe build/dev/bin/mpqcli.exe
-
-      - name: Check mpqcli version
-        run: ./build/dev/bin/mpqcli.exe version
+      - run: make configure CMAKE_ARGS="-DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DMPQCLI_WERROR=ON"
+      - run: make build
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -89,5 +65,34 @@ jobs:
           pip install -r test/requirements.txt
 
       - name: Run tests
+        run: python3 -m pytest test
+
+  test_windows:
+    runs-on: windows-2022
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR stays off here
+      # until the tree is known to compile clean under /W4, which nothing has yet
+      # checked; it is on in the Linux jobs
+      - name: Configure and build
+        shell: bash
         run: |
-          python -m pytest test
+          cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON
+          cmake --build build/dev --config Release --parallel
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r test/requirements.txt
+
+      - name: Run tests
+        run: python -m pytest test

@@ -1,7 +1,12 @@
 name: Build
 
 on:
-  workflow_call
+  workflow_call:
+    inputs:
+      artifacts:
+        description: Build the full release artefact set, not just the cheap subset
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -58,22 +63,27 @@ jobs:
 
       # The amd64 image is the one published. Saving it here rather than
       # rebuilding it in a job of its own means release and prerelease push
-      # exactly the bytes this job smoke-ran
+      # exactly the bytes this job smoke-ran. Only they consume it, so a pull
+      # request skips the save
       - name: Save Docker image as a tar file
-        if: matrix.arch == 'amd64'
+        if: matrix.arch == 'amd64' && inputs.artifacts
         run: |
           docker tag mpqcli-${{ matrix.arch }} mpqcli
           docker save mpqcli -o mpqcli-docker.tar
 
       - name: Upload Docker image as artefact
-        if: matrix.arch == 'amd64'
+        if: matrix.arch == 'amd64' && inputs.artifacts
         uses: actions/upload-artifact@v7
         with:
           name: mpqcli-docker
           path: mpqcli-docker.tar
           retention-days: 1
 
+  # Gated on the full artefact set: test.yml already compiles this platform, so
+  # a pull request learns nothing from a second Windows build, and the runner
+  # bills at twice a Linux one
   build_windows:
+    if: inputs.artifacts
     runs-on: windows-2022
     steps:
       - name: Check out repository code
@@ -81,27 +91,22 @@ jobs:
         with:
           submodules: true
 
-      - name: Run cmake
+      # Raw cmake rather than make: the Makefile needs a POSIX shell, and the
+      # shipped build gets its own tree rather than the everyday build/dev
+      - name: Build
         shell: bash
         run: |
-          cmake -B build/dev \
-          -G "Visual Studio 17 2022" \
-          -A x64 \
-          -DMPQCLI_BUILD_APP=ON
+          cmake -B build/release -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON
+          cmake --build build/release --config Release
+          mv build/release/bin/mpqcli.exe ./mpqcli-windows-x86_64.exe
 
-      - name: Compile project
-        run: cmake --build build/dev --config Release
-
-      - name: Check mpqcli version
-        run: build/dev/bin/mpqcli.exe version
-
-      - name: Copy mpqcli binary
-        run: cp build/dev/bin/mpqcli.exe build/dev/bin/mpqcli-windows-x86_64.exe
+      - name: Smoke-run the artefact
+        shell: bash
+        run: ./mpqcli-windows-x86_64.exe version
 
       - name: Upload binary as artefact
         uses: actions/upload-artifact@v7
         with:
           name: mpqcli-windows-x86_64.exe
-          path: build/dev/bin/mpqcli-windows-x86_64.exe
+          path: mpqcli-windows-x86_64.exe
           retention-days: 1
-

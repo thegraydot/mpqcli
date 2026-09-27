@@ -33,12 +33,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # --target pins the tag to the commit that was built rather than to whatever
+      # main points at by the time this job runs
       - name: Create prerelease
         run: |
           gh release create dev \
+            --target "${GITHUB_SHA}" \
             --title "Dev (Pre-release)" \
             --prerelease \
-            --notes "**Commit:** ${{ github.sha }}" \
+            --notes "**Commit:** ${GITHUB_SHA}" \
             dist/mpqcli-linux-x86_64 \
             dist/mpqcli-linux-aarch64 \
             dist/mpqcli-windows-x86_64.exe
@@ -58,14 +61,15 @@ jobs:
         run: |
           docker load -i mpqcli-docker.tar
 
-      - name: Tag Docker image as dev
-        run: |
-          docker tag mpqcli ghcr.io/thegraydot/mpqcli:dev
-
-      - name: Push Docker image to GitHub Container Registry
+      # dev only, never latest: latest tracks releases, so pointing it at a
+      # rolling build makes an untagged docker pull return whatever last landed
+      # on main
+      - name: Push dev tag to GitHub Container Registry
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTOR: ${{ github.actor }}
+          IMAGE: ghcr.io/${{ github.repository }}
         run: |
           echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
-          docker push ghcr.io/thegraydot/mpqcli:dev
+          docker tag mpqcli "$IMAGE:dev"
+          docker push "$IMAGE:dev"

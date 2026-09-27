@@ -20,8 +20,8 @@ on:
       - ".dockerignore"
       - ".gpipe.yml"
 
-# Never cancel on main. The prerelease job deletes the dev release, force-moves
-# the tag and pushes the image; a run cancelled part-way through leaves those
+# Never cancel on main. The prerelease job deletes the dev release, recreates
+# its tag and pushes the image; a run cancelled part-way through leaves those
 # three disagreeing with each other, which costs more than the runner minutes
 # cancelling would save
 concurrency:
@@ -29,22 +29,20 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
-  build:
-    uses: ./.github/workflows/build.yml
   lint:
     uses: ./.github/workflows/lint.yml
-    needs: build
   test:
     uses: ./.github/workflows/test.yml
-    needs: build
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      artifacts: true
   prerelease:
     uses: ./.github/workflows/prerelease.yml
-    needs: 
-      - build
-      - lint
-      - test
-    secrets: inherit
+    needs: [build, lint, test]
+    permissions:
+      contents: write
+      packages: write
