@@ -11,7 +11,7 @@ jobs:
     name: test_linux (${{ matrix.compiler }}, ${{ matrix.build_type }}, ${{ matrix.arch }})
     strategy:
       # Report every entry independently. Cancelling one on another's failure
-      # hides half the findings on exactly the runs where they matter
+      # hides half the findings on exactly the runs where they matter.
       fail-fast: false
       matrix:
         include:
@@ -77,7 +77,7 @@ jobs:
 
       # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR stays off here
       # until the tree is known to compile clean under /W4, which nothing has yet
-      # checked; it is on in the Linux jobs
+      # checked; it is on in the Linux jobs.
       - name: Configure and build
         shell: bash
         run: |

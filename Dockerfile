@@ -33,6 +33,6 @@ COPY --from=build /src/build/release/bin/mpqcli /mpqcli
 # No USER, deliberately. The image exists to process files on a bind mount, and
 # no fixed uid can match whoever owns the host directory, so a non-root default
 # would fail every write for most Linux users. Callers who want output owned by
-# themselves pass --user "$(id -u):$(id -g)", which the installation docs show
+# themselves pass --user "$(id -u):$(id -g)", which the installation docs show.
 WORKDIR /data
 ENTRYPOINT ["/mpqcli"]

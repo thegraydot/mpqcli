@@ -21,7 +21,7 @@ void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_propert
          [&](bool print_name) {
              TMPQHeader header = GetFileInfo<TMPQHeader>(archive, SFileMpqHeader);
              uint16_t format_version =
-                 header.wFormatVersion + 1; // Add +1 because StormLib starts at 0
+                 header.wFormatVersion + 1; // StormLib counts the formats from 0
              if (print_name) {
                  out << "Format version: ";
              }
@@ -81,16 +81,14 @@ void PrintMpqInfo(HANDLE archive, const std::optional<std::string> &info_propert
              }
          }}};
 
-    // If infoProperty is not set, print all properties with their names (key)
-    // Otherwise, print only the specified property value
     if (!info_property.has_value()) {
         for (const auto &[key, action] : property_actions) {
-            action(true); // Print property name and value
+            action(true);
         }
     } else {
         auto it = property_actions.find(info_property.value());
         if (it != property_actions.end()) {
-            it->second(false); // Print only the value
+            it->second(false);
         }
     }
 }

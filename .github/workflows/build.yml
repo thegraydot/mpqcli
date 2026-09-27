@@ -64,7 +64,7 @@ jobs:
       # The amd64 image is the one published. Saving it here rather than
       # rebuilding it in a job of its own means release and prerelease push
       # exactly the bytes this job smoke-ran. Only they consume it, so a pull
-      # request skips the save
+      # request skips the save.
       - name: Save Docker image as a tar file
         if: matrix.arch == 'amd64' && inputs.artifacts
         run: |

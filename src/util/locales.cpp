@@ -9,12 +9,8 @@
 namespace mpqcli {
 
 namespace {
-// Files in MPQs have locales with which they are associated.
-// Multiple files can have the same file name if they have different locales.
-// This function maps locales to language names.
-//
-// The mappings are from the Windows Language Code Identifier (LCID).
-// They can be found, for example, here:
+// Files with the same name can coexist under different locales; the identifiers
+// are Windows LCIDs, listed in MS-LCID:
 // https://winprotocoldoc.z19.web.core.windows.net/MS-LCID/%5bMS-LCID%5d.pdf
 
 const std::map<LCID, std::string> locale_to_lang_map = {
@@ -38,11 +34,10 @@ const std::map<LCID, std::string> locale_to_lang_map = {
     {0x816, "ptPT"}, // Portuguese (Portugal)
 };
 
-// Create a reverse map for language-to-locale lookups
 const std::map<std::string, LCID> lang_to_locale_map = []() {
     std::map<std::string, LCID> reverse_map;
     for (const auto &[locale, lang] : locale_to_lang_map) {
-        if (locale != default_locale) { // Skip the default locale to avoid duplication
+        if (locale != default_locale) { // 0x000 prints as enUS but enUS resolves to 0x409
             reverse_map[lang] = locale;
         }
     }
@@ -91,7 +86,6 @@ LCID LangToLocale(const std::string &lang) {
         return it->second;
     }
 
-    // Try parsing as a hexadecimal LCID
     LCID hex_locale = ParseHexLocale(lang);
     if (hex_locale != default_locale) {
         return hex_locale;
@@ -103,11 +97,10 @@ LCID LangToLocale(const std::string &lang) {
 std::vector<std::string> GetAllLocales() {
     std::vector<std::string> locales;
     for (const auto &[locale, lang] : locale_to_lang_map) {
-        if (locale != default_locale) { // Skip the default locale to avoid duplication
+        if (locale != default_locale) { // enUS would otherwise be listed twice
             locales.push_back(lang);
         }
     }
-    // Sort the locales for consistent output
     std::sort(locales.begin(), locales.end());
     return locales;
 }

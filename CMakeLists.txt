@@ -8,10 +8,9 @@ option(MPQCLI_BUILD_APP "Build the mpqcli binary" ON)
 option(MPQCLI_BUILD_STATIC "Build static binary" OFF)
 # Off by default, so a new compiler release adding a warning cannot stop a
 # developer working. The bar is enforced by check_lint instead: clang-tidy
-# replays these flags and .clang-tidy treats every warning as an error
+# replays these flags and .clang-tidy treats every warning as an error.
 option(MPQCLI_WERROR "Treat compiler warnings as errors" OFF)
 
-# Set project defaults
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -33,19 +32,16 @@ foreach(cfg IN ITEMS DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${PROJECT_BINARY_DIR}/bin")
 endforeach()
 
-# Windows specific settings
 if(MSVC)
     add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)
 endif()
 
-# Static linking configuration
 if(MPQCLI_BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     set(BUILD_SHARED_LIBS OFF)
 endif()
 
-# Determine git commit hash
 execute_process(
     COMMAND git rev-parse HEAD
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -58,7 +54,6 @@ if(NOT GIT_COMMIT_RESULT EQUAL 0 OR NOT GIT_COMMIT_HASH)
     set(GIT_COMMIT_HASH "unknown")
 endif()
 
-# Handle StormLib dependency
 if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/StormLib/CMakeLists.txt")
     message(FATAL_ERROR
 "Missing dependency: StormLib
@@ -69,15 +64,15 @@ Did you forget to execute the following commands?
    git submodule update")
 endif()
 
-# Use StormLib's bundled zlib/bzip2/libtommath sources instead of requiring
-# system packages. This keeps mpqcli buildable everywhere (musl/glibc Docker
-# images, MSVC, plain `cmake -B build/dev`) without extra system dependencies.
+# Use StormLib's bundled zlib, bzip2 and libtommath sources rather than system
+# packages, so the musl Docker image, MSVC and a plain cmake -B build/dev all
+# build with nothing installed beyond a compiler.
 set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
 mark_system(storm)
 
-# Handle CLI11 dependency. Only app/ parses arguments, so the core never sees it.
+# Only app/ parses arguments, so the core never sees CLI11
 if(MPQCLI_BUILD_APP)
     if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/CLI11/CMakeLists.txt")
         message(FATAL_ERROR
@@ -92,7 +87,7 @@ Did you forget to execute the following commands?
     add_subdirectory(extern/CLI11)
 endif()
 
-# Handle hash-library dependency (CRC32 + MD5 for the add --update checks)
+# CRC32 and MD5 for the add --update checks
 if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/hash-library/crc32.cpp")
     message(FATAL_ERROR
 "Missing dependency: hash-library

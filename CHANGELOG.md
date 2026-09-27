@@ -8,18 +8,21 @@
 
 ### Changed
 
-- Rename the release assets to mpqcli-linux-x86_64, mpqcli-linux-aarch64 and mpqcli-windows-x86_64.exe
-- Ship one static musl Linux binary per architecture instead of glibc and musl pairs
+- Ship one static musl Linux binary per architecture, with the release assets renamed by OS and architecture
 - Publish install scripts and a signed checksums file with each release
 - Run the Docker image in /data so mounted paths need no prefix
-- Exit 2 with a message on an unexpected internal error instead of aborting
 - Print progress and warnings on stderr, leaving stdout for results alone
+- Mark an overwritten file as changed rather than added when adding
 
 ### Fixed
 
-- Fail with a non-zero exit code on an unknown subcommand or a missing argument
+- Fail with a non-zero exit code on an unknown subcommand, a missing argument or an internal error
 - Fail with a non-zero exit code when closing, signing, listing or printing a signature fails
-- Offer every locale and game profile in zsh, keep filenames out of value lists in fish, and complete archives after a subcommand in PowerShell
+- Complete every locale, game profile and archive path in the zsh, fish and PowerShell scripts
+
+### Removed
+
+- Remove the install scripts from the repository; each release now carries its own
 
 ## 0.11.0 - 2026-09-21
 

@@ -38,11 +38,10 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
         properties.empty() ? std::vector<std::string>{"file-size", "locale", "file-time"}
                            : properties;
     if (!properties.empty()) {
-        list_detailed =
-            true; // If the user specified properties, we need to print the detailed output
+        // Named properties are only printed by the detailed listing
+        list_detailed = true;
     }
 
-    // Map of property name to SFileInfoClass, defined once, outside the loop
     static const std::map<std::string, SFileInfoClass> property_info_class = {
         {"hash-index", SFileInfoHashIndex},
         {"name-hash1", SFileInfoNameHash1},
@@ -59,25 +58,23 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
         {"encryption-key-raw", SFileInfoEncryptionKeyRaw},
     };
 
-    std::set<std::string>
-        seen_file_names; // Used to prevent printing the same file name multiple times
+    // The enumeration yields one entry per locale of a name and the detailed listing
+    // prints every locale in one go, so later entries for a seen name are skipped
+    std::set<std::string> seen_file_names;
     do {
-        // Skip special files unless user wants to list all (like ls -a)
         if (!list_all && std::find(special_mpq_files.begin(), special_mpq_files.end(),
                                    find_data.cFileName) != special_mpq_files.end()) {
             continue;
         }
 
-        // Print the detailed (long) file listing (like ls -l)
         if (list_detailed) {
             if (seen_file_names.find(find_data.cFileName) != seen_file_names.end()) {
-                // Filename has been seen before, and thus printed before. Skip over it.
                 continue;
             }
             seen_file_names.insert(find_data.cFileName);
 
             // Multiple files can be stored with identical filenames under different locales
-            DWORD max_locales = 32; // This will be updated in the call to SFileEnumLocales
+            DWORD max_locales = 32; // Updated in place by SFileEnumLocales
             std::vector<LCID> file_locale_vec(max_locales);
             LCID *file_locales = file_locale_vec.data();
 
@@ -85,10 +82,9 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
                 SFileEnumLocales(archive, find_data.cFileName, file_locales, &max_locales, 0);
 
             if (result == ERROR_INVALID_PARAMETER) {
-                // This ought to mean that the file name is unknown, whereupon `SFileEnumLocales`
-                // exits early since its check for `IsPseudoFileName` returns true. If that is the
-                // case, it will not have populated `fileLocales` or have updated `maxLocales`. Just
-                // set the maxLocales to 1 and list the file with the unknown name once.
+                // StormLib rejects a name it cannot resolve (IsPseudoFileName) before
+                // touching file_locales or max_locales, so the unknown name is listed
+                // once under the default locale
                 max_locales = 1;
                 file_locales[0] = default_locale;
 
@@ -153,9 +149,8 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
                 out << " " << find_data.cFileName << std::endl;
                 SFileCloseFile(file);
             }
-            SFileSetLocale(default_locale); // Reset locale to default after changing it
+            SFileSetLocale(default_locale);
         } else {
-            // Print just the filename (like default ls command output)
             out << find_data.cFileName << std::endl;
         }
 

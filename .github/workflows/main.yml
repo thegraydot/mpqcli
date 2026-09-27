@@ -23,7 +23,7 @@ on:
 # Never cancel on main. The prerelease job deletes the dev release, recreates
 # its tag and pushes the image; a run cancelled part-way through leaves those
 # three disagreeing with each other, which costs more than the runner minutes
-# cancelling would save
+# cancelling would save.
 concurrency:
   group: main-${{ github.ref }}
   cancel-in-progress: false

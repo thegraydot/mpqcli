@@ -90,7 +90,7 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     // The archive is invalid until it is closed, so it is written beside the output
     // and renamed into place once complete; an interrupt or error before that leaves
     // nothing at the output path. A partial left by an earlier interrupted run would
-    // otherwise be refused as an existing file
+    // otherwise be refused as an existing file.
     fs::path partial_path = output_file_path;
     partial_path += ".partial";
     fs::remove(partial_path, ec);

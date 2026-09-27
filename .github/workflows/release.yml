@@ -16,7 +16,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       # Default depth. Nothing here reads git history: get_changelog reads
-      # CHANGELOG.md from the working tree, and gh release create uses the API
+      # CHANGELOG.md from the working tree, and gh release create uses the API.
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -46,7 +46,7 @@ jobs:
 
       # Name every asset. A dist/mpqcli-* glob is shorter and wrong: with
       # merge-multiple every artefact lands flat in dist/, so the Docker image
-      # tar matches too and is attached to the release as if it were a binary
+      # tar matches too and is attached to the release as if it were a binary.
       - name: Release package
         run: |
           gh release create "${GITHUB_REF_NAME}" \

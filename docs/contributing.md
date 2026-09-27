@@ -12,7 +12,7 @@ If you are unsure whether a feature fits the project, or whether an existing too
 
 Clone the repository and initialise submodules:
 
-```
+```sh
 git clone https://github.com/thegraydot/mpqcli.git
 cd mpqcli
 git submodule update --init --recursive
@@ -20,7 +20,7 @@ git submodule update --init --recursive
 
 Install the clang lint tools, pinned to the major version the checks are formatted against:
 
-```
+```sh
 sudo apt-get install -y clang-18 clang-format-18 clang-tidy-18
 ```
 
@@ -28,20 +28,20 @@ sudo apt-get install -y clang-18 clang-format-18 clang-tidy-18
 
 Run `make help` to list all available targets. Common ones:
 
-| Target                     | Description                                                          |
-|----------------------------|----------------------------------------------------------------------|
-| `make configure`           | Configure the cmake build (uses the default compiler)                |
-| `make build_linux`         | Build for Linux using cmake                                          |
-| `make build_windows`       | Build for Windows using cmake                                        |
-| `make test_create_venv`    | Create Python venv and install test dependencies (first-time only)   |
-| `make test_mpqcli`         | Run the pytest test suite                                            |
-| `make check_all`           | Run every static check (clang-format, clang-tidy, completion scripts) |
-| `make check_format`        | Check formatting only (dry run)                                      |
-| `make format`              | Auto-fix formatting in-place                                         |
-| `make configure_lint`      | Configure build/lint with clang++ for clang-tidy                     |
-| `make check_lint`          | Run clang-tidy static analysis                                       |
-| `make check_embed`         | Syntax-check the embedded completion scripts                         |
-| `make clean`               | Remove all build, test and docs artefacts                            |
+| Target | Description |
+|---|---|
+| `make configure` | Configure the cmake build (uses the default compiler) |
+| `make build_linux` | Build for Linux using cmake |
+| `make build_windows` | Build for Windows using cmake |
+| `make test_create_venv` | Create Python venv and install test dependencies (first-time only) |
+| `make test_mpqcli` | Run the pytest test suite |
+| `make check_all` | Run every static check (clang-format, clang-tidy, completion scripts) |
+| `make check_format` | Check formatting only (dry run) |
+| `make format` | Auto-fix formatting in-place |
+| `make configure_lint` | Configure build/lint with clang++ for clang-tidy |
+| `make check_lint` | Run clang-tidy static analysis |
+| `make check_embed` | Syntax-check the embedded completion scripts |
+| `make clean` | Remove all build, test and docs artefacts |
 
 ## Requirements for a Pull Request
 
@@ -49,7 +49,7 @@ Run `make help` to list all available targets. Common ones:
 
 Make sure the project builds cleanly on your development machine before opening a PR:
 
-```
+```sh
 make build_linux   # Linux
 make build_windows # Windows
 ```
@@ -60,7 +60,7 @@ A PR automatically triggers the CI build workflow, which compiles and tests acro
 
 Run the test suite before submitting:
 
-```
+```sh
 make test_create_venv  # first-time setup only
 make test_mpqcli
 ```
@@ -75,13 +75,13 @@ If your change adds or modifies user-facing functionality - such as a new subcom
 
 All C++ code is formatted with clang-format and analysed with clang-tidy, and the completion scripts are parsed by their shells. `make check_all` runs all three checks. It configures a clang build tree of its own for clang-tidy, so it needs no prior `make configure`:
 
-```
+```sh
 make check_all
 ```
 
 If there are formatting violations, auto-fix them with:
 
-```
+```sh
 make format
 ```
 

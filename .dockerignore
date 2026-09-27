@@ -6,4 +6,4 @@ test/data/
 
 # .git is deliberately not ignored. The root CMakeLists runs git rev-parse to
 # stamp the commit into the version header, and without the repository the
-# released binary reports "unknown"
+# released binary reports "unknown".

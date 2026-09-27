@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
         // An empty command line is a request for help rather than a mistake. The argc
-        // check is what keeps an unknown subcommand, which raises the same error, failing
+        // check is what keeps an unknown subcommand, which raises the same error, failing.
         if (argc == 1 && e.get_exit_code() == static_cast<int>(CLI::ExitCodes::RequiredError)) {
             context.out << app.help() << std::endl;
             return 0;
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
         return app.exit(e, context.out, context.err);
     } catch (const mpqcli::Interrupted &) {
         // The user asked for this, so nothing is reported. Dying of the signal rather
-        // than returning a code is what lets the shell treat it as an interrupt
+        // than returning a code is what lets the shell treat it as an interrupt.
         std::signal(SIGINT, SIG_DFL);
         std::raise(SIGINT);
         return 1; // Not reached

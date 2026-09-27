@@ -1,7 +1,7 @@
 # The warning bar, defined once and linked privately by every target the project
 # owns. -Wsign-conversion is spelled out because clang folds it into -Wconversion
 # and GCC does not; left implicit, the two compilers hold different bars for the
-# same source. The vendored targets deliberately do not link this
+# same source. The vendored targets deliberately do not link this.
 add_library(mpqcli_warnings INTERFACE)
 target_compile_options(mpqcli_warnings INTERFACE
     $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->
@@ -76,5 +76,5 @@ target_link_libraries(mpqcli_core PRIVATE mpqcli::warnings)
 
 # Nothing outside this repository links the core. The alias is for the
 # configure-time check: a typo in mpqcli::core fails now, where a typo in a raw
-# mpqcli_core is taken for a system library and fails at link time instead
+# mpqcli_core is taken for a system library and fails at link time instead.
 add_library(mpqcli::core ALIAS mpqcli_core)

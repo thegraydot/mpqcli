@@ -146,7 +146,7 @@ void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrid
     // attr_flags is also set. According to StormLib's SFileCreateArchive.cpp:
     // - The (attributes) file is created only when BOTH file_flags2 AND attr_flags are non-zero
     // - If attr_flags is set but file_flags2 is still 0 (not overridden by user or profile),
-    //   we should set file_flags2 to MPQ_FILE_DEFAULT_INTERNAL to enable the attributes file
+    //   we should set file_flags2 to MPQ_FILE_DEFAULT_INTERNAL to enable the attributes file.
 
     if (!user_set_file_flags2 && create_settings_.file_flags2 == 0 &&
         create_settings_.attr_flags != 0) {

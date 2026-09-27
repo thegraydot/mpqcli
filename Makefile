@@ -27,14 +27,14 @@ LINT_DIR         ?= build/lint
 
 # Empty on a machine with no GCC, and configure_lint then passes no
 # --gcc-install-dir at all. The && is what keeps it empty: dirname of an empty
-# string is ".", which clang would take as the install directory
+# string is ".", which clang would take as the install directory.
 GCC_INSTALL_DIR  := $(shell f=$$(gcc -print-libgcc-file-name 2>/dev/null) && dirname "$$f")
 
 README           := README.md
 PACKAGE_URL      := https://github.com/thegraydot/mpqcli/pkgs/container/mpqcli
 
 # The version is declared once, in project(... VERSION X.Y.Z). The
-# cmake_minimum_required line also says VERSION and comes first, so it is skipped
+# cmake_minimum_required line also says VERSION and comes first, so it is skipped.
 VERSION_AWK      := /cmake_minimum_required/ { next } \
   match($$0, /VERSION[ \t]+[0-9]+\.[0-9]+\.[0-9]+/) { \
     v = substr($$0, RSTART, RLENGTH); sub(/VERSION[ \t]+/, "", v); \
