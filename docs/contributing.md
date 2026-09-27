@@ -2,13 +2,13 @@
 
 Contributions are welcome. Please read the guidelines below before opening a pull request.
 
-## Before You Start
+## Before you start
 
 If you are unsure whether a feature fits the project, or whether an existing tool could already be combined with `mpqcli` to achieve the same result, open an issue first. This avoids wasted effort and keeps the project focused.
 
 **mpqcli follows the Unix philosophy.** The tool is designed to do one thing well and to compose with other tools via pipes and redirection. If you find yourself wanting to add functionality that could be handled by a separate tool - for example, sorting the output of `list` - the right answer is usually to pipe the output to that tool rather than adding it here.
 
-## Prerequisites and Setup
+## Prerequisites and setup
 
 Clone the repository and initialise submodules:
 
@@ -24,7 +24,7 @@ Install the clang lint tools, pinned to the major version the checks are formatt
 sudo apt-get install -y clang-18 clang-format-18 clang-tidy-18
 ```
 
-## Makefile Reference
+## Makefile reference
 
 Run `make help` to list all available targets. Common ones:
 
@@ -43,7 +43,7 @@ Run `make help` to list all available targets. Common ones:
 | `make check_embed` | Syntax-check the embedded completion scripts |
 | `make clean` | Remove all build, test and docs artefacts |
 
-## Requirements for a Pull Request
+## Requirements for a pull request
 
 ### 1. Builds on your platform
 
@@ -114,7 +114,7 @@ if (flags & MPQ_FILE_COMPRESS)  result += 'c';
 // clang-format on
 ```
 
-## Known Design Constraints
+## Known design constraints
 
 ### StormLib locale state is global and not thread-safe
 
@@ -127,7 +127,7 @@ This means:
 
 If you add a new StormLib call that is locale-sensitive, follow the existing pattern: call `SFileSetLocale` immediately before it, with no intervening calls between the two.
 
-## Workflow Summary
+## Workflow summary
 
 1. Fork the repository and create a branch for your change
 2. Run `git submodule update --init --recursive` after cloning

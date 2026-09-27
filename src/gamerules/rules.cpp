@@ -17,11 +17,10 @@ bool GameRules::MatchFileMask(const std::string &filename, const std::string &ma
     std::string lower_filename = ToLower(filename);
     std::string lower_mask = ToLower(mask);
 
-    // Replace backslashes with forward slashes for consistent path handling
+    // A mask and a name may each use either separator
     std::replace(lower_filename.begin(), lower_filename.end(), '\\', '/');
     std::replace(lower_mask.begin(), lower_mask.end(), '\\', '/');
 
-    // Simple wildcard matching
     size_t mask_pos = 0;
     size_t file_pos = 0;
     size_t star_pos = std::string::npos;
@@ -68,7 +67,6 @@ void GameRules::AddRuleDefault(DWORD mpq_flags, DWORD compression_first, DWORD c
 
 CompressionSettings GameRules::GetCompressionSettings(const std::string &filename,
                                                       const DWORD file_size) const {
-    // First matching rule wins
     for (const auto &rule : rules_) {
         switch (rule.type) {
         case RuleType::FILE_MASK:
@@ -78,7 +76,6 @@ CompressionSettings GameRules::GetCompressionSettings(const std::string &filenam
             break;
 
         case RuleType::FILE_SIZE: {
-            // Use UINT32_MAX to indicate "no upper limit"
             bool has_upper_limit = (rule.size_max != UINT32_MAX);
             bool in_range =
                 file_size >= rule.size_min && (!has_upper_limit || file_size <= rule.size_max);
@@ -94,7 +91,7 @@ CompressionSettings GameRules::GetCompressionSettings(const std::string &filenam
         }
     }
 
-    // Fallback if no rules match (shouldn't happen if DEFAULT rule is present)
+    // Reached only by a profile that declares no DEFAULT rule
     return {MPQ_FILE_COMPRESS | MPQ_FILE_ENCRYPTED, MPQ_COMPRESSION_PKWARE,
             MPQ_COMPRESSION_NEXT_SAME};
 }
@@ -128,7 +125,7 @@ void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrid
 
     if (overrides.file_flags2.has_value()) {
         create_settings_.file_flags2 = overrides.file_flags2.value();
-        user_set_file_flags2 = true; // User explicitly set this value
+        user_set_file_flags2 = true;
     }
 
     if (overrides.file_flags3.has_value()) {
@@ -142,21 +139,14 @@ void GameRules::OverrideCreateSettings(const MpqCreateSettingsOverrides &overrid
     // Then the adjustments the overrides imply, only where the user left the
     // dependent value alone
 
-    // file_flags2 controls the (attributes) file, which is only meaningful when
-    // attr_flags is also set. According to StormLib's SFileCreateArchive.cpp:
-    // - The (attributes) file is created only when BOTH file_flags2 AND attr_flags are non-zero
-    // - If attr_flags is set but file_flags2 is still 0 (not overridden by user or profile),
-    //   we should set file_flags2 to MPQ_FILE_DEFAULT_INTERNAL to enable the attributes file.
-
+    // StormLib (SFileCreateArchive.cpp) writes the (attributes) file only when both
+    // file_flags2 and attr_flags are non-zero, so attributes asked for without a
+    // storage flag would silently never be written. An explicit zero from the user
+    // is left alone.
     if (!user_set_file_flags2 && create_settings_.file_flags2 == 0 &&
         create_settings_.attr_flags != 0) {
-        // User wants attributes (attr_flags is set) but hasn't specified how to store
-        // the (attributes) file itself. Use the default internal file flags.
         create_settings_.file_flags2 = MPQ_FILE_DEFAULT_INTERNAL;
     }
-
-    // Note: If user explicitly sets file_flags2 to 0 via override, we respect that choice
-    // even if attr_flags is non-zero.
 }
 
 } // namespace mpqcli

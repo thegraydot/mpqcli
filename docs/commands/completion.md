@@ -2,7 +2,7 @@
 
 Print a shell completion script to stdout.
 
-## Supported Shells
+## Supported shells
 
 - bash
 - zsh

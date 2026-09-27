@@ -1,4 +1,4 @@
-# Advanced Examples
+# Advanced examples
 
 ## Search and extract files on Linux
 

@@ -1,6 +1,6 @@
 # Installation
 
-## Precompiled Binaries
+## Precompiled binaries
 
 Pre-built binaries are available for Linux and Windows.
 
@@ -21,7 +21,7 @@ Both installers put `mpqcli` on the system path and may ask for elevation; pass 
 
 Check the [latest release with binaries](https://github.com/thegraydot/mpqcli/releases).
 
-## Docker Image
+## Docker image
 
 The Docker image for `mpqcli` is hosted on [GitHub Container Registry (GHCR)](https://ghcr.io). It provides a lightweight and portable way to use `mpqcli` without needing to build or download a binary.
 
