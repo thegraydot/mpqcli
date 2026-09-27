@@ -84,7 +84,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             int *skipped) {
     std::error_code ec;
     if (!fs::exists(local_file, ec)) {
-        err << "[!] File doesn't exist on disk: " << local_file << std::endl;
+        err << "[!] File doesn't exist on disk: " << local_file.string() << std::endl;
         return 1;
     }
 
@@ -148,13 +148,13 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
     if (ec) {
         err << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
-            << local_file << std::endl;
+            << local_file.string() << std::endl;
         return 1;
     }
     if (raw_file_size > std::numeric_limits<DWORD>::max()) {
         err << "[!] File exceeds 4GB, size-based compression rules may not apply "
                "correctly: "
-            << local_file << std::endl;
+            << local_file.string() << std::endl;
     }
     const DWORD file_size = static_cast<DWORD>(
         std::min(raw_file_size, static_cast<std::uintmax_t>(std::numeric_limits<DWORD>::max())));

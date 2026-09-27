@@ -31,8 +31,7 @@ int ExtractFiles(HANDLE archive, const fs::path &output,
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
     if (find_handle == nullptr) {
-        err << "[!] Failed to find first file in MPQ archive." << std::endl;
-        return 1;
+        throw ArchiveError("Failed to find first file in MPQ archive.");
     }
 
     int32_t result = 0;
@@ -83,7 +82,7 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
     }
 
     // Guard against path traversal attacks in two stages. First lexically, so a
-    // ".." entry is rejected before anything is created on disk
+    // ".." entry is rejected before anything is created on disk.
     fs::path output_file_path_name = (output_path_base / file_name_string).lexically_normal();
     if (!IsWithinDirectory(output_path_base, output_file_path_name)) {
         err << "[!] Blocked: path traversal attempt detected: " << file_name_string << std::endl;
@@ -100,7 +99,7 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
 
     // Second, through the OS to also catch symlinks. Volumes that cannot report
     // real paths (RAM disks) fail here, in which case the lexical check above is
-    // the only guard, and the caller warns about that once
+    // the only guard, and the caller warns about that once.
     fs::path resolved_base = fs::canonical(output_path_base, ec);
     if (!ec) {
         fs::path resolved_output = fs::canonical(output_file_path_name.parent_path(), ec) /

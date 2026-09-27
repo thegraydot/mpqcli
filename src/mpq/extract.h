@@ -11,6 +11,9 @@
 
 namespace mpqcli {
 
+/// Extracts every file the archive can name into output, returning non-zero if any failed
+///
+/// @throws ArchiveError if the archive's files cannot be enumerated
 int ExtractFiles(HANDLE archive, const std::filesystem::path &output,
                  const std::optional<std::filesystem::path> &listfile_name, LCID preferred_locale,
                  std::ostream &err, const std::atomic<bool> &cancelled);
