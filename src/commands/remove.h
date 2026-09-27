@@ -2,6 +2,7 @@
 #define COMMANDS_REMOVE_H
 
 #include <atomic>
+#include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -11,7 +12,7 @@ namespace mpqcli {
 
 /// Settled arguments for the remove subcommand
 struct RemoveOptions {
-    std::string archive;
+    std::filesystem::path archive;
     std::vector<std::string> files;
     std::optional<std::string> locale;
 };

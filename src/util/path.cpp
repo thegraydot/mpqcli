@@ -93,12 +93,11 @@ bool IsWithinDirectory(const fs::path &base, const fs::path &path) {
     return std::mismatch(base.begin(), base.end(), path.begin(), path.end()).first == base.end();
 }
 
-std::string ResolveArchiveName(const std::string &f, const std::optional<std::string> &path,
+std::string ResolveArchiveName(const fs::path &f, const std::optional<std::string> &path,
                                const bool treat_as_directory) {
-    fs::path file_path = path.value_or(fs::path(f).filename().u8string());
+    fs::path file_path = path.value_or(f.filename().u8string());
     if (treat_as_directory) {
-        const std::string filename = fs::path(f).filename().u8string();
-        file_path = path.value_or("") / fs::path(filename);
+        file_path = fs::path(path.value_or("")) / fs::path(f.filename().u8string());
     }
     return WindowsifyFilePath(file_path);
 }

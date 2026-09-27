@@ -27,6 +27,5 @@ void RegisterInfo(CLI::App &app, Context &context) {
     sub->add_option("-p,--property", options->property, "Prints only a specific property value")
         ->check(CLI::IsMember(valid_properties));
 
-    sub->callback(
-        [options, &context]() { context.exit_code = mpqcli::Info(*options, context.out) ? 0 : 1; });
+    sub->callback([options, &context]() { mpqcli::Info(*options, context.out); });
 }

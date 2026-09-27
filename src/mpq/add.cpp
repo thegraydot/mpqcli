@@ -67,7 +67,7 @@ int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path 
     }
 
     if (update) {
-        err << "[*] For " << base_path.u8string() << ": " << files_added << " files added, "
+        err << "[*] For " << base_path.string() << ": " << files_added << " files added, "
             << files_skipped << " files skipped, " << files_failed << " files failed." << std::endl;
     }
 
@@ -100,7 +100,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
             SFileCloseFile(file);
 
             if (unchanged) {
-                err << "[~] Skipping unchanged file: " << archive_file_path << " (" << match_reason
+                err << "[*] Skipping unchanged file: " << archive_file_path << " (" << match_reason
                     << ")" << std::endl;
                 if (skipped != nullptr) {
                     (*skipped)++;
@@ -120,7 +120,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
                 return 0;
             }
 
-            err << "[+] File" << PrettyPrintLocale(locale, " for locale ")
+            err << "[~] File" << PrettyPrintLocale(locale, " for locale ")
                 << " already exists in MPQ archive: " << archive_file_path << " - Overwriting..."
                 << std::endl;
         } else {
@@ -172,7 +172,7 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     }
 
     bool added_file =
-        SFileAddFileEx(archive, local_file.u8string().c_str(), archive_file_path.c_str(), flags,
+        SFileAddFileEx(archive, local_file.string().c_str(), archive_file_path.c_str(), flags,
                        compression, compression_next);
 
     if (!added_file) {

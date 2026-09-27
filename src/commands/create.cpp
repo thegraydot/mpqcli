@@ -45,12 +45,10 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     if (options.output.has_value()) {
         output_file_path = fs::absolute(options.output.value(), ec);
         if (ec) {
-            err << "[!] Failed to resolve output path: (" << ec.value() << ") " << ec.message()
-                << ": " << options.output.value() << std::endl;
-            return false;
+            throw FileError("Failed to resolve output path", options.output.value(), ec);
         }
     } else {
-        output_file_path = fs::path(options.target);
+        output_file_path = options.target;
         // If the path ends with a separator (e.g. "dir/"), strip the
         // trailing separator first so we get "dir.mpq"
         if (output_file_path.filename().empty()) {
@@ -58,9 +56,8 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
         }
         output_file_path.replace_extension(".mpq");
     }
-    std::string output_file = output_file_path.u8string();
     if (fs::exists(output_file_path, ec)) {
-        throw ArchiveError("File already exists: " + output_file + " Exiting...");
+        throw ArchiveError("File already exists: " + output_file_path.string());
     }
 
     GameProfile profile;
@@ -72,7 +69,7 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     GameRules game_rules(profile);
 
     err << "[*] Game profile: " << options.game_profile.value_or("default")
-        << ", Output file: " << output_file << std::endl;
+        << ", Output file: " << output_file_path.string() << std::endl;
 
     game_rules.OverrideCreateSettings(options.create_overrides);
 
@@ -82,13 +79,10 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     if (is_directory) {
         files = ListFilesRecursive(options.target, ec);
         if (ec) {
-            err << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message() << ": "
-                << options.target << std::endl;
-            return false;
+            throw FileError("Failed to list directory", options.target, ec);
         }
     } else if (!fs::is_regular_file(options.target, ec)) {
-        err << "[!] Not a file or directory: " << options.target << std::endl;
-        return false;
+        throw FileError("Not a file or directory", options.target);
     }
     const uint32_t file_count =
         CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
@@ -125,8 +119,8 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     partial.keep = true;
     fs::rename(partial_path, output_file_path, ec);
     if (ec) {
-        throw ArchiveError("Failed to move " + partial_path.u8string() + " to " + output_file +
-                           ": (" + std::to_string(ec.value()) + ") " + ec.message());
+        throw FileError("Failed to move " + partial_path.string() + " into place", output_file_path,
+                        ec);
     }
 
     return result == 0;

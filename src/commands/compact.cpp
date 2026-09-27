@@ -7,11 +7,10 @@
 
 namespace mpqcli {
 
-bool Compact(const CompactOptions &options, std::ostream &err) {
+void Compact(const CompactOptions &options, std::ostream &err) {
     Archive archive = Archive::Open(options.target, 0);
     CompactMpqArchive(archive.Handle(), options.listfile, err);
     archive.Close();
-    return true;
 }
 
 } // namespace mpqcli

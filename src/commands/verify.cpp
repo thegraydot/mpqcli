@@ -17,12 +17,9 @@ bool Verify(const VerifyOptions &options, std::ostream &out, std::ostream &err) 
     case ERROR_WEAK_SIGNATURE_OK:
     case ERROR_STRONG_SIGNATURE_OK:
         if (options.print_signature) {
-            // If printing the signature, don't print success message
-            // because the user might want to pipe/redirect the signature data
             PrintMpqSignature(archive.Handle(), options.target, out, err);
-        } else {
-            err << "[*] Verify success" << std::endl;
         }
+        err << "[*] Verify success" << std::endl;
         verified = true;
         break;
 

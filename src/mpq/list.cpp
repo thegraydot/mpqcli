@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <iomanip>
 #include <map>
 #include <optional>
@@ -20,10 +21,12 @@
 
 namespace mpqcli {
 
-void ListFiles(HANDLE archive, const std::optional<std::string> &listfile_name, bool list_all,
-               bool list_detailed, const std::vector<std::string> &properties, std::ostream &out,
-               std::ostream &err) {
-    const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
+void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listfile_name,
+               bool list_all, bool list_detailed, const std::vector<std::string> &properties,
+               std::ostream &out, std::ostream &err) {
+    const std::string listfile_string =
+        listfile_name.has_value() ? listfile_name->string() : std::string();
+    const char *listfile = listfile_name.has_value() ? listfile_string.c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);

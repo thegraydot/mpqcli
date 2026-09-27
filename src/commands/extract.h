@@ -2,6 +2,7 @@
 #define COMMANDS_EXTRACT_H
 
 #include <atomic>
+#include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -10,11 +11,11 @@ namespace mpqcli {
 
 /// Settled arguments for the extract subcommand
 struct ExtractOptions {
-    std::string target;
-    std::optional<std::string> output;
+    std::filesystem::path target;
+    std::optional<std::filesystem::path> output;
     std::optional<std::string> file;
     bool keep_folder_structure = false;
-    std::optional<std::string> listfile;
+    std::optional<std::filesystem::path> listfile;
     std::optional<std::string> locale;
 };
 

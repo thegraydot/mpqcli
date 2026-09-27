@@ -18,7 +18,8 @@ std::string WindowsifyFilePath(const std::filesystem::path &path);
 bool IsWithinDirectory(const std::filesystem::path &base, const std::filesystem::path &path);
 
 /// Builds the in-archive name for a local file
-std::string ResolveArchiveName(const std::string &f, const std::optional<std::string> &path,
+std::string ResolveArchiveName(const std::filesystem::path &f,
+                               const std::optional<std::string> &path,
                                bool treat_as_directory = false);
 
 std::vector<std::filesystem::path> ListFilesRecursive(const std::filesystem::path &directory,

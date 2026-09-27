@@ -20,11 +20,13 @@ namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-int ExtractFiles(HANDLE archive, const std::string &output,
-                 const std::optional<std::string> &listfile_name, LCID preferred_locale,
+int ExtractFiles(HANDLE archive, const fs::path &output,
+                 const std::optional<fs::path> &listfile_name, LCID preferred_locale,
                  std::ostream &err, const std::atomic<bool> &cancelled) {
     SFileSetLocale(preferred_locale);
-    const char *listfile = listfile_name.has_value() ? listfile_name->c_str() : nullptr;
+    const std::string listfile_string =
+        listfile_name.has_value() ? listfile_name->string() : std::string();
+    const char *listfile = listfile_name.has_value() ? listfile_string.c_str() : nullptr;
 
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
@@ -50,7 +52,7 @@ int ExtractFiles(HANDLE archive, const std::string &output,
     return result;
 }
 
-int ExtractFile(HANDLE archive, const std::string &output, const std::string &file_name,
+int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_name,
                 bool keep_folder_structure, LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
@@ -73,7 +75,7 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     fs::path output_path_base = fs::absolute(output, ec).lexically_normal();
     if (ec) {
         err << "[!] Failed to resolve output directory: (" << ec.value() << ") " << ec.message()
-            << ": " << output << std::endl;
+            << ": " << output.string() << std::endl;
         return 1;
     }
     if (output_path_base.filename().empty()) {
@@ -92,7 +94,7 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
     fs::create_directories(output_file_path_name.parent_path(), ec);
     if (ec) {
         err << "[!] Failed to create output directory: (" << ec.value() << ") " << ec.message()
-            << ": " << output_file_path_name.parent_path().u8string() << std::endl;
+            << ": " << output_file_path_name.parent_path().string() << std::endl;
         return 1;
     }
 
@@ -105,7 +107,7 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
                                    output_file_path_name.filename();
         if (ec) {
             err << "[!] Failed to resolve output path: (" << ec.value() << ") " << ec.message()
-                << ": " << output_file_path_name.u8string() << std::endl;
+                << ": " << output_file_path_name.string() << std::endl;
             return 1;
         }
         if (!IsWithinDirectory(resolved_base, resolved_output)) {
@@ -115,7 +117,7 @@ int ExtractFile(HANDLE archive, const std::string &output, const std::string &fi
         }
     }
 
-    std::string output_file_name{output_file_path_name.u8string()};
+    std::string output_file_name{output_file_path_name.string()};
 
     if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
         err << "[*] Extracted: " << file_name_string << std::endl;

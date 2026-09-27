@@ -1,14 +1,14 @@
 #ifndef COMMANDS_VERIFY_H
 #define COMMANDS_VERIFY_H
 
+#include <filesystem>
 #include <ostream>
-#include <string>
 
 namespace mpqcli {
 
 /// Settled arguments for the verify subcommand
 struct VerifyOptions {
-    std::string target;
+    std::filesystem::path target;
     bool print_signature = false;
 };
 

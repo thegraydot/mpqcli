@@ -1,6 +1,7 @@
 #ifndef COMMANDS_READ_H
 #define COMMANDS_READ_H
 
+#include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -10,7 +11,7 @@ namespace mpqcli {
 /// Settled arguments for the read subcommand
 struct ReadOptions {
     std::string file;
-    std::string target;
+    std::filesystem::path target;
     std::optional<std::string> locale;
 };
 

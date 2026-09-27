@@ -27,7 +27,7 @@ Archive Archive::Create(const fs::path &path, const uint32_t file_count,
                         const GameRules &game_rules) {
     std::error_code ec;
     if (fs::exists(path, ec)) {
-        throw ArchiveError("File already exists: " + path.string() + " Exiting...");
+        throw ArchiveError("File already exists: " + path.string());
     }
 
     const MpqCreateSettings &settings = game_rules.GetCreateSettings();

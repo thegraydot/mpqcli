@@ -2,6 +2,7 @@
 #define COMMANDS_CREATE_H
 
 #include <atomic>
+#include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -12,9 +13,9 @@ namespace mpqcli {
 
 /// Settled arguments for the create subcommand
 struct CreateOptions {
-    std::string target;
+    std::filesystem::path target;
     std::optional<std::string> path;
-    std::optional<std::string> output;
+    std::optional<std::filesystem::path> output;
     bool sign = false;
     std::optional<std::string> locale;
     std::optional<std::string> game_profile;

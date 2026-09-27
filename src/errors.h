@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <utility>
 
 #include "util/format.h"
@@ -30,6 +31,27 @@ inline void ThrowIfCancelled(const std::atomic<bool> &cancelled) {
         throw Interrupted{};
     }
 }
+
+/// Thrown when a filesystem operation fails; the message ends with the code, its text and the path
+class FileError : public Error {
+public:
+    FileError(const std::string &what_failed, std::filesystem::path path,
+              std::error_code error_code)
+        : Error(what_failed + ": (" + std::to_string(error_code.value()) + ") " +
+                error_code.message() + ": " + path.string()),
+          path_(std::move(path)), error_code_(error_code) {}
+
+    /// For a failure with no code to report, such as a path of the wrong kind
+    FileError(const std::string &what_failed, std::filesystem::path path)
+        : Error(what_failed + ": " + path.string()), path_(std::move(path)) {}
+
+    const std::filesystem::path &Path() const { return path_; }
+    const std::error_code &ErrorCode() const { return error_code_; }
+
+private:
+    std::filesystem::path path_;
+    std::error_code error_code_;
+};
 
 /// Base for failures reading or writing an archive
 class ArchiveError : public Error {

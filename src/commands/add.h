@@ -2,6 +2,7 @@
 #define COMMANDS_ADD_H
 
 #include <atomic>
+#include <filesystem>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -13,8 +14,8 @@ namespace mpqcli {
 
 /// Settled arguments for the add subcommand
 struct AddOptions {
-    std::string archive;
-    std::vector<std::string> files;
+    std::filesystem::path archive;
+    std::vector<std::filesystem::path> files;
     std::optional<std::string> path;
     bool overwrite = false;
     bool update = false;

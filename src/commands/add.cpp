@@ -49,7 +49,7 @@ bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &
         ThrowIfCancelled(cancelled);
 
         if (!fs::exists(f, ec)) {
-            err << "[!] Path does not exist: " << f << std::endl;
+            err << "[!] Path does not exist: " << f.string() << std::endl;
             result |= 1;
             continue;
         }
@@ -58,7 +58,7 @@ bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &
             std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
             if (ec) {
                 err << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
-                    << ": " << f << std::endl;
+                    << ": " << f.string() << std::endl;
                 result |= 1;
                 continue;
             }
@@ -75,7 +75,7 @@ bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &
                               &files_skipped);
 
         } else {
-            err << "[!] Not a file or directory: " << f << std::endl;
+            err << "[!] Not a file or directory: " << f.string() << std::endl;
             result |= 1;
         }
     }

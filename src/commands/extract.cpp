@@ -3,11 +3,11 @@
 #include <atomic>
 #include <filesystem>
 #include <ostream>
-#include <string>
 #include <system_error>
 
 #include <StormLib.h>
 
+#include "errors.h"
 #include "mpq/archive.h"
 #include "mpq/extract.h"
 #include "util/locales.h"
@@ -18,15 +18,13 @@ namespace mpqcli {
 
 bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
     std::error_code ec;
-    std::string effective_output;
+    fs::path effective_output;
     if (!options.output.has_value()) {
         fs::path target_path = fs::absolute(options.target, ec);
         if (ec) {
-            err << "[!] Failed to resolve archive path: (" << ec.value() << ") " << ec.message()
-                << ": " << options.target << std::endl;
-            return false;
+            throw FileError("Failed to resolve archive path", options.target, ec);
         }
-        effective_output = (target_path.parent_path() / target_path.stem()).u8string();
+        effective_output = target_path.parent_path() / target_path.stem();
     } else {
         effective_output = options.output.value();
     }
@@ -34,9 +32,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     if (ec) {
         std::error_code query_ec;
         if (!fs::is_directory(effective_output, query_ec)) {
-            err << "[!] Failed to create output directory: (" << ec.value() << ") " << ec.message()
-                << ": " << effective_output << std::endl;
-            return false;
+            throw FileError("Failed to create output directory", effective_output, ec);
         }
     }
 
@@ -46,7 +42,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     if (ec) {
         err << "[!] Output directory cannot be fully resolved, symlinks will not "
                "be checked during extraction: "
-            << effective_output << std::endl;
+            << effective_output.string() << std::endl;
     }
 
     Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);

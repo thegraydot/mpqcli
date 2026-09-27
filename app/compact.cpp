@@ -16,7 +16,5 @@ void RegisterCompact(CLI::App &app, Context &context) {
     sub->add_option("-l,--listfile", options->listfile, "File listing content of an MPQ archive")
         ->check(CLI::ExistingFile);
 
-    sub->callback([options, &context]() {
-        context.exit_code = mpqcli::Compact(*options, context.err) ? 0 : 1;
-    });
+    sub->callback([options, &context]() { mpqcli::Compact(*options, context.err); });
 }
