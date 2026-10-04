@@ -32,8 +32,8 @@ function __mpqcli_positional_index
     echo $index
 end
 
-# Shared value sets, kept in step with app/main.cpp, src/util/locales.cpp and
-# src/gamerules/profiles.cpp
+# Shared value sets, kept in step with app/main.cpp, app/info.cpp, app/list.cpp,
+# src/util/locales.cpp and src/gamerules/profiles.cpp
 set -l __mpqcli_subcommands \
     version about info create add remove rename list extract read verify compact completion
 
