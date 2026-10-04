@@ -8,7 +8,6 @@ CPP_LINT_DIRS    := $(wildcard src app)
 JOBS             ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 BUILD_TYPE       ?= Debug
 CMAKE_ARGS       ?=
-CMAKE_BUILD_TYPE := Release
 MPQCLI_BUILD_APP ?= ON
 
 # Prefer the versioned tool, fall back to the plain name. Falling back rather
@@ -60,20 +59,6 @@ configure: ## Configure the cmake build
 .PHONY: build
 build: configure ## Build the project
 	cmake --build build/dev --parallel $(JOBS)
-
-.PHONY: build_linux
-build_linux: ## Build for Linux using cmake
-	cmake -B build/dev \
-		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
-	cmake --build build/dev --parallel $(JOBS)
-
-.PHONY: build_windows
-build_windows: ## Build for Windows using cmake
-	cmake -B build/dev \
-		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-		-DMPQCLI_BUILD_APP=$(MPQCLI_BUILD_APP)
-	cmake --build build/dev --config $(CMAKE_BUILD_TYPE) --parallel $(JOBS)
 
 ##@ TEST
 

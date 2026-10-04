@@ -31,8 +31,7 @@ Run `make help` to list all available targets. Common ones:
 | Target | Description |
 |---|---|
 | `make configure` | Configure the cmake build (uses the default compiler) |
-| `make build_linux` | Build for Linux using cmake |
-| `make build_windows` | Build for Windows using cmake |
+| `make build` | Build the project into build/dev |
 | `make test_create_venv` | Create Python venv and install test dependencies (first-time only) |
 | `make test_mpqcli` | Run the pytest test suite |
 | `make check_all` | Run every static check (clang-format, clang-tidy, completion scripts) |
@@ -50,9 +49,10 @@ Run `make help` to list all available targets. Common ones:
 Make sure the project builds cleanly on your development machine before opening a PR:
 
 ```sh
-make build_linux   # Linux
-make build_windows # Windows
+make build
 ```
+
+On Windows without a POSIX shell, use the cmake commands from the building page instead.
 
 A PR automatically triggers the CI build workflow, which compiles and tests across all supported Linux targets (AMD64 and ARM64). You are not expected to reproduce all of those locally.
 
@@ -132,7 +132,7 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 1. Fork the repository and create a branch for your change
 2. Run `git submodule update --init --recursive` after cloning
 3. Install the clang tools as shown above
-4. Make your changes and verify they build: `make build_linux`
+4. Make your changes and verify they build: `make build`
 5. Run `make check_all`, fixing any issues
 6. Run `make test_mpqcli` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why
