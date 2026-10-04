@@ -15,11 +15,8 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-# Required permissions for GitHub Pages deployment
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 env:
   MDBOOK_VERSION: 0.5.4
@@ -54,6 +51,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-24.04
+    # Only the deploy job publishes, so only it gets the Pages permissions
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
