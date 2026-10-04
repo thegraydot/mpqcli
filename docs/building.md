@@ -48,13 +48,17 @@ To configure the testing environment you will need Python installed, as well as 
 
 ```bash
 $ sudo apt install python3-venv python3-pip
-$ python3 -m venv test/.venv
-$ source test/.venv/bin/activate
+$ python3 -m venv .venv
+$ source .venv/bin/activate
 $ pip3 install -r test/requirements.txt
 ```
 
-Then you can run the tests using:
+The tests run the binary in `build/dev`, so build it there and then run the tests using:
 
 ```bash
+$ cmake -B build/dev
+$ cmake --build build/dev
 $ python3 -m pytest test -s
 ```
+
+`make test` does the same in one step.
