@@ -9,7 +9,6 @@
 #include <StormLib.h>
 
 #include "util/hash.h"
-#include "util/locales.h"
 #include "util/path.h"
 
 namespace fs = std::filesystem;

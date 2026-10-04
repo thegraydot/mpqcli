@@ -6,7 +6,6 @@
 #include <StormLib.h>
 
 #include "mpq/query.h"
-#include "util/format.h"
 #include "util/locales.h"
 
 namespace mpqcli {

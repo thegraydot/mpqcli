@@ -1,3 +1,5 @@
+#include "gamerules/profiles.h"
+
 #include <cstddef>
 #include <map>
 #include <string>
