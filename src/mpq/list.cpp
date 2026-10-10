@@ -41,6 +41,10 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
         // Named properties are only printed by the detailed listing
         list_detailed = true;
     }
+    const bool prints_key = std::find(properties_to_print.begin(), properties_to_print.end(),
+                                      "encryption-key") != properties_to_print.end() ||
+                            std::find(properties_to_print.begin(), properties_to_print.end(),
+                                      "encryption-key-raw") != properties_to_print.end();
 
     static const std::map<std::string, SFileInfoClass> property_info_class = {
         {"hash-index", SFileInfoHashIndex},
@@ -106,6 +110,18 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
                 if (!SFileOpenFileEx(archive, find_data.cFileName, SFILE_OPEN_FROM_MPQ, &file)) {
                     err << "[!] Failed to open file: " << find_data.cFileName << std::endl;
                     continue;
+                }
+
+                // The key of an encrypted file opened without its name isn't known when the
+                // file is opened - StormLib works it out on the first read. Read a byte so that
+                // encryption-key and encryption-key-raw show it. Files opened by name already
+                // have their key, and unencrypted files have none.
+                if (prints_key &&
+                    (GetFileInfo<uint32_t>(file, SFileInfoFlags) & MPQ_FILE_ENCRYPTED) &&
+                    GetFileInfo<uint32_t>(file, SFileInfoEncryptionKey) == 0) {
+                    char first_byte;
+                    DWORD bytes_read;
+                    SFileReadFile(file, &first_byte, 1, &bytes_read, nullptr);
                 }
 
                 for (const auto &prop : properties_to_print) {

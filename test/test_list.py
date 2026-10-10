@@ -519,3 +519,45 @@ def test_list_mpq_property_locale(binary_path):
     output_lines = set(result.stdout.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
+
+
+def test_list_encryption_keys_of_files_listed_without_names(binary_path, generate_mpq_without_internal_listfile, tmp_path):
+    """
+    Test MPQ file listing of encryption keys, for encrypted files whose names aren't known.
+
+    This test checks:
+    - That an encrypted file listed without its name shows the same encryption-key and
+      encryption-key-raw as when it is listed by name, and not zero.
+    """
+    _ = generate_mpq_without_internal_listfile
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_without_internal_listfile.mpq"
+    listfile = tmp_path / "listfile.txt"
+    listfile.write_text("capybaras.txt\ncats.txt\ndogs.txt\n", newline="\n")
+
+    def keys_by_file_index(*extra_args):
+        result = subprocess.run(
+            [str(binary_path), "list", "-d", str(test_file), *extra_args,
+             "-p", "file-index", "-p", "flags", "-p", "encryption-key", "-p", "encryption-key-raw"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        keys = {}
+        for line in result.stdout.splitlines():
+            file_index, flags, key, key_raw, name = line.split(maxsplit=4)
+            if "e" in flags:  # Only encrypted files have a key - (signature) isn't encrypted
+                keys[file_index] = (flags, key, key_raw, name)
+        return keys
+
+    without_names = keys_by_file_index()
+    with_names = keys_by_file_index("-l", str(listfile))
+
+    assert len(without_names) == 3
+    assert without_names.keys() == with_names.keys()
+    for file_index, (flags, key, key_raw, name) in without_names.items():
+        assert name.startswith("File") and name.endswith(".xxx"), f"Unexpected name: {name}"
+        assert key != "00000000", f"No encryption key found for file {file_index}"
+        assert (key, key_raw) == with_names[file_index][1:3], \
+            f"Keys of file {file_index} differ: {(key, key_raw)} vs {with_names[file_index][1:3]}"
