@@ -2,6 +2,7 @@
 /book
 /mermaid*.js
 /test/data
+/valgrind_logs
 
 # C++
 # Prerequisites

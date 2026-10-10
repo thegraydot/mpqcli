@@ -3,6 +3,25 @@ build/
 book/
 .venv/
 test/data/
+valgrind_logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # .git is deliberately not ignored. The root CMakeLists runs git rev-parse to
 # stamp the commit into the version header, and without the repository the
