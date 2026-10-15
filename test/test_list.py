@@ -563,9 +563,8 @@ def test_list_encryption_keys_of_files_listed_without_names(binary_path, generat
             f"Keys of file {file_index} differ: {(key, key_raw)} vs {with_names[file_index][1:3]}"
 
 
-def test_list_short_property_flag_is_rejected(binary_path):
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_list_short_property_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
 
     result = subprocess.run(
         [str(binary_path), "list", "-p", "locale", str(test_file)],

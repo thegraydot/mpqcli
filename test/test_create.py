@@ -169,18 +169,20 @@ def test_create_mpq_with_weak_signature(binary_path, generate_test_files):
         f"Unexpected verify output: {verify_result.stderr}"
 
 
-def test_create_mpq_already_exists(binary_path, generate_test_files):
+def test_create_mpq_already_exists(binary_path, generate_test_files, tmp_path):
     """
     Test MPQ file creation with an existing output file.
 
     This test checks:
     - If the MPQ archive is not created (as archive exists already).
+    - That the existing file is left as it was.
     """
     _ = generate_test_files
     script_dir = Path(__file__).parent
     target_dir = script_dir / "data" / "files"
 
-    output_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    output_file = tmp_path / "existing.mpq"
+    output_file.write_bytes(b"Not an archive")
 
     result = subprocess.run(
         [str(binary_path), "create", "--format-version", "1", str(output_file), str(target_dir)],
@@ -190,6 +192,7 @@ def test_create_mpq_already_exists(binary_path, generate_test_files):
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert output_file.read_bytes() == b"Not an archive"
 
 
 def test_create_mpq_from_file(binary_path, generate_test_files):

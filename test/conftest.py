@@ -209,6 +209,28 @@ def generate_path_traversal_mpq(binary_path):
 
 
 @pytest.fixture(scope="function")
+def generate_cats_and_dogs_mpq(binary_path, tmp_path_factory):
+    # A directory of its own rather than test/data, so the test depends on no other test,
+    # and rather than the test's tmp_path, which some tests assert is left empty
+    archive_dir = tmp_path_factory.mktemp("cats_and_dogs")
+    files_dir = archive_dir / "files"
+    files_dir.mkdir()
+    (files_dir / "cats.txt").write_text("This is a file about cats.\n", newline="\n")
+    (files_dir / "dogs.txt").write_text("This is a file about dogs.\n", newline="\n")
+
+    mpq_file = archive_dir / "cats_and_dogs.mpq"
+    result = subprocess.run(
+        [str(binary_path), "create", str(mpq_file), str(files_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    yield mpq_file
+
+
+@pytest.fixture(scope="function")
 def generate_tampered_signature_mpq(binary_path):
     """
     Build a signed MPQ archive, then flip a single byte inside the file's

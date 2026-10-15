@@ -879,10 +879,8 @@ def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
     assert set(fi.name for fi in flat_dir.iterdir()) == {"cats.txt"}
 
 
-def test_extract_multiple_files(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_multiple_files(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
     output_dir = tmp_path / "extracted"
 
     result = subprocess.run(
@@ -897,10 +895,8 @@ def test_extract_multiple_files(binary_path, generate_test_files, tmp_path):
     assert set(fi.name for fi in output_dir.iterdir()) == {"cats.txt", "dogs.txt"}
 
 
-def test_extract_files_via_stdin(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_files_via_stdin(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
     output_dir = tmp_path / "extracted"
 
     result = subprocess.run(
@@ -915,10 +911,8 @@ def test_extract_files_via_stdin(binary_path, generate_test_files, tmp_path):
     assert set(fi.name for fi in output_dir.iterdir()) == {"cats.txt", "dogs.txt"}
 
 
-def test_extract_empty_stdin_extracts_nothing(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_empty_stdin_extracts_nothing(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
     output_dir = tmp_path / "extracted"
 
     result = subprocess.run(
@@ -963,10 +957,8 @@ def test_extract_flat_name_collision_extracts_nothing(binary_path, tmp_path):
     assert not output_dir.exists(), "Output directory was created"
 
 
-def test_extract_listfile_with_named_files_is_rejected(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_listfile_with_named_files_is_rejected(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
     listfile = tmp_path / "listfile.txt"
     listfile.write_text("cats.txt\n")
     output_dir = tmp_path / "extracted"
@@ -982,10 +974,8 @@ def test_extract_listfile_with_named_files_is_rejected(binary_path, generate_tes
     assert not output_dir.exists(), "Output directory was created"
 
 
-def test_extract_old_file_option_is_rejected(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_old_file_option_is_rejected(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
 
     result = subprocess.run(
         [str(binary_path), "extract", "-f", "cats.txt", str(test_file)],
@@ -1000,10 +990,8 @@ def test_extract_old_file_option_is_rejected(binary_path, generate_test_files, t
     assert list(tmp_path.iterdir()) == []
 
 
-def test_extract_old_keep_flag_is_rejected(binary_path, generate_test_files, tmp_path):
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_extract_old_keep_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
     output_dir = tmp_path / "extracted"
 
     result = subprocess.run(

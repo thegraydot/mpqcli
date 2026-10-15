@@ -171,9 +171,8 @@ def test_verify_mpq_target_does_not_exist(binary_path):
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
 
 
-def test_verify_short_print_flag_is_rejected(binary_path):
-    script_dir = Path(__file__).parent
-    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+def test_verify_short_print_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
 
     result = subprocess.run(
         [str(binary_path), "verify", "-p", str(test_file)],
