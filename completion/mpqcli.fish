@@ -211,16 +211,16 @@ complete -c mpqcli -n '__fish_seen_subcommand_from list' \
     -r -f -a "$__mpqcli_list_properties"
 
 # extract
-#   extract <archive.mpq> [-o/--output] [-f/--file] [-k/--keep]
+#   extract <archive.mpq> [files...] [-o/--output] [--flat]
 #           [-l/--listfile] [--locale]
-complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index -k --keep) -eq 1' -F
+# Positional 1 is the archive; the rest are in-archive paths, so they get no
+# filesystem completion
+complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index --flat) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s o -l output      -d 'Output directory' -r -f -a '(__fish_complete_directories)'
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
-    -s f -l file        -d 'Target file to extract' -r -f
-complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
-    -s k -l keep        -d 'Keep folder structure'
+    -l flat             -d 'Write files without their folders'
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s l -l listfile    -d 'External file listing content of the archive' -r -F
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \

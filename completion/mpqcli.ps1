@@ -131,10 +131,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'extract' = [ordered]@{
             '-o'         = 'Output directory'
             '--output'   = 'Output directory'
-            '-f'         = 'Target file to extract'
-            '--file'     = 'Target file to extract'
-            '-k'         = 'Keep folder structure'
-            '--keep'     = 'Keep folder structure'
+            '--flat'     = 'Write files into the output directory without their folders'
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
             '--locale'   = 'Preferred locale for extracted file'
@@ -246,8 +243,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             }
         }
         # Options that take a file/dir path -> let PowerShell complete paths
-        $pathOptions = @('-o', '--output', '-l', '--listfile', '-f', '--file',
-                         '-p', '--path')
+        $pathOptions = @('-o', '--output', '-l', '--listfile', '-p', '--path')
         if ($prevToken -in $pathOptions) {
             return  # empty -> native path completion takes over
         }

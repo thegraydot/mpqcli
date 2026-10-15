@@ -223,12 +223,13 @@ _mpqcli() {
                 -o|--output) _mpqcli_filedir -d; return ;;
                 -l|--listfile) _mpqcli_filedir; return ;;
                 --locale) _mpqcli_words "${locales[*]}"; return ;;
-                -f|--file) return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-o --output -f --file -k --keep -l --listfile --locale"
+                _mpqcli_words "-o --output --flat -l --listfile --locale"
             else
-                _mpqcli_positional_index -k --keep
+                # Positional 1 is the archive; the rest are in-archive paths, so
+                # they get no filesystem completion
+                _mpqcli_positional_index --flat
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi

@@ -6,6 +6,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace mpqcli {
 
@@ -13,13 +14,14 @@ namespace mpqcli {
 struct ExtractOptions {
     std::filesystem::path archive;
     std::optional<std::filesystem::path> output;
-    std::optional<std::string> file;
-    bool keep_folder_structure = false;
+    /// Files inside the archive; unset extracts every file the archive can name
+    std::optional<std::vector<std::string>> files;
+    bool flat = false;
     std::optional<std::filesystem::path> listfile;
     std::optional<std::string> locale;
 };
 
-/// Extracts one file or every file, returning false if any of them failed
+/// Extracts the named files, or every file, returning false if any of them failed
 bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli

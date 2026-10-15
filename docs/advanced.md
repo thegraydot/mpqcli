@@ -7,7 +7,7 @@ The `mpqcli` tool has no native search feature - instead, it is designed to be i
 The following command lists all files in an MPQ archive, and each filename is filtered using `grep` - selecting files ending in `.exe` (note: `.` is a regex wildcard matching any character; use `\.exe` for a strictly literal match) - which is then passed back to `mpqcli extract`. The result: search and extract all `exe` files.
 
 ```bash
-$ mpqcli list wow-patch.mpq | grep -i \.exe | xargs -I@ mpqcli extract -f "@" wow-patch.mpq
+$ mpqcli list wow-patch.mpq | grep -i \.exe | mpqcli extract wow-patch.mpq -
 [*] Extracted: Launcher.exe
 [*] Extracted: BackgroundDownloader.exe
 [*] Extracted: WoW.exe
@@ -16,11 +16,10 @@ $ mpqcli list wow-patch.mpq | grep -i \.exe | xargs -I@ mpqcli extract -f "@" wo
 [*] Extracted: WowError.exe
 ```
 
-Note that directories are specified with backslashes, which need to be escaped (due to how grep and xargs handles them). The following example extracts all `dat` files in the `arr` directory from the `StarDat.mpq` archive and handles escaping via `sed`.
+Note that directories are specified with backslashes. The names reach `mpqcli extract` on stdin unchanged, so only the backslash in the `grep` pattern needs escaping. The following example extracts all `dat` files in the `arr` directory from the `StarDat.mpq` archive, keeping the folder.
 
 ```bash
-$ mpqcli list -l scbw.txt StarDat.mpq | grep -i "arr\\\.*dat$" | sort | sed 's|\\|\\\\|g' | \
-    xargs -I@ mpqcli extract -f "@" -k StarDat.mpq
+$ mpqcli list -l scbw.txt StarDat.mpq | grep -i 'arr\\.*dat$' | sort | mpqcli extract StarDat.mpq -
 [*] Extracted: arr/flingy.dat
 [*] Extracted: arr/images.dat
 [*] Extracted: arr/mapdata.dat
@@ -40,7 +39,7 @@ The following command lists all files in an MPQ archive, and each filename is fi
 
 ```powershell
 PS> mpqcli.exe list wow-patch.mpq | Select-String -Pattern \.exe | `
-    ForEach-Object { mpqcli.exe extract -f $_ wow-patch.mpq }
+    ForEach-Object { mpqcli.exe extract wow-patch.mpq $_ }
 [*] Extracted: Launcher.exe
 [*] Extracted: BackgroundDownloader.exe
 [*] Extracted: WoW.exe

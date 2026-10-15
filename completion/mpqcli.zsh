@@ -161,9 +161,9 @@ _mpqcli_extract() {
     local locales="${_mpqcli_locales[*]}"
     _arguments \
         '1:archive:_mpqcli_archives' \
+        '*:archive paths' \
         '(-o --output)'{-o,--output}'[output directory]:dir:_files -/' \
-        '(-f --file)'{-f,--file}'[target file to extract]:file' \
-        '(-k --keep)'{-k,--keep}'[keep folder structure]' \
+        '--flat[write files without their folders]' \
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
         '--locale[preferred locale for extracted file]:locale:('"$locales"')'
 }

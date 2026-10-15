@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -173,7 +174,7 @@ def test_extract_file_from_mpq_output_directory_specified(binary_path, generate_
     }
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", "".join(expected_output), str(test_file)],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), "".join(expected_output)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -222,7 +223,7 @@ def test_extract_file_from_mpq_with_locale(binary_path, generate_locales_mpq_tes
         shutil.rmtree(output_dir)
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file), "--locale", locale],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -259,7 +260,7 @@ def test_extract_file_from_mpq_with_default_locale(binary_path, generate_locales
 
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file)],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -295,7 +296,7 @@ def test_extract_file_from_mpq_with_illegal_locale(binary_path, generate_locales
         shutil.rmtree(output_dir)
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file), "--locale", locale],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -323,7 +324,7 @@ def test_extract_file_from_mpq_with_locale_not_in_file(binary_path, generate_loc
         shutil.rmtree(output_dir)
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file), "--locale", locale],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -360,7 +361,7 @@ def test_extract_file_from_mpq_with_no_locale_argument_and_no_default_locale(bin
 
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file)],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -403,7 +404,7 @@ def test_extract_file_from_mpq_with_wrong_locale_argument_and_no_default_locale(
 
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file), "--locale", locale],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -539,7 +540,7 @@ def test_extract_single_file_from_mpq_without_providing_listfile(binary_path, ge
     }
 
     result = subprocess.run(
-        [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file)],
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), file_to_extract],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -842,21 +843,175 @@ def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
     )
     assert result.returncode == 0, f"Failed to add nested file: {result.stderr}"
 
-    # Extract the nested file
+    # Extract the nested file, which keeps its folder
     result = subprocess.run(
-        [str(binary_path), "extract", "-f", nested_path, "-o", str(output_dir), str(archive_file)],
+        [str(binary_path), "extract", "-o", str(output_dir), str(archive_file), nested_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
     )
 
-    expected_stderr = {"[*] Extracted: cats.txt"}
+    separator = "\\" if platform.system() == "Windows" else "/"
+    expected_stderr = {f"[*] Extracted: texts{separator}cats.txt"}
     output_lines = set(result.stderr.splitlines())
 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
 
-    extracted_file = output_dir / "cats.txt"
+    extracted_file = output_dir / "texts" / "cats.txt"
     assert extracted_file.exists(), "Extracted nested file does not exist"
     assert extracted_file.read_text(encoding="utf-8") == "This is a file about cats.\n", \
         "Unexpected content in extracted nested file"
+
+    # Extract it again with --flat, which drops the folder
+    flat_dir = script_dir / "data" / "extracted_nested_flat"
+    if flat_dir.exists():
+        shutil.rmtree(flat_dir)
+    result = subprocess.run(
+        [str(binary_path), "extract", "--flat", "-o", str(flat_dir), str(archive_file), nested_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert set(result.stderr.splitlines()) == {"[*] Extracted: cats.txt"}
+    assert set(fi.name for fi in flat_dir.iterdir()) == {"cats.txt"}
+
+
+def test_extract_multiple_files(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), "cats.txt", "dogs.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert set(result.stderr.splitlines()) == {"[*] Extracted: cats.txt", "[*] Extracted: dogs.txt"}
+    assert set(fi.name for fi in output_dir.iterdir()) == {"cats.txt", "dogs.txt"}
+
+
+def test_extract_files_via_stdin(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), "-"],
+        input="cats.txt\ndogs.txt\n",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert set(fi.name for fi in output_dir.iterdir()) == {"cats.txt", "dogs.txt"}
+
+
+def test_extract_empty_stdin_extracts_nothing(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-o", str(output_dir), str(test_file), "-"],
+        input="",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "[*] No files to extract" in result.stderr
+    assert not output_dir.exists(), "Output directory was created"
+
+
+def test_extract_flat_name_collision_extracts_nothing(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    (input_dir / "a").mkdir(parents=True)
+    (input_dir / "b").mkdir()
+    (input_dir / "a" / "x.txt").write_text("A")
+    (input_dir / "b" / "x.txt").write_text("B")
+    archive_file = tmp_path / "collision.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(input_dir), "-o", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "--flat", "-o", str(output_dir), str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert "to the same file" in result.stderr
+    assert not output_dir.exists(), "Output directory was created"
+
+
+def test_extract_listfile_with_named_files_is_rejected(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    listfile = tmp_path / "listfile.txt"
+    listfile.write_text("cats.txt\n")
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-o", str(output_dir), "-l", str(listfile), str(test_file), "cats.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 108, f"mpqcli failed with error: {result.stderr}"
+    assert not output_dir.exists(), "Output directory was created"
+
+
+def test_extract_old_file_option_is_rejected(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-f", "cats.txt", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    # -f is not an extract option, so the file name is taken as the archive
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_extract_old_keep_flag_is_rejected(binary_path, generate_test_files, tmp_path):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-k", "-o", str(output_dir), str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
+    assert not output_dir.exists(), "Output directory was created"
