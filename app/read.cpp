@@ -15,7 +15,7 @@ void RegisterRead(CLI::App &app, Context &context) {
         ->required()
         ->check(CLI::ExistingFile);
     sub->add_option("file", options->file, "File to read")->required();
-    sub->add_option("--locale", options->locale, "Preferred locale for read file")
+    sub->add_option("-e,--locale", options->locale, "Preferred locale for read file")
         ->check(locale_valid);
 
     sub->callback([options, &context]() {

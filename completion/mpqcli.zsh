@@ -100,7 +100,7 @@ _mpqcli_create() {
         '*:files:_files' \
         '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory or several inputs]:path' \
         '(-s --sign)'{-s,--sign}'[sign the archive]' \
-        '--locale[locale for added files]:locale:('"$locales"')' \
+        '(-e --locale)'{-e,--locale}'[locale for added files]:locale:('"$locales"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"$games"')' \
         '--format-version[MPQ archive format version (1-4)]:version:(1 2 3 4)' \
         '--stream-flags[override stream flags]:flags' \
@@ -123,7 +123,7 @@ _mpqcli_add() {
         '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory or several inputs]:path' \
         '(-w --overwrite -u --update)'{-w,--overwrite}'[replace every existing file]' \
         '(-u --update -w --overwrite)'{-u,--update}'[replace only files that changed]' \
-        '--locale[locale for added file]:locale:('"$locales"')' \
+        '(-e --locale)'{-e,--locale}'[locale for added file]:locale:('"$locales"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"$games"')' \
         '--flags[override MPQ file flags]:flags' \
         '--compression[override compression for first sector]:compression' \
@@ -135,7 +135,7 @@ _mpqcli_remove() {
     _arguments \
         '1:archive:_mpqcli_archives' \
         '*:archive paths' \
-        '--locale[locale of file to remove]:locale:('"$locales"')'
+        '(-e --locale)'{-e,--locale}'[locale of file to remove]:locale:('"$locales"')'
 }
 
 _mpqcli_rename() {
@@ -144,7 +144,7 @@ _mpqcli_rename() {
         '1:archive:_mpqcli_archives' \
         '2:old archive path' \
         '3:new archive path' \
-        '--locale[locale of file to rename]:locale:('"$locales"')'
+        '(-e --locale)'{-e,--locale}'[locale of file to rename]:locale:('"$locales"')'
 }
 
 _mpqcli_list() {
@@ -165,7 +165,7 @@ _mpqcli_extract() {
         '(-o --output)'{-o,--output}'[output directory]:dir:_files -/' \
         '--flat[write files without their folders]' \
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
-        '--locale[preferred locale for extracted files]:locale:('"$locales"')'
+        '(-e --locale)'{-e,--locale}'[preferred locale for extracted files]:locale:('"$locales"')'
 }
 
 _mpqcli_read() {
@@ -173,7 +173,7 @@ _mpqcli_read() {
     _arguments \
         '1:archive:_mpqcli_archives' \
         '2:file-in-archive' \
-        '--locale[preferred locale for read file]:locale:('"$locales"')'
+        '(-e --locale)'{-e,--locale}'[preferred locale for read file]:locale:('"$locales"')'
 }
 
 _mpqcli_verify() {

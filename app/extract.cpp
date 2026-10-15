@@ -35,7 +35,7 @@ void RegisterExtract(CLI::App &app, Context &context) {
                     "File listing content of an MPQ archive, when extracting every file")
         ->check(CLI::ExistingFile)
         ->excludes(files);
-    sub->add_option("--locale", options->extract.locale, "Preferred locale for extracted files")
+    sub->add_option("-e,--locale", options->extract.locale, "Preferred locale for extracted files")
         ->check(locale_valid);
 
     sub->callback([options, &context]() {

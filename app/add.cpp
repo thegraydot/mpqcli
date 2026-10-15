@@ -35,7 +35,7 @@ void RegisterAdd(CLI::App &app, Context &context) {
     sub->add_flag("-u,--update", options->add.update,
                   "Replace only files that changed. Compares size, then timestamp/MD5/CRC32")
         ->excludes(overwrite);
-    sub->add_option("--locale", options->add.locale, "Locale to use for added file")
+    sub->add_option("-e,--locale", options->add.locale, "Locale to use for added file")
         ->check(locale_valid);
     sub->add_option("-g,--game", options->add.game_profile,
                     "Game profile for compression rules. Valid options:\n" +

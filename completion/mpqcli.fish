@@ -106,7 +106,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from info' \
 
 # create
 #   create <archive.mpq> <files...> [-p/--path] [-s/--sign]
-#          [--locale] [-g/--game]
+#          [-e/--locale] [-g/--game]
 #          [--format-version] [--stream-flags] [--sector-size] [--raw-chunk-size]
 #          [--file-flags1/2/3] [--attr-flags]
 #          [--flags] [--compression] [--compression-next]
@@ -119,7 +119,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from create' \
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -s s -l sign        -d 'Sign the MPQ archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
-    -l locale           -d 'Locale to use for added files' \
+    -s e -l locale      -d 'Locale to use for added files' \
     -r -f -a "$__mpqcli_locales"
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -s g -l game        -d 'Game profile for MPQ creation' \
@@ -150,7 +150,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from create' \
 
 # add
 #   add <archive.mpq> <files...> [-p/--path] [-w/--overwrite | -u/--update]
-#       [--locale] [-g/--game]
+#       [-e/--locale] [-g/--game]
 #       [--flags] [--compression] [--compression-next]
 # Positional 1 is the archive and the rest are files or directories to add, so
 # every positional takes a path
@@ -163,7 +163,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from add' \
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -s u -l update          -d 'Replace only files that changed'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
-    -l locale               -d 'Locale to use for added file' \
+    -s e -l locale          -d 'Locale to use for added file' \
     -r -f -a "$__mpqcli_locales"
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -s g -l game            -d 'Game profile for compression rules' \
@@ -176,23 +176,23 @@ complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -l compression-next     -d 'Override compression for subsequent sectors' -r -f
 
 # remove
-#   remove <archive.mpq> <files...> [--locale]
+#   remove <archive.mpq> <files...> [-e/--locale]
 # Positional 1 is the archive; the rest are in-archive paths, so they get no
 # filesystem completion
 complete -c mpqcli -n '__fish_seen_subcommand_from remove; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from remove' \
-    -l locale   -d 'Locale of the file to remove' \
+    -s e -l locale -d 'Locale of the file to remove' \
     -r -f -a "$__mpqcli_locales"
 
 # rename
-#   rename <archive.mpq> <old path> <new path> [--locale]
+#   rename <archive.mpq> <old path> <new path> [-e/--locale]
 # Positional 1 is the archive; positionals 2 and 3 are in-archive paths, so
 # they get no filesystem completion
 complete -c mpqcli -n '__fish_seen_subcommand_from rename; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from rename' \
-    -l locale   -d 'Locale of the file to rename' \
+    -s e -l locale -d 'Locale of the file to rename' \
     -r -f -a "$__mpqcli_locales"
 
 # list
@@ -212,7 +212,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from list' \
 
 # extract
 #   extract <archive.mpq> [files...] [-o/--output] [--flat]
-#           [-l/--listfile] [--locale]
+#           [-l/--listfile] [-e/--locale]
 # Positional 1 is the archive; the rest are in-archive paths, so they get no
 # filesystem completion
 complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index --flat) -eq 1' -F
@@ -224,17 +224,17 @@ complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s l -l listfile    -d 'External file listing content of the archive' -r -F
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
-    -l locale           -d 'Preferred locale for extracted files' \
+    -s e -l locale      -d 'Preferred locale for extracted files' \
     -r -f -a "$__mpqcli_locales"
 
 # read
-#   read <archive.mpq> <file> [--locale]
+#   read <archive.mpq> <file> [-e/--locale]
 # Positional 1 is the archive; positional 2 is an in-archive path, so it gets
 # no filesystem completion
 complete -c mpqcli -n '__fish_seen_subcommand_from read; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from read' \
-    -l locale   -d 'Preferred locale for read file' \
+    -s e -l locale -d 'Preferred locale for read file' \
     -r -f -a "$__mpqcli_locales"
 
 # verify

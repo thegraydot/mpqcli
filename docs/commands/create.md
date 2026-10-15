@@ -76,7 +76,7 @@ $ mpqcli create --format-version 1 --sign archive.mpq <directory>
 
 ## Create an MPQ archive with a given locale
 
-Use the `--locale` argument to specify the locale that all added files will have in the archive. Note that subsequent added files will have the default locale unless the `--locale` argument is specified again.
+Use the `-e` or `--locale` argument to specify the locale that all added files will have in the archive. Note that subsequent added files will have the default locale unless the `--locale` argument is specified again.
 
 ```bash
 $ mpqcli create archive.mpq <directory> --locale koKR

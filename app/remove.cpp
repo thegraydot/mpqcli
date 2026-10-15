@@ -19,7 +19,8 @@ void RegisterRemove(CLI::App &app, Context &context) {
                     "Archive paths of files to remove; pass - to read paths from stdin")
         ->required()
         ->expected(-1);
-    sub->add_option("--locale", options->locale, "Locale of file to remove")->check(locale_valid);
+    sub->add_option("-e,--locale", options->locale, "Locale of file to remove")
+        ->check(locale_valid);
 
     sub->callback([options, &context]() {
         options->files = mpqcli::ExpandStdinMarker(options->files, context.in);

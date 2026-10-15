@@ -1,5 +1,8 @@
+import re
 import subprocess
 from pathlib import Path
+
+import pytest
 
 
 def test_read_mpq_v1_plain(binary_path):
@@ -73,6 +76,37 @@ def test_read_file_from_mpq_with_locale(binary_path, generate_locales_mpq_test_f
     output_lines = set(result.stdout.splitlines())
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert output_lines == expected_content, f"Unexpected output: {output_lines}"
+
+
+def test_read_file_from_mpq_with_short_locale_flag(binary_path, generate_locales_mpq_test_files):
+    _ = generate_locales_mpq_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_many_locales.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "read", str(test_file), "cats.txt", "-e", "deDE"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout.splitlines() == ["Dies ist eine Datei über Katzen."]
+
+
+@pytest.mark.parametrize("subcommand", ["add", "create", "extract", "read", "remove", "rename"])
+def test_locale_short_flag_is_e_on_every_subcommand(binary_path, subcommand):
+    # A short flag means one thing across the binary, so every subcommand with a
+    # locale offers it as -e
+    result = subprocess.run(
+        [str(binary_path), subcommand, "--help"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert re.search(r"^\s+-e,\s+--locale\b", result.stdout, re.MULTILINE), result.stdout
 
 
 def test_read_file_from_mpq_with_default_locale(binary_path, generate_locales_mpq_test_files):

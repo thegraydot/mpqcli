@@ -39,7 +39,7 @@ $ mpqcli read wow-patch.mpq "WoW.exe" | xxd
 
 ## Read one specific file with locale
 
-Use the `--locale` argument to specify the locale of the file to read. If there is no file with the requested name and locale, the default locale will be used instead.
+Use the `-e` or `--locale` argument to specify the locale of the file to read. If there is no file with the requested name and locale, the default locale will be used instead.
 
 ```bash
 $ mpqcli read Patch_rt.mpq "rez\stat_txt.tbl" --locale ptPT

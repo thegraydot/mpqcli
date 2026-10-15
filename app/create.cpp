@@ -36,7 +36,7 @@ void RegisterCreate(CLI::App &app, Context &context) {
     sub->add_option("-p,--path", options->create.path,
                     "Archive path for a single file, or prefix for a directory or several inputs");
     sub->add_flag("-s,--sign", options->create.sign, "Sign the MPQ archive (default false)");
-    sub->add_option("--locale", options->create.locale, "Locale to use for added files")
+    sub->add_option("-e,--locale", options->create.locale, "Locale to use for added files")
         ->check(locale_valid);
     sub->add_option("-g,--game", options->create.game_profile,
                     "Game profile for MPQ creation. Valid options:\n" +

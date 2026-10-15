@@ -82,6 +82,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--path'          = 'Archive path for a single file, or prefix for a directory or several inputs'
             '-s'              = 'Sign the MPQ archive'
             '--sign'          = 'Sign the MPQ archive'
+            '-e'              = 'Locale to use for added files'
             '--locale'        = 'Locale to use for added files'
             '-g'              = 'Game profile for MPQ creation'
             '--game'          = 'Game profile for MPQ creation'
@@ -104,6 +105,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--overwrite' = 'Replace every file that already exists in the archive'
             '-u'          = 'Replace only files that changed'
             '--update'    = 'Replace only files that changed'
+            '-e'          = 'Locale to use for added file'
             '--locale'    = 'Locale to use for added file'
             '-g'          = 'Game profile for compression rules'
             '--game'      = 'Game profile for compression rules'
@@ -112,9 +114,11 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
         'remove' = [ordered]@{
+            '-e'       = 'Locale of file to remove'
             '--locale' = 'Locale of file to remove'
         }
         'rename' = [ordered]@{
+            '-e'       = 'Locale of file to rename'
             '--locale' = 'Locale of file to rename'
         }
         'list' = [ordered]@{
@@ -132,9 +136,11 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--flat'     = 'Write files into the output directory without their folders'
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
+            '-e'         = 'Preferred locale for extracted files'
             '--locale'   = 'Preferred locale for extracted files'
         }
         'read' = [ordered]@{
+            '-e'       = 'Preferred locale for read file'
             '--locale' = 'Preferred locale for read file'
         }
         'verify' = [ordered]@{
@@ -151,6 +157,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
 
     # Options whose *argument* should complete from a static value set
     $valueOptions = @{
+        '-e'               = $locales
         '--locale'         = $locales
         '-g'               = $gameProfiles
         '--game'           = $gameProfiles

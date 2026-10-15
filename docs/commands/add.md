@@ -100,7 +100,7 @@ $ mpqcli add wow-patch.mpq allegiance.txt --overwrite
 
 ## Add with a locale
 
-Use `--locale` to store the file under a specific locale. Files added without `--locale` use the default locale.
+Use `-e` or `--locale` to store the file under a specific locale. Files added without `--locale` use the default locale.
 
 ```bash
 $ mpqcli add wow-patch.mpq allianz.txt --locale deDE

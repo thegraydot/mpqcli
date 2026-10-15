@@ -130,7 +130,7 @@ _mpqcli() {
 
         create)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
                 --format-version) _mpqcli_words "1 2 3 4"; return ;;
                 -p|--path|--stream-flags|--sector-size|--raw-chunk-size|\
@@ -139,7 +139,7 @@ _mpqcli() {
                     return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -s --sign --locale -g --game --format-version \
+                _mpqcli_words "-p --path -s --sign -e --locale -g --game --format-version \
 --stream-flags --sector-size --raw-chunk-size --file-flags1 --file-flags2 --file-flags3 \
 --attr-flags --flags --compression --compression-next"
             else
@@ -151,12 +151,12 @@ _mpqcli() {
 
         add)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
                 -p|--path|--flags|--compression|--compression-next) return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -w --overwrite -u --update --locale -g --game \
+                _mpqcli_words "-p --path -w --overwrite -u --update -e --locale -g --game \
 --flags --compression --compression-next"
             else
                 # Positional 1 is the archive; the rest are files or directories to add
@@ -171,10 +171,10 @@ _mpqcli() {
 
         remove)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
                 # Positional 1 is the archive; the rest are in-archive paths, so
                 # they get no filesystem completion
@@ -187,10 +187,10 @@ _mpqcli() {
 
         rename)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
                 # Positional 1 is the archive; positionals 2 and 3 are in-archive
                 # paths, so they get no filesystem completion
@@ -220,10 +220,10 @@ _mpqcli() {
             case "$prev" in
                 -o|--output) _mpqcli_filedir -d; return ;;
                 -l|--listfile) _mpqcli_filedir; return ;;
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-o --output --flat -l --listfile --locale"
+                _mpqcli_words "-o --output --flat -l --listfile -e --locale"
             else
                 # Positional 1 is the archive; the rest are in-archive paths, so
                 # they get no filesystem completion
@@ -236,10 +236,10 @@ _mpqcli() {
 
         read)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
                 # Positional 1 is the archive; positional 2 is an in-archive path,
                 # so it gets no filesystem completion
