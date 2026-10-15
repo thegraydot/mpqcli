@@ -102,7 +102,7 @@ _mpqcli_create() {
         '(-s --sign)'{-s,--sign}'[sign the archive]' \
         '--locale[locale for added files]:locale:('"$locales"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"$games"')' \
-        '--version[MPQ archive version (1-4)]:version:(1 2 3 4)' \
+        '--format-version[MPQ archive format version (1-4)]:version:(1 2 3 4)' \
         '--stream-flags[override stream flags]:flags' \
         '--sector-size[override sector size]:size' \
         '--raw-chunk-size[override raw chunk size for MPQ v4]:size' \

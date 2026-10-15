@@ -20,7 +20,7 @@ Target a specific game version by using the `-g` or `--game` argument. This will
 $ mpqcli create -g starcraft <target_directory>
 $ mpqcli create --game wow-wotlk \
     --sector-size 16384 \
-    --version 3 <target_directory>
+    --format-version 3 <target_directory>
 ```
 
 ## Create an MPQ archive from a single file
@@ -53,7 +53,7 @@ $ mpqcli create textures/ --output archive.mpq --path textures
 Use the `-s` or `--sign` argument to cryptographically sign an MPQ archive with the Blizzard weak signature.
 
 ```bash
-$ mpqcli create --version 1 --sign <target_directory>
+$ mpqcli create --format-version 1 --sign <target_directory>
 ```
 
 ## Create an MPQ archive with a given locale

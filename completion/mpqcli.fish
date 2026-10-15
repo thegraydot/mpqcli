@@ -107,7 +107,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from info' \
 # create
 #   create <target> [-p/--path] [-o/--output] [-s/--sign]
 #          [--locale] [-g/--game]
-#          [--version] [--stream-flags] [--sector-size] [--raw-chunk-size]
+#          [--format-version] [--stream-flags] [--sector-size] [--raw-chunk-size]
 #          [--file-flags1/2/3] [--attr-flags]
 #          [--flags] [--compression] [--compression-next]
 complete -c mpqcli -n '__fish_seen_subcommand_from create; and test (__mpqcli_positional_index -s --sign) -eq 1' -F
@@ -126,7 +126,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -r -f -a "$__mpqcli_game_profiles"
 # Game setting overrides
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
-    -l version          -d 'Override MPQ archive version (1-4)' -r -f -a '1 2 3 4'
+    -l format-version   -d 'Override MPQ archive format version (1-4)' -r -f -a '1 2 3 4'
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -l stream-flags     -d 'Override stream flags' -r -f
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \

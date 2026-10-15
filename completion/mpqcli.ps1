@@ -87,7 +87,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--locale'        = 'Locale to use for added files'
             '-g'              = 'Game profile for MPQ creation'
             '--game'          = 'Game profile for MPQ creation'
-            '--version'       = 'Override the MPQ archive version (1-4)'
+            '--format-version'= 'Override the MPQ archive format version (1-4)'
             '--stream-flags'  = 'Override stream flags'
             '--sector-size'   = 'Override sector size'
             '--raw-chunk-size'= 'Override raw chunk size for MPQ v4'
@@ -156,10 +156,10 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
 
     # Options whose *argument* should complete from a static value set
     $valueOptions = @{
-        '--locale'   = $locales
-        '-g'         = $gameProfiles
-        '--game'     = $gameProfiles
-        '--version'  = @('1', '2', '3', '4')
+        '--locale'         = $locales
+        '-g'               = $gameProfiles
+        '--game'           = $gameProfiles
+        '--format-version' = @('1', '2', '3', '4')
     }
     # Property options depend on the subcommand (info vs list), handled below
 

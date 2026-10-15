@@ -132,7 +132,7 @@ _mpqcli() {
             case "$prev" in
                 --locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
-                --version) _mpqcli_words "1 2 3 4"; return ;;
+                --format-version) _mpqcli_words "1 2 3 4"; return ;;
                 -o|--output) _mpqcli_filedir; return ;;
                 -p|--path|--stream-flags|--sector-size|--raw-chunk-size|\
                 --file-flags1|--file-flags2|--file-flags3|--attr-flags|\
@@ -140,7 +140,7 @@ _mpqcli() {
                     return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -o --output -s --sign --locale -g --game --version \
+                _mpqcli_words "-p --path -o --output -s --sign --locale -g --game --format-version \
 --stream-flags --sector-size --raw-chunk-size --file-flags1 --file-flags2 --file-flags3 \
 --attr-flags --flags --compression --compression-next"
             else

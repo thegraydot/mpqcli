@@ -836,7 +836,7 @@ def test_extract_nested_file_from_mpq(binary_path, generate_test_files):
     target_dir = script_dir / "data" / "files"
     archive_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", str(target_dir), "-o", str(archive_file)],
+        [str(binary_path), "create", "--format-version", "1", str(target_dir), "-o", str(archive_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

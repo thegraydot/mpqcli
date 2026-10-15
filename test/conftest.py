@@ -96,7 +96,7 @@ def generate_locales_mpq_test_files(binary_path):
 
         if locale == "": # Default locale - create a new MPQ file
             result = subprocess.run(
-                [str(binary_path), "create", "--version", "1", "-o", str(mpq_many_locales_file_name), str(locales_files_dir)],
+                [str(binary_path), "create", "--format-version", "1", "-o", str(mpq_many_locales_file_name), str(locales_files_dir)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -118,7 +118,7 @@ def generate_locales_mpq_test_files(binary_path):
     file_path.write_text(content, newline="\n")
 
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", "-o", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
+        [str(binary_path), "create", "--format-version", "1", "-o", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

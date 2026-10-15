@@ -15,7 +15,7 @@ void RegisterCreate(CLI::App &app, Context &context) {
     struct Options {
         mpqcli::CreateOptions create;
         // The documented numbering is 1 to 4; StormLib counts the same formats from 0
-        std::optional<int32_t> version;
+        std::optional<int32_t> format_version;
     };
 
     auto options = std::make_shared<Options>();
@@ -36,7 +36,8 @@ void RegisterCreate(CLI::App &app, Context &context) {
         ->check(game_profile_valid);
 
     mpqcli::MpqCreateSettingsOverrides &create = options->create.create_overrides;
-    sub->add_option("--version", options->version, "Override the MPQ archive version")
+    sub->add_option("--format-version", options->format_version,
+                    "Override the MPQ archive format version")
         ->check(CLI::Range(1, 4))
         ->group("Game setting overrides");
     sub->add_option("--stream-flags", create.stream_flags, "Override stream flags")
@@ -66,9 +67,9 @@ void RegisterCreate(CLI::App &app, Context &context) {
         ->group("Game setting overrides");
 
     sub->callback([options, &context]() {
-        if (options->version.has_value()) {
+        if (options->format_version.has_value()) {
             options->create.create_overrides.mpq_version =
-                static_cast<DWORD>(options->version.value() - 1);
+                static_cast<DWORD>(options->format_version.value() - 1);
         }
         context.exit_code = mpqcli::Create(options->create, context.err, context.cancelled) ? 0 : 1;
     });

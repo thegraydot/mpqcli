@@ -18,7 +18,7 @@ def test_create_mpq_target_does_not_exist(binary_path, generate_test_files):
     target_dir = script_dir / "does" / "not" / "exist"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -47,7 +47,7 @@ def test_create_mpq_versions(binary_path, generate_test_files):
         # test_create_mpq_already_exists
         target_file.unlink(missing_ok=True)
         result = subprocess.run(
-            [str(binary_path), "create", "--version", str(version), str(target_dir)],
+            [str(binary_path), "create", "--format-version", str(version), str(target_dir)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -92,7 +92,7 @@ def test_create_mpq_with_output(binary_path, generate_test_files):
         result = subprocess.run(
             [
                 str(binary_path), "create",
-                "--version", str(version),
+                "--format-version", str(version),
                 "--file-flags1", "4294967295",
                 "--file-flags2", "4294967295",
                 "--file-flags3", "0",
@@ -181,7 +181,7 @@ def test_create_mpq_already_exists(binary_path, generate_test_files):
     output_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", "-o", str(output_file), str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", "-o", str(output_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -310,7 +310,7 @@ def test_create_mpq_with_illegal_locale(binary_path, generate_test_files):
     output_file = script_dir / "data" / "new_mpq.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", "-o", str(output_file), str(target_dir), "--locale", "illegal_locale"],
+        [str(binary_path), "create", "--format-version", "1", "-o", str(output_file), str(target_dir), "--locale", "illegal_locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -851,3 +851,21 @@ def test_create_mpq_from_empty_directory(binary_path, tmp_path):
     assert info_result.returncode == 0
     assert info_result.stdout.strip() == "64", \
         f"Expected max-files of 64, got: {info_result.stdout.strip()}"
+
+
+def test_create_old_version_option_is_rejected(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+
+    result = subprocess.run(
+        [str(binary_path), "create", "--version", "1", str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    # --version is not a create option, so the version number is taken as the input
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert list(tmp_path.glob("*.mpq")) == []
