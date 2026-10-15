@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.13.0 - 2026-10-16
+
+### Added
+
+- Accept several files, or a list read from stdin, in create and extract
+- Add a flat option to extract, which fails rather than overwrites when two names clash
+
+### Changed
+
+- Take the archive as the first argument in every subcommand, including create and read
+- Keep folders when extracting named files
+- Rename the create version option to format-version
+- Reject an unknown locale in extract and read instead of using the default locale
+
+### Fixed
+
+- Show the encryption keys of encrypted files listed without their names
+- Accept Windows line endings in paths read from stdin
+
+### Removed
+
+- Remove create -o, extract -f and -k, and the -p flag from info, list and verify
+
+### Thanks
+
+- Thanks to @sjoblomj for the contributions in this release
+- Thanks to @MikaMika for reporting the inconsistent subcommand arguments
+
 ## 0.12.0 - 2026-10-04
 
 ### Added
