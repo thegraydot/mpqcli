@@ -1,3 +1,4 @@
+import os
 import platform
 import subprocess
 import shutil
@@ -971,6 +972,37 @@ def test_create_missing_input_creates_nothing(binary_path, tmp_path):
     assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
     assert "Path does not exist" in result.stderr
     assert sorted(p.name for p in tmp_path.iterdir()) == ["a.txt"]
+
+
+@pytest.mark.skipif(
+    platform.system() == "Windows" or os.geteuid() == 0,
+    reason="Needs a file permission that stops the user running the tests from reading it",
+)
+def test_create_unreadable_file_creates_nothing(binary_path, tmp_path):
+    input_dir = tmp_path / "mod"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+    locked_file = input_dir / "locked.txt"
+    locked_file.write_text("Locked.")
+    other_file = tmp_path / "b.txt"
+    other_file.write_text("B file.")
+    archive_file = tmp_path / "unreadable.mpq"
+
+    locked_file.chmod(0)
+    try:
+        result = subprocess.run(
+            [str(binary_path), "create", str(archive_file), str(other_file), str(input_dir)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+    finally:
+        locked_file.chmod(0o644)
+
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert "Failed to add: locked.txt" in result.stderr
+    assert "no archive was created" in result.stderr
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["b.txt", "mod"]
 
 
 def test_create_skips_the_archive_inside_its_own_input_directory(binary_path, tmp_path):

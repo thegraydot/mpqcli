@@ -19,6 +19,7 @@
 - Show the encryption keys of encrypted files listed without their names
 - Accept Windows line endings in paths read from stdin
 - Stop add and create from storing an archive inside itself
+- Leave no archive behind when create cannot add every file
 
 ### Removed
 

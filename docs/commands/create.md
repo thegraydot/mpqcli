@@ -12,7 +12,7 @@ $ mpqcli create archive.mpq <directory>
 
 The default mode of operation for the `create` subcommand is to take everything from the directory (and below) and recursively add it to the archive. The directory's contents go at the root of the archive, and the structure below it is retained. Windows-style backslash path separators are used (`\`), as per the observed behaviour in most MPQ archives.
 
-The archive must not already exist; `create` never overwrites a file.
+The archive must not already exist; `create` never overwrites a file. If an input is missing or any file cannot be added, no archive is created.
 
 ## Create an MPQ archive from several files and directories
 

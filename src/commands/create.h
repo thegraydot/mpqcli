@@ -24,7 +24,7 @@ struct CreateOptions {
     CompressionSettingsOverrides compression_overrides;
 };
 
-/// Creates an archive from files and directories, returning false if any file failed to add
+/// Creates an archive from files and directories, creating nothing if any file failed to add
 bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli

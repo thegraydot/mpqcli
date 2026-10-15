@@ -54,7 +54,8 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     }
 
     // Count every input up front: the archive's max file count is fixed at creation,
-    // and an input that cannot be read fails here, before the archive exists
+    // and a missing input or a directory that cannot be listed fails here, before the
+    // archive exists
     uint32_t input_file_count = 0;
     for (const auto &f : options.files) {
         if (!fs::exists(f, ec)) {
@@ -109,6 +110,14 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
             << std::endl;
     }
 
+    // An archive missing some of its files is not the one that was asked for, so it is
+    // discarded with the partial and the output path stays empty, as for a missing input
+    if (result != 0) {
+        err << "[!] Failed to add every file, so no archive was created: "
+            << output_file_path.string() << std::endl;
+        return false;
+    }
+
     if (options.sign) {
         archive.Sign();
     }
@@ -122,7 +131,7 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
                         ec);
     }
 
-    return result == 0;
+    return true;
 }
 
 } // namespace mpqcli
