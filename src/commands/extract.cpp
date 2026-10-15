@@ -20,11 +20,11 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     std::error_code ec;
     fs::path effective_output;
     if (!options.output.has_value()) {
-        fs::path target_path = fs::absolute(options.target, ec);
+        fs::path archive_path = fs::absolute(options.archive, ec);
         if (ec) {
-            throw FileError("Failed to resolve archive path", options.target, ec);
+            throw FileError("Failed to resolve archive path", options.archive, ec);
         }
-        effective_output = target_path.parent_path() / target_path.stem();
+        effective_output = archive_path.parent_path() / archive_path.stem();
     } else {
         effective_output = options.output.value();
     }
@@ -45,7 +45,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
             << effective_output.string() << std::endl;
     }
 
-    Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);
+    Archive archive = Archive::Open(options.archive, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
     if (options.locale.has_value() && lcid == default_locale) {

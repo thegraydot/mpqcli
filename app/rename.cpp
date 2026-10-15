@@ -11,7 +11,7 @@ void RegisterRename(CLI::App &app, Context &context) {
     auto options = std::make_shared<mpqcli::RenameOptions>();
     auto *sub = app.add_subcommand("rename", "Rename a file in an existing MPQ archive");
 
-    sub->add_option("archive", options->archive, "Target MPQ archive")
+    sub->add_option("archive", options->archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
     sub->add_option("old-file", options->old_file, "Current archive path of the file")->required();

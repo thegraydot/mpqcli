@@ -11,7 +11,7 @@ namespace mpqcli {
 
 /// Settled arguments for the extract subcommand
 struct ExtractOptions {
-    std::filesystem::path target;
+    std::filesystem::path archive;
     std::optional<std::filesystem::path> output;
     std::optional<std::string> file;
     bool keep_folder_structure = false;

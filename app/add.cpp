@@ -21,7 +21,7 @@ void RegisterAdd(CLI::App &app, Context &context) {
     auto options = std::make_shared<Options>();
     auto *sub = app.add_subcommand("add", "Add files to an existing MPQ archive");
 
-    sub->add_option("archive", options->add.archive, "Target MPQ archive")
+    sub->add_option("archive", options->add.archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
     sub->add_option("files", options->files,

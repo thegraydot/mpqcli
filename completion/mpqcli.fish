@@ -97,7 +97,7 @@ complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
     -a completion -d 'Generate shell completion script'
 
 # info
-#   info <target.mpq> [-p/--property <value>]
+#   info <archive.mpq> [-p/--property <value>]
 complete -c mpqcli -n '__fish_seen_subcommand_from info; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from info' \
@@ -196,7 +196,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from rename' \
     -r -f -a "$__mpqcli_locales"
 
 # list
-#   list <target.mpq> [-l/--listfile] [-d/--detailed] [-a/--all]
+#   list <archive.mpq> [-l/--listfile] [-d/--detailed] [-a/--all]
 #        [-p/--property <value...>]
 complete -c mpqcli -n '__fish_seen_subcommand_from list; and test (__mpqcli_positional_index -d --detailed -a --all) -eq 1' -F
 
@@ -211,7 +211,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from list' \
     -r -f -a "$__mpqcli_list_properties"
 
 # extract
-#   extract <target.mpq> [-o/--output] [-f/--file] [-k/--keep]
+#   extract <archive.mpq> [-o/--output] [-f/--file] [-k/--keep]
 #           [-l/--listfile] [--locale]
 complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index -k --keep) -eq 1' -F
 
@@ -228,7 +228,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -r -f -a "$__mpqcli_locales"
 
 # read
-#   read <file> <target.mpq> [--locale]
+#   read <file> <archive.mpq> [--locale]
 # Positional 1 is an in-archive path, so it gets no filesystem completion;
 # positional 2 is the archive
 complete -c mpqcli -n '__fish_seen_subcommand_from read; and test (__mpqcli_positional_index) -eq 2' -F
@@ -238,14 +238,14 @@ complete -c mpqcli -n '__fish_seen_subcommand_from read' \
     -r -f -a "$__mpqcli_locales"
 
 # verify
-#   verify <target.mpq> [-p/--print]
+#   verify <archive.mpq> [-p/--print]
 complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index -p --print) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from verify' \
     -s p -l print   -d 'Print the digital signature (in hex)'
 
 # compact
-#   compact <target.mpq> [-l/--listfile]
+#   compact <archive.mpq> [-l/--listfile]
 complete -c mpqcli -n '__fish_seen_subcommand_from compact; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from compact' \

@@ -8,7 +8,7 @@ namespace mpqcli {
 
 /// Settled arguments for the verify subcommand
 struct VerifyOptions {
-    std::filesystem::path target;
+    std::filesystem::path archive;
     bool print_signature = false;
 };
 

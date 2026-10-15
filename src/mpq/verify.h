@@ -15,7 +15,7 @@ uint32_t VerifyMpqArchive(HANDLE archive);
 ///
 /// @throws ArchiveError if the signature cannot be read
 /// @throws FileError if the archive's size on disk cannot be read
-void PrintMpqSignature(HANDLE archive, const std::filesystem::path &target, std::ostream &out,
+void PrintMpqSignature(HANDLE archive, const std::filesystem::path &archive_path, std::ostream &out,
                        std::ostream &err);
 
 } // namespace mpqcli

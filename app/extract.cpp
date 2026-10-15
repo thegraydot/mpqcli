@@ -10,7 +10,7 @@ void RegisterExtract(CLI::App &app, Context &context) {
     auto options = std::make_shared<mpqcli::ExtractOptions>();
     auto *sub = app.add_subcommand("extract", "Extract files from the MPQ archive");
 
-    sub->add_option("target", options->target, "Target MPQ archive")
+    sub->add_option("archive", options->archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
     sub->add_option("-o,--output", options->output, "Output directory");
