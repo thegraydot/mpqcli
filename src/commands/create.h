@@ -6,6 +6,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "gamerules/settings.h"
 
@@ -13,9 +14,9 @@ namespace mpqcli {
 
 /// Settled arguments for the create subcommand
 struct CreateOptions {
-    std::filesystem::path target;
+    std::filesystem::path archive;
+    std::vector<std::filesystem::path> files;
     std::optional<std::string> path;
-    std::optional<std::filesystem::path> output;
     bool sign = false;
     std::optional<std::string> locale;
     std::optional<std::string> game_profile;
@@ -23,7 +24,7 @@ struct CreateOptions {
     CompressionSettingsOverrides compression_overrides;
 };
 
-/// Creates an archive from a file or directory, returning false if any file failed to add
+/// Creates an archive from files and directories, creating nothing if any file failed to add
 bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<bool> &cancelled);
 
 } // namespace mpqcli

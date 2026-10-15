@@ -116,10 +116,10 @@ _mpqcli() {
     case "${words[1]}" in
         info)
             case "$prev" in
-                -p|--property) _mpqcli_words "${info_properties[*]}"; return ;;
+                -q|--property) _mpqcli_words "${info_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --property"
+                _mpqcli_words "-q --property"
             else
                 _mpqcli_positional_index
                 if [[ $pos -eq 0 ]]; then
@@ -130,35 +130,33 @@ _mpqcli() {
 
         create)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
-                --version) _mpqcli_words "1 2 3 4"; return ;;
-                -o|--output) _mpqcli_filedir; return ;;
+                --format-version) _mpqcli_words "1 2 3 4"; return ;;
                 -p|--path|--stream-flags|--sector-size|--raw-chunk-size|\
                 --file-flags1|--file-flags2|--file-flags3|--attr-flags|\
                 --flags|--compression|--compression-next)
                     return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -o --output -s --sign --locale -g --game --version \
+                _mpqcli_words "-p --path -s --sign -e --locale -g --game --format-version \
 --stream-flags --sector-size --raw-chunk-size --file-flags1 --file-flags2 --file-flags3 \
 --attr-flags --flags --compression --compression-next"
             else
-                _mpqcli_positional_index -s --sign
-                if [[ $pos -eq 0 ]]; then
-                    _mpqcli_filedir
-                fi
+                # Positional 1 is the new archive; the rest are files or directories
+                # to add, so every positional takes a path
+                _mpqcli_filedir
             fi
             ;;
 
         add)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
                 -p|--path|--flags|--compression|--compression-next) return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -w --overwrite -u --update --locale -g --game \
+                _mpqcli_words "-p --path -w --overwrite -u --update -e --locale -g --game \
 --flags --compression --compression-next"
             else
                 # Positional 1 is the archive; the rest are files or directories to add
@@ -173,10 +171,10 @@ _mpqcli() {
 
         remove)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
                 # Positional 1 is the archive; the rest are in-archive paths, so
                 # they get no filesystem completion
@@ -189,10 +187,10 @@ _mpqcli() {
 
         rename)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
                 # Positional 1 is the archive; positionals 2 and 3 are in-archive
                 # paths, so they get no filesystem completion
@@ -206,10 +204,10 @@ _mpqcli() {
         list)
             case "$prev" in
                 -l|--listfile) _mpqcli_filedir; return ;;
-                -p|--property) _mpqcli_words "${list_properties[*]}"; return ;;
+                -q|--property) _mpqcli_words "${list_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-l --listfile -d --detailed -a --all -p --property"
+                _mpqcli_words "-l --listfile -d --detailed -a --all -q --property"
             else
                 _mpqcli_positional_index -d --detailed -a --all
                 if [[ $pos -eq 0 ]]; then
@@ -222,13 +220,14 @@ _mpqcli() {
             case "$prev" in
                 -o|--output) _mpqcli_filedir -d; return ;;
                 -l|--listfile) _mpqcli_filedir; return ;;
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
-                -f|--file) return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-o --output -f --file -k --keep -l --listfile --locale"
+                _mpqcli_words "-o --output -j --flat -l --listfile -e --locale"
             else
-                _mpqcli_positional_index -k --keep
+                # Positional 1 is the archive; the rest are in-archive paths, so
+                # they get no filesystem completion
+                _mpqcli_positional_index -j --flat
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi
@@ -237,15 +236,15 @@ _mpqcli() {
 
         read)
             case "$prev" in
-                --locale) _mpqcli_words "${locales[*]}"; return ;;
+                -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--locale"
+                _mpqcli_words "-e --locale"
             else
-                # Positional 1 is an in-archive path, so it gets no filesystem
-                # completion; positional 2 is the archive
+                # Positional 1 is the archive; positional 2 is an in-archive path,
+                # so it gets no filesystem completion
                 _mpqcli_positional_index
-                if [[ $pos -eq 1 ]]; then
+                if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi
             fi
@@ -253,9 +252,9 @@ _mpqcli() {
 
         verify)
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --print"
+                _mpqcli_words "-x --print"
             else
-                _mpqcli_positional_index -p --print
+                _mpqcli_positional_index -x --print
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi

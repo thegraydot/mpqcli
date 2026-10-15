@@ -29,9 +29,9 @@ The `info` subcommand supports the following properties:
 - `max-files`
 - `signature-type`
 
-You can use the `-p` or `--property` argument with the `info` subcommand to print just the value of a specific property. This can be useful for automation, for example, to determine the signature type of a directory of MPQ archives.
+You can use the `-q` or `--property` argument with the `info` subcommand to print just the value of a specific property. This can be useful for automation, for example, to determine the signature type of a directory of MPQ archives.
 
 ```bash
-$ mpqcli info -p file-count wow-patch.mpq
+$ mpqcli info --property file-count wow-patch.mpq
 65
 ```

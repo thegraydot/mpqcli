@@ -25,7 +25,7 @@ std::string ResolveArchiveName(const std::filesystem::path &f,
 std::vector<std::filesystem::path> ListFilesRecursive(const std::filesystem::path &directory,
                                                       std::error_code &ec);
 
-/// Replaces each "-" in paths with the non-empty lines read from in
+/// Replaces each "-" in paths with the non-empty lines read from in, less any trailing \r
 std::vector<std::string> ExpandStdinMarker(const std::vector<std::string> &paths, std::istream &in);
 
 /// Returns the file's last-modification time as a Windows FILETIME value

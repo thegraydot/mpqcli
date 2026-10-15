@@ -3,7 +3,9 @@
 #include <atomic>
 #include <filesystem>
 #include <ostream>
+#include <string>
 #include <system_error>
+#include <vector>
 
 #include <StormLib.h>
 
@@ -20,14 +22,40 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     std::error_code ec;
     fs::path effective_output;
     if (!options.output.has_value()) {
-        fs::path target_path = fs::absolute(options.target, ec);
+        fs::path archive_path = fs::absolute(options.archive, ec);
         if (ec) {
-            throw FileError("Failed to resolve archive path", options.target, ec);
+            throw FileError("Failed to resolve archive path", options.archive, ec);
         }
-        effective_output = target_path.parent_path() / target_path.stem();
+        effective_output = archive_path.parent_path() / archive_path.stem();
     } else {
         effective_output = options.output.value();
     }
+
+    Archive archive = Archive::Open(options.archive, MPQ_OPEN_READ_ONLY);
+
+    LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
+
+    // Every name is settled before the output directory is created, so a
+    // rejected --flat run leaves nothing on disk
+    const std::vector<std::string> file_names =
+        options.files.has_value()
+            ? options.files.value()
+            : ListArchivedFiles(archive.Handle(), options.listfile, cancelled);
+    if (file_names.empty()) {
+        err << "[*] No files to extract" << std::endl;
+        archive.Close();
+        return true;
+    }
+    if (options.flat) {
+        const auto collision = FindFlatCollision(file_names);
+        if (collision.has_value()) {
+            err << "[!] --flat would extract " << collision->first << " and " << collision->second
+                << " to the same file" << std::endl;
+            archive.Close();
+            return false;
+        }
+    }
+
     fs::create_directory(effective_output, ec);
     if (ec) {
         std::error_code query_ec;
@@ -45,22 +73,8 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
             << effective_output.string() << std::endl;
     }
 
-    Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);
-
-    LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
-    if (options.locale.has_value() && lcid == default_locale) {
-        err << "[!] The locale '" << options.locale.value()
-            << "' is unknown. Will use default locale instead." << std::endl;
-    }
-
-    int result;
-    if (options.file.has_value()) {
-        result = ExtractFile(archive.Handle(), effective_output, options.file.value(),
-                             options.keep_folder_structure, lcid, err);
-    } else {
-        result = ExtractFiles(archive.Handle(), effective_output, options.listfile, lcid, err,
-                              cancelled);
-    }
+    const int result = ExtractFiles(archive.Handle(), effective_output, file_names, options.flat,
+                                    lcid, err, cancelled);
     archive.Close();
 
     if (result != 0) {

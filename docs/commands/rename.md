@@ -10,7 +10,7 @@ $ mpqcli rename wow-patch.mpq old-name.txt new-name.txt
 [~] Renaming file: old-name.txt -> new-name.txt
 ```
 
-Use `--locale` to rename only the copy stored under a specific locale. Without `--locale`,
+Use `-e` or `--locale` to rename only the copy stored under a specific locale. Without `--locale`,
 the file stored under the default locale is renamed.
 
 ```bash

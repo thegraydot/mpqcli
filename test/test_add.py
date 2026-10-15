@@ -396,7 +396,7 @@ def test_add_file_with_game_profile(binary_path, generate_test_files):
         assert f"Adding file: test_{profile}.txt" in result.stderr
 
         list_result = subprocess.run(
-            [str(binary_path), "list", str(target_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(target_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -471,7 +471,7 @@ def test_add_file_with_all_game_profiles(binary_path, generate_test_files):
         assert f"test_all_{profile}.txt" in list_result.stdout, f"Profile {profile}: added file not found in archive"
 
         flags_result = subprocess.run(
-            [str(binary_path), "list", str(target_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(target_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -1074,12 +1074,104 @@ def test_add_files_via_stdin(binary_path, generate_test_files):
     assert "stdin_b.txt" in list_result.stdout
 
 
+def test_add_files_via_stdin_with_windows_line_endings(binary_path, generate_test_files):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+
+    create_mpq_archive_for_test(binary_path, script_dir)
+
+    test_file_a = script_dir / "data" / "stdin_a.txt"
+    test_file_b = script_dir / "data" / "stdin_b.txt"
+    test_file_a.write_text("Stdin file A.")
+    test_file_b.write_text("Stdin file B.")
+
+    stdin_input = f"{test_file_a}\r\n{test_file_b}\r\n"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(target_mpq), "-"],
+        input=stdin_input,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "[+] Adding file: stdin_a.txt" in result.stderr
+    assert "[+] Adding file: stdin_b.txt" in result.stderr
+
+
+def test_add_skips_the_archive_inside_an_input_directory(binary_path, tmp_path):
+    input_dir = tmp_path / "mod"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+    other_file = tmp_path / "b.txt"
+    other_file.write_text("B file.")
+    archive_file = input_dir / "mod.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(other_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "Skipping the archive itself" in result.stderr
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert set(list_result.stdout.splitlines()) == {"a.txt", "b.txt"}
+
+
+def test_add_skips_the_archive_named_as_an_input(binary_path, tmp_path):
+    input_file = tmp_path / "a.txt"
+    input_file.write_text("A file.")
+    archive_file = tmp_path / "a.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "Skipping the archive itself" in result.stderr
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert list_result.stdout.splitlines() == ["a.txt"]
+
+
 def create_mpq_archive_for_test(binary_path, script_dir):
     target_dir = script_dir / "data" / "files"
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1098,7 +1190,7 @@ def create_mpq_archive_with_attrs_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wow1", str(target_dir)],
+        [str(binary_path), "create", "--game", "wow1", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1117,7 +1209,7 @@ def create_mpq_archive_with_crc32_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wc3", str(target_dir)],
+        [str(binary_path), "create", "--game", "wc3", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1136,7 +1228,7 @@ def create_mpq_archive_with_filetime_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wc3", "--attr-flags", "2", str(target_dir)],
+        [str(binary_path), "create", "--game", "wc3", "--attr-flags", "2", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1149,7 +1241,7 @@ def create_mpq_archive_with_filetime_for_test(binary_path, script_dir):
 
 def verify_archive_file_content(binary_path, test_file, expected_output):
     result = subprocess.run(
-        [str(binary_path), "list", str(test_file), "-d", "-p", "locale"],
+        [str(binary_path), "list", str(test_file), "-d", "--property", "locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1161,7 +1253,7 @@ def verify_archive_file_content(binary_path, test_file, expected_output):
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
 def verify_file_in_mpq_has_content(binary_path, mpq_archive, file_name, expected_content, locale=None):
-    cmd = [str(binary_path), "read", file_name, str(mpq_archive)]
+    cmd = [str(binary_path), "read", str(mpq_archive), file_name]
     if locale is not None:
         cmd += ["--locale", locale]
     result = subprocess.run(

@@ -21,10 +21,10 @@ void RegisterInfo(CLI::App &app, Context &context) {
     auto options = std::make_shared<mpqcli::InfoOptions>();
     auto *sub = app.add_subcommand("info", "Prints info about an MPQ archive");
 
-    sub->add_option("target", options->target, "Target MPQ archive")
+    sub->add_option("archive", options->archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
-    sub->add_option("-p,--property", options->property, "Prints only a specific property value")
+    sub->add_option("-q,--property", options->property, "Prints only a specific property value")
         ->check(CLI::IsMember(valid_properties));
 
     sub->callback([options, &context]() { mpqcli::Info(*options, context.out); });

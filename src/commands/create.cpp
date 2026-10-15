@@ -40,25 +40,40 @@ struct PartialArchive {
 } // namespace
 
 bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
+    if (options.files.empty()) {
+        throw Error("No files or directories to add");
+    }
+
     std::error_code ec;
-    fs::path output_file_path;
-    if (options.output.has_value()) {
-        output_file_path = fs::absolute(options.output.value(), ec);
-        if (ec) {
-            throw FileError("Failed to resolve output path", options.output.value(), ec);
-        }
-    } else {
-        output_file_path = options.target;
-        // If the path ends with a separator (e.g. "dir/"), strip the
-        // trailing separator first so we get "dir.mpq"
-        if (output_file_path.filename().empty()) {
-            output_file_path = output_file_path.parent_path();
-        }
-        output_file_path.replace_extension(".mpq");
+    const fs::path output_file_path = fs::absolute(options.archive, ec);
+    if (ec) {
+        throw FileError("Failed to resolve archive path", options.archive, ec);
     }
     if (fs::exists(output_file_path, ec)) {
         throw ArchiveError("File already exists: " + output_file_path.string());
     }
+
+    // Count every input up front: the archive's max file count is fixed at creation,
+    // and a missing input or a directory that cannot be listed fails here, before the
+    // archive exists
+    uint32_t input_file_count = 0;
+    for (const auto &f : options.files) {
+        if (!fs::exists(f, ec)) {
+            throw FileError("Path does not exist", f);
+        }
+        if (fs::is_directory(f, ec)) {
+            const std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
+            if (ec) {
+                throw FileError("Failed to list directory", f, ec);
+            }
+            input_file_count += static_cast<uint32_t>(directory_files.size());
+        } else if (fs::is_regular_file(f, ec)) {
+            input_file_count++;
+        } else {
+            throw FileError("Not a file or directory", f);
+        }
+    }
+    const uint32_t file_count = CalculateMpqMaxFileValue(input_file_count);
 
     GameProfile profile;
     if (options.game_profile.has_value()) {
@@ -73,20 +88,6 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
 
     game_rules.OverrideCreateSettings(options.create_overrides);
 
-    // List the files up front: the archive's max file count is fixed at creation
-    std::vector<fs::path> files;
-    const bool is_directory = fs::is_directory(options.target, ec);
-    if (is_directory) {
-        files = ListFilesRecursive(options.target, ec);
-        if (ec) {
-            throw FileError("Failed to list directory", options.target, ec);
-        }
-    } else if (!fs::is_regular_file(options.target, ec)) {
-        throw FileError("Not a file or directory", options.target);
-    }
-    const uint32_t file_count =
-        CalculateMpqMaxFileValue(is_directory ? static_cast<uint32_t>(files.size()) : 1);
-
     // The archive is invalid until it is closed, so it is written beside the output
     // and renamed into place once complete; an interrupt or error before that leaves
     // nothing at the output path. A partial left by an earlier interrupted run would
@@ -99,15 +100,23 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     Archive archive = Archive::Create(partial_path, file_count, game_rules);
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
 
-    int result = 0;
-    if (is_directory) {
-        const std::string prefix = options.path.value_or("");
-        result |= AddFiles(archive.Handle(), files, options.target, prefix, lcid, game_rules, err,
-                           cancelled, options.compression_overrides);
-    } else {
-        std::string archive_path = ResolveArchiveName(options.target, options.path);
-        result |= AddFile(archive.Handle(), options.target, archive_path, lcid, game_rules, err,
-                          options.compression_overrides);
+    int files_skipped = 0;
+    const int result =
+        AddInputs(archive.Handle(), partial_path, options.files, options.path, lcid, game_rules,
+                  err, cancelled, options.compression_overrides, false, false, &files_skipped);
+    // The archive starts empty, so a skip can only mean two inputs hold the same name
+    if (files_skipped > 0) {
+        err << "[!] " << files_skipped
+            << " file(s) were not added because an earlier input added a file by the same name"
+            << std::endl;
+    }
+
+    // An archive missing some of its files is not the one that was asked for, so it is
+    // discarded with the partial and the output path stays empty, as for a missing input
+    if (result != 0 || files_skipped > 0) {
+        err << "[!] Failed to add every file, so no archive was created: "
+            << output_file_path.string() << std::endl;
+        return false;
     }
 
     if (options.sign) {
@@ -123,7 +132,7 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
                         ec);
     }
 
-    return result == 0;
+    return true;
 }
 
 } // namespace mpqcli

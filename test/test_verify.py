@@ -110,7 +110,7 @@ def test_verify_weak_signature_patch(binary_path, download_test_files):
     expected_md5 = "e434b57cdc6b730c17e18f2bb2fa8fd9"
 
     result = subprocess.run(
-        [str(binary_path), "verify", "-p", str(test_file)],
+        [str(binary_path), "verify", "--print", str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False  # Get raw bytes to avoid UTF decode errors
@@ -142,7 +142,7 @@ def test_verify_strong_signature_patch(binary_path, download_test_files):
     expected_md5 = "931fc40bb6bff48b89d39b5acb169bbd"
 
     result = subprocess.run(
-        [str(binary_path), "verify", "-p", str(test_file)],
+        [str(binary_path), "verify", "--print", str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False  # Get raw bytes to avoid UTF decode errors
@@ -169,3 +169,48 @@ def test_verify_mpq_target_does_not_exist(binary_path):
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_verify_short_print_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    result = subprocess.run(
+        [str(binary_path), "verify", "-p", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout == ""
+
+
+def test_verify_print_short_flag(binary_path, tmp_path):
+    input_file = tmp_path / "a.txt"
+    input_file.write_text("A file.")
+    archive_file = tmp_path / "signed.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", "-s", str(archive_file), str(input_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    short_form = subprocess.run(
+        [str(binary_path), "verify", "-x", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=False  # The signature is raw bytes
+    )
+    long_form = subprocess.run(
+        [str(binary_path), "verify", "--print", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=False
+    )
+
+    assert short_form.returncode == 0, f"mpqcli failed with error: {short_form.stderr}"
+    assert short_form.stdout != b""
+    assert short_form.stdout == long_form.stdout

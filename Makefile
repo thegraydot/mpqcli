@@ -162,16 +162,21 @@ gen_docs_changelog: ## Copy CHANGELOG.md into the docs site
 	@cp CHANGELOG.md docs/changelog.md
 	@echo "[*] Updated docs/changelog.md"
 
+# The exact count is read from the title attribute (<h3 title="1223">1.22K</h3>)
+# and abbreviated to match the shields.io release downloads badge (1.2k)
 .PHONY: gen_downloads
 gen_downloads: ## Update the package downloads badge in README.md from GitHub
-	@DOWNLOADS=$$(curl -s "$(PACKAGE_URL)" \
+	@DOWNLOADS=$$(curl -fs "$(PACKAGE_URL)" \
 		| grep -A2 "Total downloads" \
-		| grep -o '<h3 title="[0-9]*">[0-9]*</h3>' \
-		| grep -o 'title="[0-9]*"' \
-		| grep -o '[0-9]*' \
+		| sed -n 's/.*<h3 title="\([0-9][0-9]*\)".*/\1/p' \
 		| head -1); \
-	sed -i "s/package_downloads-[0-9]*-green/package_downloads-$$DOWNLOADS-green/" $(README); \
-	echo "[*] Updated package downloads badge: $$DOWNLOADS"
+	if [[ -z "$$DOWNLOADS" ]]; then \
+	  printf 'gen_downloads: no download count found at %s\n' "$(PACKAGE_URL)" >&2; \
+	  exit 1; \
+	fi; \
+	BADGE=$$(awk -v n="$$DOWNLOADS" 'BEGIN { if (n < 1000) print n; else printf "%.1fk\n", n / 1000 }'); \
+	sed -i "s/package_downloads-[^-]*-green/package_downloads-$$BADGE-green/" $(README); \
+	echo "[*] Updated package downloads badge: $$BADGE ($$DOWNLOADS)"
 
 ##@ GET
 

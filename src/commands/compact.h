@@ -9,7 +9,7 @@ namespace mpqcli {
 
 /// Settled arguments for the compact subcommand
 struct CompactOptions {
-    std::filesystem::path target;
+    std::filesystem::path archive;
     std::optional<std::filesystem::path> listfile;
 };
 

@@ -1,26 +1,44 @@
 # create
 
-Create an MPQ archive from a target directory or a single file.
+Create an MPQ archive from files and directories.
 
-## Create an MPQ archive from a target directory
+## Create an MPQ archive from a directory
 
-Create an MPQ file from a target directory. Automatically adds `(listfile)` to the archive, and will skip this file if it exists in the target directory.
+Name the new archive first, then the directory to put in it. Automatically adds `(listfile)` to the archive, and will skip this file if it exists in the directory.
 
 ```bash
-$ mpqcli create <target_directory>
+$ mpqcli create archive.mpq <directory>
 ```
 
-The default mode of operation for the `create` subcommand is to take everything from the "target" directory (and below) and recursively add it to the archive. The directory structure is retained. Windows-style backslash path separators are used (`\`), as per the observed behaviour in most MPQ archives.
+The default mode of operation for the `create` subcommand is to take everything from the directory (and below) and recursively add it to the archive. The directory's contents go at the root of the archive, and the structure below it is retained. Windows-style backslash path separators are used (`\`), as per the observed behaviour in most MPQ archives.
+
+The archive must not already exist; `create` never overwrites a file. If an input is missing or any file cannot be added, no archive is created.
+
+## Create an MPQ archive from several files and directories
+
+Name as many files and directories as needed after the archive. Each file is stored under its own name, and each directory's contents go at the root of the archive. If two inputs hold a file with the same name, no archive is created.
+
+```bash
+$ mpqcli create archive.mpq readme.txt textures/ sounds/
+```
+
+Pass `-` in place of the files to read their paths from stdin, one per line:
+
+```bash
+$ find . -maxdepth 1 -name '*.txt' | mpqcli create texts.mpq -
+```
+
+As with files named on the command line, each file is stored under its own name, without the folders in its path. To keep the folder structure, name the directory instead.
 
 ## Create an MPQ archive for a specific game
 
 Target a specific game version by using the `-g` or `--game` argument. This will automatically set the correct archive format version and settings, although they can be overridden.
 
 ```bash
-$ mpqcli create -g starcraft <target_directory>
+$ mpqcli create -g starcraft archive.mpq <directory>
 $ mpqcli create --game wow-wotlk \
     --sector-size 16384 \
-    --version 3 <target_directory>
+    --format-version 3 archive.mpq <directory>
 ```
 
 ## Create an MPQ archive from a single file
@@ -28,22 +46,22 @@ $ mpqcli create --game wow-wotlk \
 Create an MPQ file from a single file.
 
 ```bash
-$ mpqcli create --game diablo2 <target_file>
+$ mpqcli create --game diablo2 archive.mpq <file>
 ```
 
 ## Control where files are stored
 
-For single files, one can specify both directory and filename in one step using `-p` or `--path`:
+For a single file, one can specify both directory and filename in one step using `-p` or `--path`:
 
 ```bash
-$ mpqcli create fts.txt --output archive.mpq --path "texts\swarm.txt"
+$ mpqcli create archive.mpq fts.txt --path "texts\swarm.txt"
 [+] Adding file: texts\swarm.txt
 ```
 
-For directories, one can specify the base directory using `-p` or `--path`:
+For directories, or several inputs, `-p` or `--path` is a prefix that every file is stored under:
 
 ```bash
-$ mpqcli create textures/ --output archive.mpq --path textures
+$ mpqcli create archive.mpq textures/ --path textures
 [+] Adding file: textures\Creature\Bear\Bear.blp
 [+] Adding file: textures\Creature\Wolf\Wolf.blp
 ```
@@ -53,13 +71,13 @@ $ mpqcli create textures/ --output archive.mpq --path textures
 Use the `-s` or `--sign` argument to cryptographically sign an MPQ archive with the Blizzard weak signature.
 
 ```bash
-$ mpqcli create --version 1 --sign <target_directory>
+$ mpqcli create --format-version 1 --sign archive.mpq <directory>
 ```
 
 ## Create an MPQ archive with a given locale
 
-Use the `--locale` argument to specify the locale that all added files will have in the archive. Note that subsequent added files will have the default locale unless the `--locale` argument is specified again.
+Use the `-e` or `--locale` argument to specify the locale that all added files will have in the archive. Note that subsequent added files will have the default locale unless the `--locale` argument is specified again.
 
 ```bash
-$ mpqcli create <target_directory> --locale koKR
+$ mpqcli create archive.mpq <directory> --locale koKR
 ```

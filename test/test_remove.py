@@ -321,7 +321,7 @@ def test_remove_files_via_stdin(binary_path, generate_locales_mpq_test_files):
 
 def verify_archive_content(binary_path, target_file, expected_output, listfile = Path()):
     # Verify that the archive has the expected content
-    cmd = [str(binary_path), "list", "-d", str(target_file), "-p", "locale"]
+    cmd = [str(binary_path), "list", "-d", str(target_file), "--property", "locale"]
     if listfile != Path():
         cmd.extend(["--listfile", str(listfile)])
 

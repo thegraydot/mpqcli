@@ -96,7 +96,7 @@ def generate_locales_mpq_test_files(binary_path):
 
         if locale == "": # Default locale - create a new MPQ file
             result = subprocess.run(
-                [str(binary_path), "create", "--version", "1", "-o", str(mpq_many_locales_file_name), str(locales_files_dir)],
+                [str(binary_path), "create", "--format-version", "1", str(mpq_many_locales_file_name), str(locales_files_dir)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -118,7 +118,7 @@ def generate_locales_mpq_test_files(binary_path):
     file_path.write_text(content, newline="\n")
 
     result = subprocess.run(
-        [str(binary_path), "create", "--version", "1", "-o", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
+        [str(binary_path), "create", "--format-version", "1", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -153,7 +153,7 @@ def generate_mpq_without_internal_listfile(binary_path):
 
         if locale == "": # Default locale - create a new MPQ file
             result = subprocess.run(
-                [str(binary_path), "create", "-o", str(mpq_file_name), str(locales_files_dir), "--file-flags1", "0"],
+                [str(binary_path), "create", str(mpq_file_name), str(locales_files_dir), "--file-flags1", "0"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -189,7 +189,7 @@ def generate_path_traversal_mpq(binary_path):
 
     # Create a base MPQ containing the safe file
     result = subprocess.run(
-        [str(binary_path), "create", "-o", str(mpq_file), str(traversal_files_dir)],
+        [str(binary_path), "create", str(mpq_file), str(traversal_files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -199,6 +199,28 @@ def generate_path_traversal_mpq(binary_path):
     # Embed a second entry whose archive path traverses above the output directory
     result = subprocess.run(
         [str(binary_path), "add", str(mpq_file), str(safe_file), "-p", "../../sneaky.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    yield mpq_file
+
+
+@pytest.fixture(scope="function")
+def generate_cats_and_dogs_mpq(binary_path, tmp_path_factory):
+    # A directory of its own rather than test/data, so the test depends on no other test,
+    # and rather than the test's tmp_path, which some tests assert is left empty
+    archive_dir = tmp_path_factory.mktemp("cats_and_dogs")
+    files_dir = archive_dir / "files"
+    files_dir.mkdir()
+    (files_dir / "cats.txt").write_text("This is a file about cats.\n", newline="\n")
+    (files_dir / "dogs.txt").write_text("This is a file about dogs.\n", newline="\n")
+
+    mpq_file = archive_dir / "cats_and_dogs.mpq"
+    result = subprocess.run(
+        [str(binary_path), "create", str(mpq_file), str(files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -239,7 +261,7 @@ def generate_tampered_signature_mpq(binary_path):
     )
 
     result = subprocess.run(
-        [str(binary_path), "create", "-s", "-o", str(mpq_file), str(tamper_files_dir)],
+        [str(binary_path), "create", "-s", str(mpq_file), str(tamper_files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -247,7 +269,7 @@ def generate_tampered_signature_mpq(binary_path):
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
 
     offset_result = subprocess.run(
-        [str(binary_path), "list", "-p", "byte-offset", str(mpq_file)],
+        [str(binary_path), "list", "--property", "byte-offset", str(mpq_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -256,7 +278,7 @@ def generate_tampered_signature_mpq(binary_path):
     byte_offset = int(offset_result.stdout.split()[0])
 
     size_result = subprocess.run(
-        [str(binary_path), "list", "-p", "compressed-size", str(mpq_file)],
+        [str(binary_path), "list", "--property", "compressed-size", str(mpq_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

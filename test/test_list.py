@@ -96,8 +96,8 @@ def test_list_mpq_with_specified_details(binary_path):
 
     result = subprocess.run(
         [str(binary_path), "list", "-a", "-d", str(test_file),
-         "-p", "hash-index", "-p", "name-hash1", "-p", "name-hash2", "-p", "name-hash3",
-         "-p", "compressed-size", "-p", "flags", "-p", "encryption-key-raw"],
+         "--property", "hash-index", "--property", "name-hash1", "--property", "name-hash2", "--property", "name-hash3",
+         "--property", "compressed-size", "--property", "flags", "--property", "encryption-key-raw"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -402,7 +402,7 @@ def test_list_mpq_property_file_index(binary_path):
     }
 
     result = subprocess.run(
-        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "file-index"],
+        [str(binary_path), "list", "-a", "-d", str(test_file), "--property", "file-index"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -433,7 +433,7 @@ def test_list_mpq_property_byte_offset(binary_path):
         expected_output.add("      9b  (attributes)")
 
     result = subprocess.run(
-        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "byte-offset"],
+        [str(binary_path), "list", "-a", "-d", str(test_file), "--property", "byte-offset"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -457,7 +457,7 @@ def test_list_mpq_property_file_time(binary_path):
     }
 
     result = subprocess.run(
-        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "file-time"],
+        [str(binary_path), "list", "-a", "-d", str(test_file), "--property", "file-time"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -486,7 +486,7 @@ def test_list_mpq_property_encryption_key(binary_path):
         expected_output.add("50e315df  (attributes)")
 
     result = subprocess.run(
-        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "encryption-key"],
+        [str(binary_path), "list", "-a", "-d", str(test_file), "--property", "encryption-key"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -510,7 +510,7 @@ def test_list_mpq_property_locale(binary_path):
     }
 
     result = subprocess.run(
-        [str(binary_path), "list", "-a", "-d", str(test_file), "-p", "locale"],
+        [str(binary_path), "list", "-a", "-d", str(test_file), "--property", "locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -538,7 +538,7 @@ def test_list_encryption_keys_of_files_listed_without_names(binary_path, generat
     def keys_by_file_index(*extra_args):
         result = subprocess.run(
             [str(binary_path), "list", "-d", str(test_file), *extra_args,
-             "-p", "file-index", "-p", "flags", "-p", "encryption-key", "-p", "encryption-key-raw"],
+             "--property", "file-index", "--property", "flags", "--property", "encryption-key", "--property", "encryption-key-raw"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -561,3 +561,40 @@ def test_list_encryption_keys_of_files_listed_without_names(binary_path, generat
         assert key != "00000000", f"No encryption key found for file {file_index}"
         assert (key, key_raw) == with_names[file_index][1:3], \
             f"Keys of file {file_index} differ: {(key, key_raw)} vs {with_names[file_index][1:3]}"
+
+
+def test_list_short_property_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    result = subprocess.run(
+        [str(binary_path), "list", "-p", "locale", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    # -p is not a list option, so the property name is taken as the archive
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert "archive: File does not exist: locale" in result.stderr
+    assert result.stdout == ""
+
+
+def test_list_property_short_flag(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    short_form = subprocess.run(
+        [str(binary_path), "list", "-q", "locale", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    long_form = subprocess.run(
+        [str(binary_path), "list", "--property", "locale", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert short_form.returncode == 0, f"mpqcli failed with error: {short_form.stderr}"
+    assert short_form.stdout.strip() != ""
+    assert short_form.stdout == long_form.stdout

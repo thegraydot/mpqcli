@@ -90,7 +90,7 @@ def test_info_v1_properties(binary_path):
 
     for property_name, expected_output in test_cases:
         result = subprocess.run(
-            [str(binary_path), "info", "-p", property_name, str(test_file)],
+            [str(binary_path), "info", "--property", property_name, str(test_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -123,7 +123,7 @@ def test_info_v2_properties(binary_path):
 
     for property_name, expected_output in test_cases:
         result = subprocess.run(
-            [str(binary_path), "info", "-p", property_name, str(test_file)],
+            [str(binary_path), "info", "--property", property_name, str(test_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -140,7 +140,7 @@ def test_info_v1_invalid_property(binary_path):
     property_name = "not-real"
 
     result = subprocess.run(
-        [str(binary_path), "info", "-p", property_name, str(test_file)],
+        [str(binary_path), "info", "--property", property_name, str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -161,3 +161,40 @@ def test_info_mpq_target_does_not_exist(binary_path):
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_info_short_property_flag_is_rejected(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    result = subprocess.run(
+        [str(binary_path), "info", "-p", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    # -p is not an info option, so the property name is taken as the archive
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert "archive: File does not exist: file-count" in result.stderr
+    assert result.stdout == ""
+
+
+def test_info_property_short_flag(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    short_form = subprocess.run(
+        [str(binary_path), "info", "-q", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    long_form = subprocess.run(
+        [str(binary_path), "info", "--property", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    assert short_form.returncode == 0, f"mpqcli failed with error: {short_form.stderr}"
+    assert short_form.stdout.strip() != ""
+    assert short_form.stdout == long_form.stdout

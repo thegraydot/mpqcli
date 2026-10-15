@@ -25,7 +25,7 @@ uint32_t VerifyMpqArchive(HANDLE archive) {
     return SFileVerifyArchive(archive);
 }
 
-void PrintMpqSignature(HANDLE archive, const fs::path &target, std::ostream &out,
+void PrintMpqSignature(HANDLE archive, const fs::path &archive_path, std::ostream &out,
                        std::ostream &err) {
     int32_t signature_type = GetFileInfo<int32_t>(archive, SFileMpqSignatures);
 
@@ -50,9 +50,9 @@ void PrintMpqSignature(HANDLE archive, const fs::path &target, std::ostream &out
         int64_t archive_offset = GetFileInfo<int64_t>(archive, SFileMpqHeaderOffset);
 
         std::error_code ec;
-        const auto file_size = static_cast<int64_t>(fs::file_size(target, ec));
+        const auto file_size = static_cast<int64_t>(fs::file_size(archive_path, ec));
         if (ec) {
-            throw FileError("Failed to read archive size", target, ec);
+            throw FileError("Failed to read archive size", archive_path, ec);
         }
         // fs::file_size returns uintmax_t, so without the cast the subtraction runs
         // unsigned and a legitimately negative length reaches the check below only
@@ -64,12 +64,12 @@ void PrintMpqSignature(HANDLE archive, const fs::path &target, std::ostream &out
         }
 
         std::vector<char> signature_content(static_cast<size_t>(signature_length));
-        std::ifstream file_mpq(target, std::ios::binary);
+        std::ifstream file_mpq(archive_path, std::ios::binary);
         file_mpq.seekg(archive_offset + archive_size, std::ios::beg);
         file_mpq.read(signature_content.data(),
                       static_cast<std::streamsize>(signature_content.size()));
         if (!file_mpq) {
-            throw ArchiveError("Failed to read strong signature: " + target.string());
+            throw ArchiveError("Failed to read strong signature: " + archive_path.string());
         }
 
         WriteBinary(out, signature_content.data(), static_cast<uint32_t>(signature_content.size()));

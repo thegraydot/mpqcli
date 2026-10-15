@@ -10,7 +10,7 @@
 namespace mpqcli {
 
 void Info(const InfoOptions &options, std::ostream &out) {
-    Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);
+    Archive archive = Archive::Open(options.archive, MPQ_OPEN_READ_ONLY);
     PrintMpqInfo(archive.Handle(), options.property, out);
     archive.Close();
 }

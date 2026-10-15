@@ -10,7 +10,7 @@ namespace mpqcli {
 
 /// Settled arguments for the info subcommand
 struct InfoOptions {
-    std::filesystem::path target;
+    std::filesystem::path archive;
     std::optional<std::string> property;
 };
 

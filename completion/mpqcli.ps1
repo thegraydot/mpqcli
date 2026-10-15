@@ -24,7 +24,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'version'    = 'Prints program version'
         'about'      = 'Prints program information'
         'info'       = 'Prints info about an MPQ archive'
-        'create'     = 'Create an MPQ archive from target file or directory'
+        'create'     = 'Create an MPQ archive from files and directories'
         'add'        = 'Add files to an existing MPQ archive'
         'remove'     = 'Remove files from an existing MPQ archive'
         'rename'     = 'Rename a file in an existing MPQ archive'
@@ -75,20 +75,19 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
     # short help string, in the order the help text lists them
     $optionSpec = @{
         'info' = [ordered]@{
-            '-p'         = 'Print only a specific property value'
+            '-q'         = 'Print only a specific property value'
             '--property' = 'Print only a specific property value'
         }
         'create' = [ordered]@{
-            '-p'              = 'Archive path for a single file, or prefix for a directory'
-            '--path'          = 'Archive path for a single file, or prefix for a directory'
-            '-o'              = 'Output MPQ archive'
-            '--output'        = 'Output MPQ archive'
+            '-p'              = 'Archive path for a single file, or prefix for a directory or several inputs'
+            '--path'          = 'Archive path for a single file, or prefix for a directory or several inputs'
             '-s'              = 'Sign the MPQ archive'
             '--sign'          = 'Sign the MPQ archive'
+            '-e'              = 'Locale to use for added files'
             '--locale'        = 'Locale to use for added files'
             '-g'              = 'Game profile for MPQ creation'
             '--game'          = 'Game profile for MPQ creation'
-            '--version'       = 'Override the MPQ archive version (1-4)'
+            '--format-version'= 'Override the MPQ archive format version (1-4)'
             '--stream-flags'  = 'Override stream flags'
             '--sector-size'   = 'Override sector size'
             '--raw-chunk-size'= 'Override raw chunk size for MPQ v4'
@@ -101,12 +100,13 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
         'add' = [ordered]@{
-            '-p'          = 'Archive path for a single file, or prefix for a directory'
-            '--path'      = 'Archive path for a single file, or prefix for a directory'
+            '-p'          = 'Archive path for a single file, or prefix for a directory or several inputs'
+            '--path'      = 'Archive path for a single file, or prefix for a directory or several inputs'
             '-w'          = 'Replace every file that already exists in the archive'
             '--overwrite' = 'Replace every file that already exists in the archive'
             '-u'          = 'Replace only files that changed'
             '--update'    = 'Replace only files that changed'
+            '-e'          = 'Locale to use for added file'
             '--locale'    = 'Locale to use for added file'
             '-g'          = 'Game profile for compression rules'
             '--game'      = 'Game profile for compression rules'
@@ -115,9 +115,11 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
         'remove' = [ordered]@{
+            '-e'       = 'Locale of file to remove'
             '--locale' = 'Locale of file to remove'
         }
         'rename' = [ordered]@{
+            '-e'       = 'Locale of file to rename'
             '--locale' = 'Locale of file to rename'
         }
         'list' = [ordered]@{
@@ -127,25 +129,25 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--detailed' = 'File listing with additional columns'
             '-a'         = 'File listing including hidden files'
             '--all'      = 'File listing including hidden files'
-            '-p'         = 'Print only specific property values'
+            '-q'         = 'Print only specific property values'
             '--property' = 'Print only specific property values'
         }
         'extract' = [ordered]@{
             '-o'         = 'Output directory'
             '--output'   = 'Output directory'
-            '-f'         = 'Target file to extract'
-            '--file'     = 'Target file to extract'
-            '-k'         = 'Keep folder structure'
-            '--keep'     = 'Keep folder structure'
+            '-j'         = 'Write files into the output directory without their folders'
+            '--flat'     = 'Write files into the output directory without their folders'
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
-            '--locale'   = 'Preferred locale for extracted file'
+            '-e'         = 'Preferred locale for extracted files'
+            '--locale'   = 'Preferred locale for extracted files'
         }
         'read' = [ordered]@{
+            '-e'       = 'Preferred locale for read file'
             '--locale' = 'Preferred locale for read file'
         }
         'verify' = [ordered]@{
-            '-p'      = 'Print the digital signature (in hex)'
+            '-x'      = 'Print the digital signature (in hex)'
             '--print' = 'Print the digital signature (in hex)'
         }
         'compact' = [ordered]@{
@@ -159,10 +161,11 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
 
     # Options whose *argument* should complete from a static value set
     $valueOptions = @{
-        '--locale'   = $locales
-        '-g'         = $gameProfiles
-        '--game'     = $gameProfiles
-        '--version'  = @('1', '2', '3', '4')
+        '-e'               = $locales
+        '--locale'         = $locales
+        '-g'               = $gameProfiles
+        '--game'           = $gameProfiles
+        '--format-version' = @('1', '2', '3', '4')
     }
     # Property options depend on the subcommand (info vs list), handled below
 
@@ -236,7 +239,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             return & $emit $items 'ParameterValue'
         }
         # Property options: meaning depends on the subcommand
-        if ($prevToken -in @('-p', '--property')) {
+        if ($prevToken -in @('-q', '--property')) {
             if ($subcommand -eq 'info') {
                 $items = foreach ($v in $infoProperties) {
                     [pscustomobject]@{ Value = $v; Tip = 'info property' } }
@@ -247,13 +250,10 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
                     [pscustomobject]@{ Value = $v; Tip = 'list property' } }
                 return & $emit $items 'ParameterValue'
             }
-            # For 'verify', -p/--print is a flag (no value) -> fall through
         }
         # Options that take a file/dir path -> let PowerShell complete paths
-        $pathOptions = @('-o', '--output', '-l', '--listfile', '-f', '--file',
-                         '-p', '--path')
-        if ($prevToken -in $pathOptions -and
-            -not ($subcommand -in @('info', 'list') -and $prevToken -in @('-p', '--property'))) {
+        $pathOptions = @('-o', '--output', '-l', '--listfile', '-p', '--path')
+        if ($prevToken -in $pathOptions) {
             return  # empty -> native path completion takes over
         }
     }

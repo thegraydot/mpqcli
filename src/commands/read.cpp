@@ -13,13 +13,9 @@
 namespace mpqcli {
 
 bool Read(const ReadOptions &options, std::ostream &out, std::ostream &err) {
-    Archive archive = Archive::Open(options.target, MPQ_OPEN_READ_ONLY);
+    Archive archive = Archive::Open(options.archive, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
-    if (options.locale.has_value() && lcid == default_locale) {
-        err << "[!] The locale '" << options.locale.value()
-            << "' is unknown. Will use default locale instead." << std::endl;
-    }
 
     uint32_t file_size;
     auto file_content =

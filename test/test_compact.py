@@ -136,7 +136,7 @@ def test_compact_file(binary_path):
     large_file.write_bytes(random.Random(0).randbytes(large_file_size))
 
     result = subprocess.run(
-        [str(binary_path), "create", "-o", str(mpq_file), str(compaction_files_dir)],
+        [str(binary_path), "create", str(mpq_file), str(compaction_files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

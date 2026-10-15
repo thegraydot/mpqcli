@@ -21,7 +21,7 @@ void RegisterAdd(CLI::App &app, Context &context) {
     auto options = std::make_shared<Options>();
     auto *sub = app.add_subcommand("add", "Add files to an existing MPQ archive");
 
-    sub->add_option("archive", options->add.archive, "Target MPQ archive")
+    sub->add_option("archive", options->add.archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
     sub->add_option("files", options->files,
@@ -29,13 +29,13 @@ void RegisterAdd(CLI::App &app, Context &context) {
         ->required()
         ->expected(-1);
     sub->add_option("-p,--path", options->add.path,
-                    "Archive path for a single file, or prefix for a directory");
+                    "Archive path for a single file, or prefix for a directory or several inputs");
     CLI::Option *overwrite = sub->add_flag("-w,--overwrite", options->add.overwrite,
                                            "Replace every file that already exists in the archive");
     sub->add_flag("-u,--update", options->add.update,
                   "Replace only files that changed. Compares size, then timestamp/MD5/CRC32")
         ->excludes(overwrite);
-    sub->add_option("--locale", options->add.locale, "Locale to use for added file")
+    sub->add_option("-e,--locale", options->add.locale, "Locale to use for added file")
         ->check(locale_valid);
     sub->add_option("-g,--game", options->add.game_profile,
                     "Game profile for compression rules. Valid options:\n" +

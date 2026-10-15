@@ -10,8 +10,8 @@ namespace mpqcli {
 
 /// Settled arguments for the read subcommand
 struct ReadOptions {
+    std::filesystem::path archive;
     std::string file;
-    std::filesystem::path target;
     std::optional<std::string> locale;
 };
 

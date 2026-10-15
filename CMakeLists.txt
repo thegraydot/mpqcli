@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(mpqcli VERSION 0.12.0)
+project(mpqcli VERSION 0.13.0)
 
 # An option() name is global to the CMake cache, including a consumer's, so these
 # carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.

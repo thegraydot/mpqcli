@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <limits>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <system_error>
@@ -23,6 +24,22 @@
 namespace fs = std::filesystem;
 
 namespace mpqcli {
+
+namespace {
+
+/// Whether file is the archive's own file, reporting the skip when it is
+bool SkipIfArchiveFile(const fs::path &file, const fs::path &archive_file, std::ostream &err) {
+    // Compared by identity rather than by path, so a symlink to the archive or another
+    // spelling of its path is caught too
+    std::error_code ec;
+    if (!fs::equivalent(file, archive_file, ec)) {
+        return false;
+    }
+    err << "[*] Skipping the archive itself: " << file.string() << std::endl;
+    return true;
+}
+
+} // namespace
 
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
              const std::string &path_prefix, LCID locale, const GameRules &game_rules,
@@ -183,6 +200,67 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     }
 
     return 0;
+}
+
+int AddInputs(HANDLE archive, const fs::path &archive_file, const std::vector<fs::path> &inputs,
+              const std::optional<std::string> &path, LCID locale, const GameRules &game_rules,
+              std::ostream &err, const std::atomic<bool> &cancelled,
+              const CompressionSettingsOverrides &overrides, bool overwrite, bool update,
+              int *skipped) {
+    std::error_code ec;
+    bool has_directory = false;
+    for (const auto &f : inputs) {
+        if (fs::is_directory(f, ec)) {
+            has_directory = true;
+            break;
+        }
+    }
+
+    int result = 0;
+    for (const auto &f : inputs) {
+        ThrowIfCancelled(cancelled);
+
+        if (!fs::exists(f, ec)) {
+            err << "[!] Path does not exist: " << f.string() << std::endl;
+            result |= 1;
+            continue;
+        }
+
+        if (fs::is_directory(f, ec)) {
+            std::vector<fs::path> directory_files = ListFilesRecursive(f, ec);
+            if (ec) {
+                err << "[!] Failed to list directory: (" << ec.value() << ") " << ec.message()
+                    << ": " << f.string() << std::endl;
+                result |= 1;
+                continue;
+            }
+            // A directory can hold the archive being written, as "create out.mpq ." does
+            const auto skip_archive = [&](const fs::path &file) {
+                return SkipIfArchiveFile(file, archive_file, err);
+            };
+            directory_files.erase(
+                std::remove_if(directory_files.begin(), directory_files.end(), skip_archive),
+                directory_files.end());
+            std::string prefix = path.value_or("");
+            result |= AddFiles(archive, directory_files, f, prefix, locale, game_rules, err,
+                               cancelled, overrides, overwrite, update, skipped);
+
+        } else if (fs::is_regular_file(f, ec)) {
+            if (SkipIfArchiveFile(f, archive_file, err)) {
+                continue;
+            }
+            const bool treat_as_directory = has_directory || inputs.size() > 1;
+            std::string archive_path = ResolveArchiveName(f, path, treat_as_directory);
+            result |= AddFile(archive, f, archive_path, locale, game_rules, err, overrides,
+                              overwrite, update, skipped);
+
+        } else {
+            err << "[!] Not a file or directory: " << f.string() << std::endl;
+            result |= 1;
+        }
+    }
+
+    return result;
 }
 
 } // namespace mpqcli

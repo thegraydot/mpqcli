@@ -1,12 +1,14 @@
 #include "mpq/extract.h"
 
 #include <atomic>
-#include <cstdint>
 #include <filesystem>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <system_error>
+#include <utility>
+#include <vector>
 
 #include <StormLib.h>
 
@@ -15,15 +17,28 @@
 #include "util/format.h"
 #include "util/locales.h"
 #include "util/path.h"
+#include "util/string.h"
 
 namespace fs = std::filesystem;
 
 namespace mpqcli {
 
-int ExtractFiles(HANDLE archive, const fs::path &output,
-                 const std::optional<fs::path> &listfile_name, LCID preferred_locale,
-                 std::ostream &err, const std::atomic<bool> &cancelled) {
-    SFileSetLocale(preferred_locale);
+namespace {
+
+/// Returns the path, relative to the output directory, a file is extracted to
+std::string ExtractedName(const std::string &file_name, bool flat) {
+    std::string name = NormalizeFilePath(fs::path(file_name));
+    if (flat) {
+        name = fs::path(name).filename().u8string();
+    }
+    return name;
+}
+
+} // namespace
+
+std::vector<std::string> ListArchivedFiles(HANDLE archive,
+                                           const std::optional<fs::path> &listfile_name,
+                                           const std::atomic<bool> &cancelled) {
     const std::string listfile_string =
         listfile_name.has_value() ? listfile_name->string() : std::string();
     const char *listfile = listfile_name.has_value() ? listfile_string.c_str() : nullptr;
@@ -34,7 +49,7 @@ int ExtractFiles(HANDLE archive, const fs::path &output,
         throw ArchiveError("Failed to find first file in MPQ archive.");
     }
 
-    int32_t result = 0;
+    std::vector<std::string> file_names;
     do {
         // Closed by hand rather than through ThrowIfCancelled, so the find handle
         // does not leak on the way out
@@ -42,17 +57,43 @@ int ExtractFiles(HANDLE archive, const fs::path &output,
             SFileFindClose(find_handle);
             throw Interrupted{};
         }
-        result |= ExtractFile(archive, output, find_data.cFileName,
-                              true, // Keep folder structure
-                              preferred_locale, err);
+        file_names.emplace_back(find_data.cFileName);
     } while (SFileFindNextFile(find_handle, &find_data));
 
     SFileFindClose(find_handle);
+    return file_names;
+}
+
+std::optional<std::pair<std::string, std::string>>
+FindFlatCollision(const std::vector<std::string> &file_names) {
+    // Compared without case: MPQ names ignore it, and so do the default Windows
+    // and macOS filesystems, where the second file would overwrite the first
+    std::map<std::string, std::string> first_by_extracted_name;
+    for (const auto &name : file_names) {
+        auto [it, inserted] =
+            first_by_extracted_name.emplace(ToLower(ExtractedName(name, true)), name);
+        // The same file named twice, or listed once per locale, lands on itself
+        if (!inserted &&
+            ToLower(ExtractedName(it->second, false)) != ToLower(ExtractedName(name, false))) {
+            return std::make_pair(it->second, name);
+        }
+    }
+    return std::nullopt;
+}
+
+int ExtractFiles(HANDLE archive, const fs::path &output, const std::vector<std::string> &file_names,
+                 bool flat, LCID preferred_locale, std::ostream &err,
+                 const std::atomic<bool> &cancelled) {
+    int result = 0;
+    for (const auto &name : file_names) {
+        ThrowIfCancelled(cancelled);
+        result |= ExtractFile(archive, output, name, flat, preferred_locale, err);
+    }
     return result;
 }
 
-int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_name,
-                bool keep_folder_structure, LCID preferred_locale, std::ostream &err) {
+int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_name, bool flat,
+                LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
         !FileExistsInArchiveForLocale(archive, file_name.c_str(), default_locale)) {
@@ -62,13 +103,7 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
         return 1;
     }
 
-    fs::path file_name_path(file_name);
-    std::string file_name_string = NormalizeFilePath(file_name_path);
-
-    if (!keep_folder_structure) {
-        file_name_path = fs::path(file_name_string);
-        file_name_string = file_name_path.filename().u8string();
-    }
+    const std::string file_name_string = ExtractedName(file_name, flat);
 
     std::error_code ec;
     fs::path output_path_base = fs::absolute(output, ec).lexically_normal();

@@ -35,7 +35,7 @@ $ echo -e "fth.txt\nfta.txt" | mpqcli remove wow-patch.mpq -
 
 ## Remove a file with a given locale
 
-Use `--locale` to remove only the copy stored under a specific locale. Without `--locale`,
+Use `-e` or `--locale` to remove only the copy stored under a specific locale. Without `--locale`,
 the file stored under the default locale is removed.
 
 ```bash

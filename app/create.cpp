@@ -3,32 +3,40 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
+#include <vector>
 
 #include <CLI/CLI.hpp>
 #include <StormLib.h>
 
 #include "commands.h"
 #include "gamerules/rules.h"
+#include "util/path.h"
 #include "validators.h"
 
 void RegisterCreate(CLI::App &app, Context &context) {
     struct Options {
         mpqcli::CreateOptions create;
+        // Local paths, or - for the lines on stdin, settled into create.files by the callback
+        std::vector<std::string> files;
         // The documented numbering is 1 to 4; StormLib counts the same formats from 0
-        std::optional<int32_t> version;
+        std::optional<int32_t> format_version;
     };
 
     auto options = std::make_shared<Options>();
-    auto *sub = app.add_subcommand("create", "Create an MPQ archive from target file or directory");
+    auto *sub = app.add_subcommand("create", "Create an MPQ archive from files and directories");
 
-    sub->add_option("target", options->create.target, "Directory or file to put in MPQ archive")
+    sub->add_option("archive", options->create.archive, "MPQ archive to create")
         ->required()
-        ->check(CLI::ExistingPath);
+        ->check(CLI::NonexistentPath);
+    sub->add_option("files", options->files,
+                    "Files or directories to add; pass - to read paths from stdin")
+        ->required()
+        ->expected(-1);
     sub->add_option("-p,--path", options->create.path,
-                    "Archive path for a single file, or prefix for a directory");
-    sub->add_option("-o,--output", options->create.output, "Output MPQ archive");
+                    "Archive path for a single file, or prefix for a directory or several inputs");
     sub->add_flag("-s,--sign", options->create.sign, "Sign the MPQ archive (default false)");
-    sub->add_option("--locale", options->create.locale, "Locale to use for added files")
+    sub->add_option("-e,--locale", options->create.locale, "Locale to use for added files")
         ->check(locale_valid);
     sub->add_option("-g,--game", options->create.game_profile,
                     "Game profile for MPQ creation. Valid options:\n" +
@@ -36,7 +44,8 @@ void RegisterCreate(CLI::App &app, Context &context) {
         ->check(game_profile_valid);
 
     mpqcli::MpqCreateSettingsOverrides &create = options->create.create_overrides;
-    sub->add_option("--version", options->version, "Override the MPQ archive version")
+    sub->add_option("--format-version", options->format_version,
+                    "Override the MPQ archive format version")
         ->check(CLI::Range(1, 4))
         ->group("Game setting overrides");
     sub->add_option("--stream-flags", create.stream_flags, "Override stream flags")
@@ -66,9 +75,11 @@ void RegisterCreate(CLI::App &app, Context &context) {
         ->group("Game setting overrides");
 
     sub->callback([options, &context]() {
-        if (options->version.has_value()) {
+        const auto files = mpqcli::ExpandStdinMarker(options->files, context.in);
+        options->create.files.assign(files.begin(), files.end());
+        if (options->format_version.has_value()) {
             options->create.create_overrides.mpq_version =
-                static_cast<DWORD>(options->version.value() - 1);
+                static_cast<DWORD>(options->format_version.value() - 1);
         }
         context.exit_code = mpqcli::Create(options->create, context.err, context.cancelled) ? 0 : 1;
     });
