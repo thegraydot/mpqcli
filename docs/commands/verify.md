@@ -1,6 +1,6 @@
 # verify
 
-Verify a target MPQ archive signature.
+Verify an MPQ archive signature.
 
 ## Verify an MPQ archive
 

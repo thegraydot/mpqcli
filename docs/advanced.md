@@ -35,11 +35,11 @@ $ mpqcli list -l scbw.txt StarDat.mpq | grep -i 'arr\\.*dat$' | sort | mpqcli ex
 
 ## Search and extract files on Windows
 
-The following command lists all files in an MPQ archive, and each filename is filtered using `Select-String` - selecting files ending in `.exe` (note: `.` is a regex wildcard matching any character; use `\.exe` for a strictly literal match) - which is then passed back to `mpqcli extract`. The result: search and extract all `exe` files.
+The following command lists all files in an MPQ archive, and each filename is filtered using `Select-String` - selecting files ending in `.exe` (note: `.` is a regex wildcard matching any character; use `\.exe` for a strictly literal match) - which is then passed back to `mpqcli extract` on stdin. `ForEach-Object Line` passes on the text of each match rather than the match object. The result: search and extract all `exe` files.
 
 ```powershell
 PS> mpqcli.exe list wow-patch.mpq | Select-String -Pattern \.exe | `
-    ForEach-Object { mpqcli.exe extract wow-patch.mpq $_ }
+    ForEach-Object Line | mpqcli.exe extract wow-patch.mpq -
 [*] Extracted: Launcher.exe
 [*] Extracted: BackgroundDownloader.exe
 [*] Extracted: WoW.exe

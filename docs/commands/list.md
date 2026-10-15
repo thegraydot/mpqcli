@@ -1,6 +1,6 @@
 # list
 
-List files in a target MPQ archive.
+List files in an MPQ archive.
 
 ## List all files in an MPQ archive
 

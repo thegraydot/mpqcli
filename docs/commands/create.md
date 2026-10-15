@@ -25,8 +25,10 @@ $ mpqcli create archive.mpq readme.txt textures/ sounds/
 Pass `-` in place of the files to read their paths from stdin, one per line:
 
 ```bash
-$ find art -name '*.blp' | mpqcli create art.mpq -
+$ find . -maxdepth 1 -name '*.txt' | mpqcli create texts.mpq -
 ```
+
+As with files named on the command line, each file is stored under its own name, without the folders in its path. To keep the folder structure, name the directory instead.
 
 ## Create an MPQ archive for a specific game
 
