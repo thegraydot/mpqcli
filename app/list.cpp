@@ -30,7 +30,7 @@ void RegisterList(CLI::App &app, Context &context) {
     sub->add_flag("-d,--detailed", options->detailed,
                   "File listing with additional columns (default false)");
     sub->add_flag("-a,--all", options->all, "File listing including hidden files (default false)");
-    sub->add_option("--property", options->properties, "Prints only specific property values")
+    sub->add_option("-q,--property", options->properties, "Prints only specific property values")
         ->check(CLI::IsMember(valid_properties));
 
     sub->callback([options, &context]() { mpqcli::List(*options, context.out, context.err); });

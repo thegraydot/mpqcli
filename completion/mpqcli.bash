@@ -116,10 +116,10 @@ _mpqcli() {
     case "${words[1]}" in
         info)
             case "$prev" in
-                --property) _mpqcli_words "${info_properties[*]}"; return ;;
+                -q|--property) _mpqcli_words "${info_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--property"
+                _mpqcli_words "-q --property"
             else
                 _mpqcli_positional_index
                 if [[ $pos -eq 0 ]]; then
@@ -204,10 +204,10 @@ _mpqcli() {
         list)
             case "$prev" in
                 -l|--listfile) _mpqcli_filedir; return ;;
-                --property) _mpqcli_words "${list_properties[*]}"; return ;;
+                -q|--property) _mpqcli_words "${list_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-l --listfile -d --detailed -a --all --property"
+                _mpqcli_words "-l --listfile -d --detailed -a --all -q --property"
             else
                 _mpqcli_positional_index -d --detailed -a --all
                 if [[ $pos -eq 0 ]]; then
@@ -223,11 +223,11 @@ _mpqcli() {
                 -e|--locale) _mpqcli_words "${locales[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-o --output --flat -l --listfile -e --locale"
+                _mpqcli_words "-o --output -j --flat -l --listfile -e --locale"
             else
                 # Positional 1 is the archive; the rest are in-archive paths, so
                 # they get no filesystem completion
-                _mpqcli_positional_index --flat
+                _mpqcli_positional_index -j --flat
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi
@@ -252,9 +252,9 @@ _mpqcli() {
 
         verify)
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "--print"
+                _mpqcli_words "-x --print"
             else
-                _mpqcli_positional_index --print
+                _mpqcli_positional_index -x --print
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi

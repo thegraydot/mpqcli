@@ -29,7 +29,7 @@ void RegisterExtract(CLI::App &app, Context &context) {
                         "Files to extract, or every file when omitted; pass - to read "
                         "names from stdin");
     sub->add_option("-o,--output", options->extract.output, "Output directory");
-    sub->add_flag("--flat", options->extract.flat,
+    sub->add_flag("-j,--flat", options->extract.flat,
                   "Write files into the output directory without their folders");
     sub->add_option("-l,--listfile", options->extract.listfile,
                     "File listing content of an MPQ archive, when extracting every file")

@@ -97,11 +97,11 @@ complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
     -a completion -d 'Generate shell completion script'
 
 # info
-#   info <archive.mpq> [--property <value>]
+#   info <archive.mpq> [-q/--property <value>]
 complete -c mpqcli -n '__fish_seen_subcommand_from info; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from info' \
-    -l property -d 'Print only a specific property value' \
+    -s q -l property -d 'Print only a specific property value' \
     -r -f -a "$__mpqcli_info_properties"
 
 # create
@@ -197,7 +197,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from rename' \
 
 # list
 #   list <archive.mpq> [-l/--listfile] [-d/--detailed] [-a/--all]
-#        [--property <value...>]
+#        [-q/--property <value...>]
 complete -c mpqcli -n '__fish_seen_subcommand_from list; and test (__mpqcli_positional_index -d --detailed -a --all) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
@@ -207,20 +207,20 @@ complete -c mpqcli -n '__fish_seen_subcommand_from list' \
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
     -s a -l all         -d 'Include hidden files'
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
-    -l property         -d 'Print only specific property values' \
+    -s q -l property    -d 'Print only specific property values' \
     -r -f -a "$__mpqcli_list_properties"
 
 # extract
-#   extract <archive.mpq> [files...] [-o/--output] [--flat]
+#   extract <archive.mpq> [files...] [-o/--output] [-j/--flat]
 #           [-l/--listfile] [-e/--locale]
 # Positional 1 is the archive; the rest are in-archive paths, so they get no
 # filesystem completion
-complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index --flat) -eq 1' -F
+complete -c mpqcli -n '__fish_seen_subcommand_from extract; and test (__mpqcli_positional_index -j --flat) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s o -l output      -d 'Output directory' -r -f -a '(__fish_complete_directories)'
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
-    -l flat             -d 'Write files without their folders'
+    -s j -l flat        -d 'Write files without their folders'
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s l -l listfile    -d 'External file listing content of the archive' -r -F
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
@@ -238,11 +238,11 @@ complete -c mpqcli -n '__fish_seen_subcommand_from read' \
     -r -f -a "$__mpqcli_locales"
 
 # verify
-#   verify <archive.mpq> [--print]
-complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index --print) -eq 1' -F
+#   verify <archive.mpq> [-x/--print]
+complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index -x --print) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from verify' \
-    -l print -d 'Print the digital signature (in hex)'
+    -s x -l print -d 'Print the digital signature (in hex)'
 
 # compact
 #   compact <archive.mpq> [-l/--listfile]

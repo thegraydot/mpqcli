@@ -63,7 +63,7 @@ The `list` subcommand supports listing the following properties:
   * `n`: Use default flags for internal files.
   * `f`: Fix key; This is obsolete.
 
-You can use the `--property` argument with the `list` subcommand to print the given properties. Many properties can be given, and they will be printed in the order given.
+You can use the `-q` or `--property` argument with the `list` subcommand to print the given properties. Many properties can be given, and they will be printed in the order given.
 
 ```bash
 $ mpqcli list -d -a Patch_rt.mpq --property hash-index --property locale --property flags

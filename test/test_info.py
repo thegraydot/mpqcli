@@ -177,3 +177,24 @@ def test_info_short_property_flag_is_rejected(binary_path, generate_cats_and_dog
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
     assert "archive: File does not exist: file-count" in result.stderr
     assert result.stdout == ""
+
+
+def test_info_property_short_flag(binary_path, generate_cats_and_dogs_mpq):
+    test_file = generate_cats_and_dogs_mpq
+
+    short_form = subprocess.run(
+        [str(binary_path), "info", "-q", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    long_form = subprocess.run(
+        [str(binary_path), "info", "--property", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    assert short_form.returncode == 0, f"mpqcli failed with error: {short_form.stderr}"
+    assert short_form.stdout.strip() != ""
+    assert short_form.stdout == long_form.stdout

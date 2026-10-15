@@ -1060,3 +1060,29 @@ def test_extract_flat_allows_one_name_stored_under_several_locales(binary_path, 
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
     assert result.stderr.splitlines().count("[*] Extracted: cats.txt") == 2
     assert (output_dir / "cats.txt").exists()
+
+
+def test_extract_short_flat_flag(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    (input_dir / "texts").mkdir(parents=True)
+    (input_dir / "texts" / "cats.txt").write_text("Cats.")
+    archive_file = tmp_path / "nested.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-j", "-o", str(output_dir), str(archive_file), "texts\\cats.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert set(fi.name for fi in output_dir.iterdir()) == {"cats.txt"}

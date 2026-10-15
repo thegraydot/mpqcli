@@ -183,3 +183,34 @@ def test_verify_short_print_flag_is_rejected(binary_path, generate_cats_and_dogs
 
     assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
     assert result.stdout == ""
+
+
+def test_verify_print_short_flag(binary_path, tmp_path):
+    input_file = tmp_path / "a.txt"
+    input_file.write_text("A file.")
+    archive_file = tmp_path / "signed.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", "-s", str(archive_file), str(input_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    short_form = subprocess.run(
+        [str(binary_path), "verify", "-x", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=False  # The signature is raw bytes
+    )
+    long_form = subprocess.run(
+        [str(binary_path), "verify", "--print", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=False
+    )
+
+    assert short_form.returncode == 0, f"mpqcli failed with error: {short_form.stderr}"
+    assert short_form.stdout != b""
+    assert short_form.stdout == long_form.stdout

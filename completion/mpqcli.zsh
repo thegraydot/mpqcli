@@ -90,7 +90,7 @@ _mpqcli_info() {
     local props="${_mpqcli_info_properties[*]}"
     _arguments \
         '1:archive:_mpqcli_archives' \
-        '--property[print only a specific property]:property:('"$props"')'
+        '(-q --property)'{-q,--property}'[print only a specific property]:property:('"$props"')'
 }
 
 _mpqcli_create() {
@@ -154,7 +154,7 @@ _mpqcli_list() {
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
         '(-d --detailed)'{-d,--detailed}'[detailed listing with extra columns]' \
         '(-a --all)'{-a,--all}'[include hidden files]' \
-        '--property[print specific property values]:property:('"$props"')'
+        '*'{-q,--property}'[print specific property values]:property:('"$props"')'
 }
 
 _mpqcli_extract() {
@@ -163,7 +163,7 @@ _mpqcli_extract() {
         '1:archive:_mpqcli_archives' \
         '*:archive paths' \
         '(-o --output)'{-o,--output}'[output directory]:dir:_files -/' \
-        '--flat[write files without their folders]' \
+        '(-j --flat)'{-j,--flat}'[write files without their folders]' \
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
         '(-e --locale)'{-e,--locale}'[preferred locale for extracted files]:locale:('"$locales"')'
 }
@@ -179,7 +179,7 @@ _mpqcli_read() {
 _mpqcli_verify() {
     _arguments \
         '1:archive:_mpqcli_archives' \
-        '--print[print the digital signature in hex]'
+        '(-x --print)'{-x,--print}'[print the digital signature in hex]'
 }
 
 _mpqcli_compact() {

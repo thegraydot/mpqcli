@@ -27,7 +27,7 @@ $ mpqcli extract -o patch-1.10 wow-patch.mpq
 
 ## Extract all files without the folder structure
 
-Use the `--flat` flag to write every file straight into the output directory, keeping only the filename. If two files would end up with the same name, nothing is extracted.
+Use the `-j` or `--flat` flag to write every file straight into the output directory, keeping only the filename. If two files would end up with the same name, nothing is extracted.
 
 ```bash
 $ mpqcli extract --flat wow-patch.mpq

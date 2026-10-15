@@ -75,6 +75,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
     # short help string, in the order the help text lists them
     $optionSpec = @{
         'info' = [ordered]@{
+            '-q'         = 'Print only a specific property value'
             '--property' = 'Print only a specific property value'
         }
         'create' = [ordered]@{
@@ -128,11 +129,13 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--detailed' = 'File listing with additional columns'
             '-a'         = 'File listing including hidden files'
             '--all'      = 'File listing including hidden files'
+            '-q'         = 'Print only specific property values'
             '--property' = 'Print only specific property values'
         }
         'extract' = [ordered]@{
             '-o'         = 'Output directory'
             '--output'   = 'Output directory'
+            '-j'         = 'Write files into the output directory without their folders'
             '--flat'     = 'Write files into the output directory without their folders'
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
@@ -144,6 +147,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--locale' = 'Preferred locale for read file'
         }
         'verify' = [ordered]@{
+            '-x'      = 'Print the digital signature (in hex)'
             '--print' = 'Print the digital signature (in hex)'
         }
         'compact' = [ordered]@{
@@ -235,7 +239,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             return & $emit $items 'ParameterValue'
         }
         # Property options: meaning depends on the subcommand
-        if ($prevToken -eq '--property') {
+        if ($prevToken -in @('-q', '--property')) {
             if ($subcommand -eq 'info') {
                 $items = foreach ($v in $infoProperties) {
                     [pscustomobject]@{ Value = $v; Tip = 'info property' } }

@@ -24,7 +24,7 @@ void RegisterInfo(CLI::App &app, Context &context) {
     sub->add_option("archive", options->archive, "MPQ archive")
         ->required()
         ->check(CLI::ExistingFile);
-    sub->add_option("--property", options->property, "Prints only a specific property value")
+    sub->add_option("-q,--property", options->property, "Prints only a specific property value")
         ->check(CLI::IsMember(valid_properties));
 
     sub->callback([options, &context]() { mpqcli::Info(*options, context.out); });

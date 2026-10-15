@@ -6,7 +6,7 @@
 
 - Accept several files, or a list read from stdin, in create and extract
 - Add a flat option to extract
-- Add -e as the short form of the locale option
+- Add short flags -e, -j, -q and -x for the locale, flat, property and print options
 
 ### Changed
 
