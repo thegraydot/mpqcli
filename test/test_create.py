@@ -59,7 +59,7 @@ def test_create_mpq_versions(binary_path, generate_test_files):
 
         # Verify the correct version was written to the archive
         version_result = subprocess.run(
-            [str(binary_path), "info", "-p", "format-version", str(target_file)],
+            [str(binary_path), "info", "--property", "format-version", str(target_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -381,7 +381,7 @@ def test_create_mpq_with_game_profile(binary_path, generate_test_files):
 
         # Verify the MPQ version
         version_result = subprocess.run(
-            [str(binary_path), "info", "-p", "format-version", str(output_file)],
+            [str(binary_path), "info", "--property", "format-version", str(output_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -392,7 +392,7 @@ def test_create_mpq_with_game_profile(binary_path, generate_test_files):
 
         # Verify compression flags on a .txt file
         list_result = subprocess.run(
-            [str(binary_path), "list", str(output_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(output_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -484,7 +484,7 @@ def test_create_mpq_with_all_game_profiles(binary_path, generate_test_files):
 
         # Verify the MPQ version
         version_result = subprocess.run(
-            [str(binary_path), "info", "-p", "format-version", str(output_file)],
+            [str(binary_path), "info", "--property", "format-version", str(output_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -536,7 +536,7 @@ def test_deletion_marker_only_for_zero_size_files(binary_path):
 
         # Check flags for both files
         list_result = subprocess.run(
-            [str(binary_path), "list", str(output_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(output_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -601,7 +601,7 @@ def test_create_mpq_no_sign_flag_has_no_signature(binary_path, generate_test_fil
     assert output_file.exists(), "MPQ file was not created"
 
     info = subprocess.run(
-        [str(binary_path), "info", "-p", "signature-type", str(output_file)],
+        [str(binary_path), "info", "--property", "signature-type", str(output_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -686,7 +686,7 @@ def test_create_mpq_skips_special_files(binary_path, tmp_path):
 
     # Signature type must be None (signature) must not have been ingested
     info = subprocess.run(
-        [str(binary_path), "info", "-p", "signature-type", str(output_file)],
+        [str(binary_path), "info", "--property", "signature-type", str(output_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -802,7 +802,7 @@ def test_create_mpq_skips_dangling_symlink(binary_path, tmp_path):
 
 def verify_archive_file_content(binary_path, test_file, expected_output):
     result = subprocess.run(
-        [str(binary_path), "list", str(test_file), "-d", "-p", "locale"],
+        [str(binary_path), "list", str(test_file), "-d", "--property", "locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -843,7 +843,7 @@ def test_create_mpq_from_empty_directory(binary_path, tmp_path):
 
     # max-files should be 64 (minimum value returned by CalculateMpqMaxFileValue for 0 files)
     info_result = subprocess.run(
-        [str(binary_path), "info", "-p", "max-files", str(output_file)],
+        [str(binary_path), "info", "--property", "max-files", str(output_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

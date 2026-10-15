@@ -110,7 +110,7 @@ def test_verify_weak_signature_patch(binary_path, download_test_files):
     expected_md5 = "e434b57cdc6b730c17e18f2bb2fa8fd9"
 
     result = subprocess.run(
-        [str(binary_path), "verify", "-p", str(test_file)],
+        [str(binary_path), "verify", "--print", str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False  # Get raw bytes to avoid UTF decode errors
@@ -142,7 +142,7 @@ def test_verify_strong_signature_patch(binary_path, download_test_files):
     expected_md5 = "931fc40bb6bff48b89d39b5acb169bbd"
 
     result = subprocess.run(
-        [str(binary_path), "verify", "-p", str(test_file)],
+        [str(binary_path), "verify", "--print", str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False  # Get raw bytes to avoid UTF decode errors
@@ -169,3 +169,18 @@ def test_verify_mpq_target_does_not_exist(binary_path):
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_verify_short_print_flag_is_rejected(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "verify", "-p", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout == ""

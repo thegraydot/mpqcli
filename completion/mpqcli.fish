@@ -97,11 +97,11 @@ complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
     -a completion -d 'Generate shell completion script'
 
 # info
-#   info <archive.mpq> [-p/--property <value>]
+#   info <archive.mpq> [--property <value>]
 complete -c mpqcli -n '__fish_seen_subcommand_from info; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from info' \
-    -s p -l property -d 'Print only a specific property value' \
+    -l property -d 'Print only a specific property value' \
     -r -f -a "$__mpqcli_info_properties"
 
 # create
@@ -197,7 +197,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from rename' \
 
 # list
 #   list <archive.mpq> [-l/--listfile] [-d/--detailed] [-a/--all]
-#        [-p/--property <value...>]
+#        [--property <value...>]
 complete -c mpqcli -n '__fish_seen_subcommand_from list; and test (__mpqcli_positional_index -d --detailed -a --all) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
@@ -207,7 +207,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from list' \
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
     -s a -l all         -d 'Include hidden files'
 complete -c mpqcli -n '__fish_seen_subcommand_from list' \
-    -s p -l property    -d 'Print only specific property values' \
+    -l property         -d 'Print only specific property values' \
     -r -f -a "$__mpqcli_list_properties"
 
 # extract
@@ -238,11 +238,11 @@ complete -c mpqcli -n '__fish_seen_subcommand_from read' \
     -r -f -a "$__mpqcli_locales"
 
 # verify
-#   verify <archive.mpq> [-p/--print]
-complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index -p --print) -eq 1' -F
+#   verify <archive.mpq> [--print]
+complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index --print) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from verify' \
-    -s p -l print   -d 'Print the digital signature (in hex)'
+    -l print -d 'Print the digital signature (in hex)'
 
 # compact
 #   compact <archive.mpq> [-l/--listfile]

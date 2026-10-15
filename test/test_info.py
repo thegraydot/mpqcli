@@ -90,7 +90,7 @@ def test_info_v1_properties(binary_path):
 
     for property_name, expected_output in test_cases:
         result = subprocess.run(
-            [str(binary_path), "info", "-p", property_name, str(test_file)],
+            [str(binary_path), "info", "--property", property_name, str(test_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -123,7 +123,7 @@ def test_info_v2_properties(binary_path):
 
     for property_name, expected_output in test_cases:
         result = subprocess.run(
-            [str(binary_path), "info", "-p", property_name, str(test_file)],
+            [str(binary_path), "info", "--property", property_name, str(test_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -140,7 +140,7 @@ def test_info_v1_invalid_property(binary_path):
     property_name = "not-real"
 
     result = subprocess.run(
-        [str(binary_path), "info", "-p", property_name, str(test_file)],
+        [str(binary_path), "info", "--property", property_name, str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -161,3 +161,19 @@ def test_info_mpq_target_does_not_exist(binary_path):
     )
 
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+
+
+def test_info_short_property_flag_is_rejected(binary_path):
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "info", "-p", "file-count", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    # -p is not an info option, so the property name is taken as the archive
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout == ""

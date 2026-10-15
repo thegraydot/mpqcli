@@ -75,7 +75,6 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
     # short help string, in the order the help text lists them
     $optionSpec = @{
         'info' = [ordered]@{
-            '-p'         = 'Print only a specific property value'
             '--property' = 'Print only a specific property value'
         }
         'create' = [ordered]@{
@@ -127,7 +126,6 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--detailed' = 'File listing with additional columns'
             '-a'         = 'File listing including hidden files'
             '--all'      = 'File listing including hidden files'
-            '-p'         = 'Print only specific property values'
             '--property' = 'Print only specific property values'
         }
         'extract' = [ordered]@{
@@ -145,7 +143,6 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--locale' = 'Preferred locale for read file'
         }
         'verify' = [ordered]@{
-            '-p'      = 'Print the digital signature (in hex)'
             '--print' = 'Print the digital signature (in hex)'
         }
         'compact' = [ordered]@{
@@ -236,7 +233,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             return & $emit $items 'ParameterValue'
         }
         # Property options: meaning depends on the subcommand
-        if ($prevToken -in @('-p', '--property')) {
+        if ($prevToken -eq '--property') {
             if ($subcommand -eq 'info') {
                 $items = foreach ($v in $infoProperties) {
                     [pscustomobject]@{ Value = $v; Tip = 'info property' } }
@@ -247,13 +244,11 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
                     [pscustomobject]@{ Value = $v; Tip = 'list property' } }
                 return & $emit $items 'ParameterValue'
             }
-            # For 'verify', -p/--print is a flag (no value) -> fall through
         }
         # Options that take a file/dir path -> let PowerShell complete paths
         $pathOptions = @('-o', '--output', '-l', '--listfile', '-f', '--file',
                          '-p', '--path')
-        if ($prevToken -in $pathOptions -and
-            -not ($subcommand -in @('info', 'list') -and $prevToken -in @('-p', '--property'))) {
+        if ($prevToken -in $pathOptions) {
             return  # empty -> native path completion takes over
         }
     }

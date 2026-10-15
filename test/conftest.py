@@ -247,7 +247,7 @@ def generate_tampered_signature_mpq(binary_path):
     assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
 
     offset_result = subprocess.run(
-        [str(binary_path), "list", "-p", "byte-offset", str(mpq_file)],
+        [str(binary_path), "list", "--property", "byte-offset", str(mpq_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -256,7 +256,7 @@ def generate_tampered_signature_mpq(binary_path):
     byte_offset = int(offset_result.stdout.split()[0])
 
     size_result = subprocess.run(
-        [str(binary_path), "list", "-p", "compressed-size", str(mpq_file)],
+        [str(binary_path), "list", "--property", "compressed-size", str(mpq_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

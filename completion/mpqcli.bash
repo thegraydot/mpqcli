@@ -116,10 +116,10 @@ _mpqcli() {
     case "${words[1]}" in
         info)
             case "$prev" in
-                -p|--property) _mpqcli_words "${info_properties[*]}"; return ;;
+                --property) _mpqcli_words "${info_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --property"
+                _mpqcli_words "--property"
             else
                 _mpqcli_positional_index
                 if [[ $pos -eq 0 ]]; then
@@ -206,10 +206,10 @@ _mpqcli() {
         list)
             case "$prev" in
                 -l|--listfile) _mpqcli_filedir; return ;;
-                -p|--property) _mpqcli_words "${list_properties[*]}"; return ;;
+                --property) _mpqcli_words "${list_properties[*]}"; return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-l --listfile -d --detailed -a --all -p --property"
+                _mpqcli_words "-l --listfile -d --detailed -a --all --property"
             else
                 _mpqcli_positional_index -d --detailed -a --all
                 if [[ $pos -eq 0 ]]; then
@@ -253,9 +253,9 @@ _mpqcli() {
 
         verify)
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --print"
+                _mpqcli_words "--print"
             else
-                _mpqcli_positional_index -p --print
+                _mpqcli_positional_index --print
                 if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi

@@ -396,7 +396,7 @@ def test_add_file_with_game_profile(binary_path, generate_test_files):
         assert f"Adding file: test_{profile}.txt" in result.stderr
 
         list_result = subprocess.run(
-            [str(binary_path), "list", str(target_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(target_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -471,7 +471,7 @@ def test_add_file_with_all_game_profiles(binary_path, generate_test_files):
         assert f"test_all_{profile}.txt" in list_result.stdout, f"Profile {profile}: added file not found in archive"
 
         flags_result = subprocess.run(
-            [str(binary_path), "list", str(target_file), "-d", "-p", "flags"],
+            [str(binary_path), "list", str(target_file), "-d", "--property", "flags"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -1176,7 +1176,7 @@ def create_mpq_archive_with_filetime_for_test(binary_path, script_dir):
 
 def verify_archive_file_content(binary_path, test_file, expected_output):
     result = subprocess.run(
-        [str(binary_path), "list", str(test_file), "-d", "-p", "locale"],
+        [str(binary_path), "list", str(test_file), "-d", "--property", "locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

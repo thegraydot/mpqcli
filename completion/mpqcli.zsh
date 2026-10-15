@@ -90,7 +90,7 @@ _mpqcli_info() {
     local props="${_mpqcli_info_properties[*]}"
     _arguments \
         '1:archive:_mpqcli_archives' \
-        '(-p --property)'{-p,--property}'[print only a specific property]:property:('"$props"')'
+        '--property[print only a specific property]:property:('"$props"')'
 }
 
 _mpqcli_create() {
@@ -154,7 +154,7 @@ _mpqcli_list() {
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
         '(-d --detailed)'{-d,--detailed}'[detailed listing with extra columns]' \
         '(-a --all)'{-a,--all}'[include hidden files]' \
-        '(-p --property)'{-p,--property}'[print specific property values]:property:('"$props"')'
+        '--property[print specific property values]:property:('"$props"')'
 }
 
 _mpqcli_extract() {
@@ -179,7 +179,7 @@ _mpqcli_read() {
 _mpqcli_verify() {
     _arguments \
         '1:archive:_mpqcli_archives' \
-        '(-p --print)'{-p,--print}'[print the digital signature in hex]'
+        '--print[print the digital signature in hex]'
 }
 
 _mpqcli_compact() {
