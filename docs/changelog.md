@@ -5,7 +5,7 @@
 ### Added
 
 - Accept several files, or a list read from stdin, in create and extract
-- Add a flat option to extract, which fails rather than overwrites when two names clash
+- Add a flat option to extract
 
 ### Changed
 

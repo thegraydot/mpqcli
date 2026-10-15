@@ -115,7 +115,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from info' \
 complete -c mpqcli -n '__fish_seen_subcommand_from create' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
-    -s p -l path        -d 'Archive path for a single file, or prefix for a directory' -r -f
+    -s p -l path        -d 'Archive path for a single file, or prefix for a directory or several inputs' -r -f
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -s s -l sign        -d 'Sign the MPQ archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
@@ -157,7 +157,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from create' \
 complete -c mpqcli -n '__fish_seen_subcommand_from add' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
-    -s p -l path            -d 'Archive path for a single file, or prefix for a directory' -r -f
+    -s p -l path            -d 'Archive path for a single file, or prefix for a directory or several inputs' -r -f
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
     -s w -l overwrite       -d 'Replace every file that already exists in the archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from add' \
@@ -224,7 +224,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -s l -l listfile    -d 'External file listing content of the archive' -r -F
 complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
-    -l locale           -d 'Preferred locale for extracted file' \
+    -l locale           -d 'Preferred locale for extracted files' \
     -r -f -a "$__mpqcli_locales"
 
 # read

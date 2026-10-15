@@ -78,8 +78,8 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--property' = 'Print only a specific property value'
         }
         'create' = [ordered]@{
-            '-p'              = 'Archive path for a single file, or prefix for a directory'
-            '--path'          = 'Archive path for a single file, or prefix for a directory'
+            '-p'              = 'Archive path for a single file, or prefix for a directory or several inputs'
+            '--path'          = 'Archive path for a single file, or prefix for a directory or several inputs'
             '-s'              = 'Sign the MPQ archive'
             '--sign'          = 'Sign the MPQ archive'
             '--locale'        = 'Locale to use for added files'
@@ -98,8 +98,8 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--compression-next'  = 'Override compression for subsequent sectors'
         }
         'add' = [ordered]@{
-            '-p'          = 'Archive path for a single file, or prefix for a directory'
-            '--path'      = 'Archive path for a single file, or prefix for a directory'
+            '-p'          = 'Archive path for a single file, or prefix for a directory or several inputs'
+            '--path'      = 'Archive path for a single file, or prefix for a directory or several inputs'
             '-w'          = 'Replace every file that already exists in the archive'
             '--overwrite' = 'Replace every file that already exists in the archive'
             '-u'          = 'Replace only files that changed'
@@ -132,7 +132,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--flat'     = 'Write files into the output directory without their folders'
             '-l'         = 'File listing content of an MPQ archive'
             '--listfile' = 'File listing content of an MPQ archive'
-            '--locale'   = 'Preferred locale for extracted file'
+            '--locale'   = 'Preferred locale for extracted files'
         }
         'read' = [ordered]@{
             '--locale' = 'Preferred locale for read file'

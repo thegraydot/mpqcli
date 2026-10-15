@@ -98,7 +98,7 @@ _mpqcli_create() {
     _arguments \
         '1:archive:_files' \
         '*:files:_files' \
-        '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory]:path' \
+        '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory or several inputs]:path' \
         '(-s --sign)'{-s,--sign}'[sign the archive]' \
         '--locale[locale for added files]:locale:('"$locales"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"$games"')' \
@@ -120,7 +120,7 @@ _mpqcli_add() {
     _arguments \
         '1:archive:_mpqcli_archives' \
         '*:files:_files' \
-        '(-p --path)'{-p,--path}'[archive path or prefix for directory add]:path' \
+        '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory or several inputs]:path' \
         '(-w --overwrite -u --update)'{-w,--overwrite}'[replace every existing file]' \
         '(-u --update -w --overwrite)'{-u,--update}'[replace only files that changed]' \
         '--locale[locale for added file]:locale:('"$locales"')' \
@@ -165,7 +165,7 @@ _mpqcli_extract() {
         '(-o --output)'{-o,--output}'[output directory]:dir:_files -/' \
         '--flat[write files without their folders]' \
         '(-l --listfile)'{-l,--listfile}'[listfile path]:file:_files' \
-        '--locale[preferred locale for extracted file]:locale:('"$locales"')'
+        '--locale[preferred locale for extracted files]:locale:('"$locales"')'
 }
 
 _mpqcli_read() {

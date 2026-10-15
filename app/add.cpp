@@ -29,7 +29,7 @@ void RegisterAdd(CLI::App &app, Context &context) {
         ->required()
         ->expected(-1);
     sub->add_option("-p,--path", options->add.path,
-                    "Archive path for a single file, or prefix for a directory");
+                    "Archive path for a single file, or prefix for a directory or several inputs");
     CLI::Option *overwrite = sub->add_flag("-w,--overwrite", options->add.overwrite,
                                            "Replace every file that already exists in the archive");
     sub->add_flag("-u,--update", options->add.update,
