@@ -16,7 +16,7 @@ The archive must not already exist; `create` never overwrites a file. If an inpu
 
 ## Create an MPQ archive from several files and directories
 
-Name as many files and directories as needed after the archive. Each file is stored under its own name, and each directory's contents go at the root of the archive. If two inputs hold a file with the same name, the first one is kept.
+Name as many files and directories as needed after the archive. Each file is stored under its own name, and each directory's contents go at the root of the archive. If two inputs hold a file with the same name, no archive is created.
 
 ```bash
 $ mpqcli create archive.mpq readme.txt textures/ sounds/

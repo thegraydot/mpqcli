@@ -104,15 +104,16 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
     const int result =
         AddInputs(archive.Handle(), partial_path, options.files, options.path, lcid, game_rules,
                   err, cancelled, options.compression_overrides, false, false, &files_skipped);
+    // The archive starts empty, so a skip can only mean two inputs hold the same name
     if (files_skipped > 0) {
-        err << "[*] " << files_skipped
-            << " file(s) were skipped because an earlier input added a file by the same name"
+        err << "[!] " << files_skipped
+            << " file(s) were not added because an earlier input added a file by the same name"
             << std::endl;
     }
 
     // An archive missing some of its files is not the one that was asked for, so it is
     // discarded with the partial and the output path stays empty, as for a missing input
-    if (result != 0) {
+    if (result != 0 || files_skipped > 0) {
         err << "[!] Failed to add every file, so no archive was created: "
             << output_file_path.string() << std::endl;
         return false;

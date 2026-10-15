@@ -893,7 +893,7 @@ def test_create_from_several_inputs(binary_path, tmp_path):
     assert set(list_result.stdout.splitlines()) == {"readme.txt", "bear\\bear.blp"}
 
 
-def test_create_keeps_the_first_of_two_inputs_with_the_same_name(binary_path, tmp_path):
+def test_create_two_inputs_with_the_same_name_creates_nothing(binary_path, tmp_path):
     first_dir = tmp_path / "first"
     second_dir = tmp_path / "second"
     first_dir.mkdir()
@@ -908,16 +908,12 @@ def test_create_keeps_the_first_of_two_inputs_with_the_same_name(binary_path, tm
         stderr=subprocess.PIPE,
         text=True
     )
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert "1 file(s) were skipped" in result.stderr
 
-    read_result = subprocess.run(
-        [str(binary_path), "read", str(archive_file), "a.txt"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-    assert read_result.stdout == "First."
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert "1 file(s) were not added because an earlier input added a file by the same name" \
+        in result.stderr
+    assert "no archive was created" in result.stderr
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["first", "second"]
 
 
 def test_create_files_via_stdin(binary_path, tmp_path):
