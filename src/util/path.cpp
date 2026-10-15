@@ -63,6 +63,10 @@ std::vector<std::string> ExpandStdinMarker(const std::vector<std::string> &paths
         }
         std::string line;
         while (std::getline(in, line)) {
+            // A list saved with Windows line endings keeps the \r when read on POSIX
+            if (!line.empty() && line.back() == '\r') {
+                line.pop_back();
+            }
             if (!line.empty()) {
                 expanded.push_back(line);
             }

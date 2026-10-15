@@ -1074,6 +1074,33 @@ def test_add_files_via_stdin(binary_path, generate_test_files):
     assert "stdin_b.txt" in list_result.stdout
 
 
+def test_add_files_via_stdin_with_windows_line_endings(binary_path, generate_test_files):
+    _ = generate_test_files
+    script_dir = Path(__file__).parent
+    target_mpq = script_dir / "data" / "files.mpq"
+
+    create_mpq_archive_for_test(binary_path, script_dir)
+
+    test_file_a = script_dir / "data" / "stdin_a.txt"
+    test_file_b = script_dir / "data" / "stdin_b.txt"
+    test_file_a.write_text("Stdin file A.")
+    test_file_b.write_text("Stdin file B.")
+
+    stdin_input = f"{test_file_a}\r\n{test_file_b}\r\n"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(target_mpq), "-"],
+        input=stdin_input,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "[+] Adding file: stdin_a.txt" in result.stderr
+    assert "[+] Adding file: stdin_b.txt" in result.stderr
+
+
 def create_mpq_archive_for_test(binary_path, script_dir):
     target_dir = script_dir / "data" / "files"
     target_file = target_dir.with_suffix(".mpq")
