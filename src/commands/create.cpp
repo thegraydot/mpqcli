@@ -101,8 +101,8 @@ bool Create(const CreateOptions &options, std::ostream &err, const std::atomic<b
 
     int files_skipped = 0;
     const int result =
-        AddInputs(archive.Handle(), options.files, options.path, lcid, game_rules, err, cancelled,
-                  options.compression_overrides, false, false, &files_skipped);
+        AddInputs(archive.Handle(), partial_path, options.files, options.path, lcid, game_rules,
+                  err, cancelled, options.compression_overrides, false, false, &files_skipped);
     if (files_skipped > 0) {
         err << "[*] " << files_skipped
             << " file(s) were skipped because an earlier input added a file by the same name"

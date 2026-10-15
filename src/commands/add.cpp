@@ -28,9 +28,9 @@ bool Add(const AddOptions &options, std::ostream &err, const std::atomic<bool> &
     GameRules game_rules(profile);
 
     int files_skipped = 0;
-    const int result =
-        AddInputs(archive.Handle(), options.files, options.path, lcid, game_rules, err, cancelled,
-                  options.compression_overrides, options.overwrite, options.update, &files_skipped);
+    const int result = AddInputs(archive.Handle(), options.archive, options.files, options.path,
+                                 lcid, game_rules, err, cancelled, options.compression_overrides,
+                                 options.overwrite, options.update, &files_skipped);
 
     // Skipping pre-existing files is the default, so point at the flags that change it
     // rather than letting the run look like it silently did nothing.

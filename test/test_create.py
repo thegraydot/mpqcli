@@ -971,3 +971,28 @@ def test_create_missing_input_creates_nothing(binary_path, tmp_path):
     assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
     assert "Path does not exist" in result.stderr
     assert sorted(p.name for p in tmp_path.iterdir()) == ["a.txt"]
+
+
+def test_create_skips_the_archive_inside_its_own_input_directory(binary_path, tmp_path):
+    input_dir = tmp_path / "mod"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+
+    result = subprocess.run(
+        [str(binary_path), "create", "out.mpq", "."],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=input_dir,
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "Skipping the archive itself" in result.stderr
+    assert sorted(p.name for p in input_dir.iterdir()) == ["a.txt", "out.mpq"]
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(input_dir / "out.mpq")],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert list_result.stdout.splitlines() == ["a.txt"]

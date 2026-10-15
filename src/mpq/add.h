@@ -30,7 +30,10 @@ int AddFile(HANDLE archive, const std::filesystem::path &local_file,
 ///
 /// A directory's contents go under path, or at the archive root without it. A lone file is
 /// stored at path when given; beside other inputs or any directory, path is a prefix.
-int AddInputs(HANDLE archive, const std::vector<std::filesystem::path> &inputs,
+/// archive_file is the archive's own file on disk, which is skipped wherever it turns up
+/// among the inputs, so an archive is never added to itself.
+int AddInputs(HANDLE archive, const std::filesystem::path &archive_file,
+              const std::vector<std::filesystem::path> &inputs,
               const std::optional<std::string> &path, LCID locale, const GameRules &game_rules,
               std::ostream &err, const std::atomic<bool> &cancelled,
               const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),

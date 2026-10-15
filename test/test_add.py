@@ -1101,6 +1101,71 @@ def test_add_files_via_stdin_with_windows_line_endings(binary_path, generate_tes
     assert "[+] Adding file: stdin_b.txt" in result.stderr
 
 
+def test_add_skips_the_archive_inside_an_input_directory(binary_path, tmp_path):
+    input_dir = tmp_path / "mod"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+    other_file = tmp_path / "b.txt"
+    other_file.write_text("B file.")
+    archive_file = input_dir / "mod.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(other_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "Skipping the archive itself" in result.stderr
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert set(list_result.stdout.splitlines()) == {"a.txt", "b.txt"}
+
+
+def test_add_skips_the_archive_named_as_an_input(binary_path, tmp_path):
+    input_file = tmp_path / "a.txt"
+    input_file.write_text("A file.")
+    archive_file = tmp_path / "a.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "Skipping the archive itself" in result.stderr
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert list_result.stdout.splitlines() == ["a.txt"]
+
+
 def create_mpq_archive_for_test(binary_path, script_dir):
     target_dir = script_dir / "data" / "files"
     target_file = target_dir.with_suffix(".mpq")
