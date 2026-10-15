@@ -273,4 +273,5 @@ def test_read_old_argument_order_is_rejected(binary_path, generate_locales_mpq_t
 
     # The file name is taken as the archive, and no local file has that name
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert "archive: File does not exist: cats.txt" in result.stderr
     assert result.stdout == ""

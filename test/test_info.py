@@ -175,4 +175,5 @@ def test_info_short_property_flag_is_rejected(binary_path, generate_cats_and_dog
 
     # -p is not an info option, so the property name is taken as the archive
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert "archive: File does not exist: file-count" in result.stderr
     assert result.stdout == ""

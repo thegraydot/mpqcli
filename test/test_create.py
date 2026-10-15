@@ -1031,3 +1031,69 @@ def test_create_skips_the_archive_inside_its_own_input_directory(binary_path, tm
         text=True
     )
     assert list_result.stdout.splitlines() == ["a.txt"]
+
+
+def test_create_path_is_a_prefix_for_several_inputs(binary_path, tmp_path):
+    file_a = tmp_path / "a.txt"
+    file_b = tmp_path / "b.txt"
+    file_a.write_text("A.")
+    file_b.write_text("B.")
+    input_dir = tmp_path / "textures"
+    (input_dir / "bear").mkdir(parents=True)
+    (input_dir / "bear" / "bear.blp").write_text("Bear.")
+    archive_file = tmp_path / "prefixed.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(file_a), str(file_b), str(input_dir),
+         "--path", "data"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert set(list_result.stdout.splitlines()) == {
+        "data\\a.txt", "data\\b.txt", "data\\bear\\bear.blp"
+    }
+
+
+def test_create_sizes_the_archive_for_paths_from_stdin(binary_path, tmp_path):
+    # Enough files that the count matters: an archive sized for none of them, and grown
+    # as they are added, reports the same max-files as one made from a single file
+    input_dir = tmp_path / "files"
+    input_dir.mkdir()
+    for i in range(30):
+        (input_dir / f"file{i}.txt").write_text(f"File {i}.")
+    paths = "".join(f"{p}\n" for p in sorted(input_dir.iterdir()))
+
+    def create_and_read_max_files(archive_file, inputs, stdin=None):
+        result = subprocess.run(
+            [str(binary_path), "create", str(archive_file), *inputs],
+            input=stdin,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+        info_result = subprocess.run(
+            [str(binary_path), "info", "--property", "max-files", str(archive_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        assert info_result.returncode == 0, f"mpqcli failed with error: {info_result.stderr}"
+        return int(info_result.stdout.strip())
+
+    from_stdin = create_and_read_max_files(tmp_path / "stdin.mpq", ["-"], paths)
+    from_directory = create_and_read_max_files(tmp_path / "directory.mpq", [str(input_dir)])
+    from_one_file = create_and_read_max_files(
+        tmp_path / "one.mpq", [str(input_dir / "file0.txt")])
+
+    assert from_stdin == from_directory
+    assert from_stdin > from_one_file

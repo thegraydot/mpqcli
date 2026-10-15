@@ -987,6 +987,7 @@ def test_extract_old_file_option_is_rejected(binary_path, generate_cats_and_dogs
 
     # -f is not an extract option, so the file name is taken as the archive
     assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert "archive: File does not exist: cats.txt" in result.stderr
     assert list(tmp_path.iterdir()) == []
 
 
@@ -1003,3 +1004,59 @@ def test_extract_old_keep_flag_is_rejected(binary_path, generate_cats_and_dogs_m
 
     assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
     assert not output_dir.exists(), "Output directory was created"
+
+
+def test_extract_listfile_with_stdin_is_rejected(binary_path, generate_cats_and_dogs_mpq, tmp_path):
+    test_file = generate_cats_and_dogs_mpq
+    listfile = tmp_path / "listfile.txt"
+    listfile.write_text("cats.txt\n")
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "-o", str(output_dir), "-l", str(listfile), str(test_file), "-"],
+        input="cats.txt\n",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 108, f"mpqcli failed with error: {result.stderr}"
+    assert not output_dir.exists(), "Output directory was created"
+
+
+def test_extract_flat_allows_one_name_stored_under_several_locales(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    input_dir.mkdir()
+    (input_dir / "cats.txt").write_text("Cats in the default locale.")
+    german_file = tmp_path / "cats.txt"
+    german_file.write_text("Cats in German.")
+    archive_file = tmp_path / "locales.mpq"
+    output_dir = tmp_path / "extracted"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to create archive: {result.stderr}"
+    result = subprocess.run(
+        [str(binary_path), "add", str(archive_file), str(german_file), "--locale", "deDE"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"Failed to add the second locale: {result.stderr}"
+
+    result = subprocess.run(
+        [str(binary_path), "extract", "--flat", "-o", str(output_dir), str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    # cats.txt is listed once per locale, and both land on the same file without
+    # counting as a collision
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert result.stderr.splitlines().count("[*] Extracted: cats.txt") == 2
+    assert (output_dir / "cats.txt").exists()
