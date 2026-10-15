@@ -1,0 +1,95 @@
+name: Valgrind Memory Leak Check
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+# pull-requests: write is only for the PR comment. A called workflow cannot
+# raise its caller's permissions, so pr.yml grants it on the valgrind job too.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Install Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.11
+
+      # Builds, runs the suite under Valgrind and writes the step summary. It
+      # exits 0 on findings: this check only warns, and reports through the
+      # status output instead.
+      - name: Run test suite under Valgrind
+        id: analyze
+        run: scripts/run_valgrind_tests.sh
+
+      - name: Upload Valgrind logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: valgrind-logs
+          path: |
+            valgrind_logs/
+          retention-days: 30
+
+      # The token is read-only on pull requests from forks, so commenting there
+      # would fail the job. The step summary still carries the results.
+      - name: Comment on PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const marker = '<!-- valgrind-leak-check -->';
+            const status = '${{ steps.analyze.outputs.status }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body && c.body.startsWith(marker));
+
+            if (status === 'warning') {
+              const body = `${marker}\n⚠️ **Valgrind detected potential memory leaks**\n\nPlease review the [Valgrind logs](${runUrl}) for details.\n\n*Note: This check is informational and does not block merging.*`;
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } else if (existing) {
+              const body = `${marker}\n✅ **No Valgrind memory leaks detected.**\n\nIssues reported by an earlier run on this PR have been resolved. See the latest [Valgrind logs](${runUrl}).`;
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            }
