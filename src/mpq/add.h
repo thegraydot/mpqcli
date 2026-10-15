@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <filesystem>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -24,6 +25,16 @@ int AddFile(HANDLE archive, const std::filesystem::path &local_file,
             std::ostream &err,
             const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
             bool overwrite = false, bool update = false, int *skipped = nullptr);
+
+/// Adds each local file or directory in inputs, returning 1 if any of them failed
+///
+/// A directory's contents go under path, or at the archive root without it. A lone file is
+/// stored at path when given; beside other inputs or any directory, path is a prefix.
+int AddInputs(HANDLE archive, const std::vector<std::filesystem::path> &inputs,
+              const std::optional<std::string> &path, LCID locale, const GameRules &game_rules,
+              std::ostream &err, const std::atomic<bool> &cancelled,
+              const CompressionSettingsOverrides &overrides = CompressionSettingsOverrides(),
+              bool overwrite = false, bool update = false, int *skipped = nullptr);
 
 } // namespace mpqcli
 
