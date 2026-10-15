@@ -76,7 +76,7 @@ complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
 complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
     -a info       -d 'Prints info about an MPQ archive'
 complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
-    -a create     -d 'Create an MPQ archive from target file or directory'
+    -a create     -d 'Create an MPQ archive from files and directories'
 complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
     -a add        -d 'Add files to an existing MPQ archive'
 complete -c mpqcli -n "not __fish_seen_subcommand_from $__mpqcli_subcommands" \
@@ -105,17 +105,17 @@ complete -c mpqcli -n '__fish_seen_subcommand_from info' \
     -r -f -a "$__mpqcli_info_properties"
 
 # create
-#   create <target> [-p/--path] [-o/--output] [-s/--sign]
+#   create <archive.mpq> <files...> [-p/--path] [-s/--sign]
 #          [--locale] [-g/--game]
 #          [--format-version] [--stream-flags] [--sector-size] [--raw-chunk-size]
 #          [--file-flags1/2/3] [--attr-flags]
 #          [--flags] [--compression] [--compression-next]
-complete -c mpqcli -n '__fish_seen_subcommand_from create; and test (__mpqcli_positional_index -s --sign) -eq 1' -F
+# Positional 1 is the new archive and the rest are files or directories to add,
+# so every positional takes a path
+complete -c mpqcli -n '__fish_seen_subcommand_from create' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -s p -l path        -d 'Archive path for a single file, or prefix for a directory' -r -f
-complete -c mpqcli -n '__fish_seen_subcommand_from create' \
-    -s o -l output      -d 'Output MPQ archive path' -r -F
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \
     -s s -l sign        -d 'Sign the MPQ archive'
 complete -c mpqcli -n '__fish_seen_subcommand_from create' \

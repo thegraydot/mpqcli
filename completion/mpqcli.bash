@@ -133,21 +133,19 @@ _mpqcli() {
                 --locale) _mpqcli_words "${locales[*]}"; return ;;
                 -g|--game) _mpqcli_words "${games[*]}"; return ;;
                 --format-version) _mpqcli_words "1 2 3 4"; return ;;
-                -o|--output) _mpqcli_filedir; return ;;
                 -p|--path|--stream-flags|--sector-size|--raw-chunk-size|\
                 --file-flags1|--file-flags2|--file-flags3|--attr-flags|\
                 --flags|--compression|--compression-next)
                     return ;;
             esac
             if [[ "$cur" == -* ]]; then
-                _mpqcli_words "-p --path -o --output -s --sign --locale -g --game --format-version \
+                _mpqcli_words "-p --path -s --sign --locale -g --game --format-version \
 --stream-flags --sector-size --raw-chunk-size --file-flags1 --file-flags2 --file-flags3 \
 --attr-flags --flags --compression --compression-next"
             else
-                _mpqcli_positional_index -s --sign
-                if [[ $pos -eq 0 ]]; then
-                    _mpqcli_filedir
-                fi
+                # Positional 1 is the new archive; the rest are files or directories
+                # to add, so every positional takes a path
+                _mpqcli_filedir
             fi
             ;;
 

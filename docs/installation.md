@@ -46,7 +46,7 @@ $ docker run --rm -v "$PWD":/data ghcr.io/thegraydot/mpqcli:latest list example.
 The container runs as root, so a file it creates or extracts is owned by root on the host. To have the output owned by you, run the container as your own user:
 
 ```bash
-$ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/data ghcr.io/thegraydot/mpqcli:latest create -o example.mpq files/
+$ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/data ghcr.io/thegraydot/mpqcli:latest create example.mpq files/
 ```
 
 A shell function makes that the default for everyday use:

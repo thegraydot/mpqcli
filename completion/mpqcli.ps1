@@ -24,7 +24,7 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'version'    = 'Prints program version'
         'about'      = 'Prints program information'
         'info'       = 'Prints info about an MPQ archive'
-        'create'     = 'Create an MPQ archive from target file or directory'
+        'create'     = 'Create an MPQ archive from files and directories'
         'add'        = 'Add files to an existing MPQ archive'
         'remove'     = 'Remove files from an existing MPQ archive'
         'rename'     = 'Rename a file in an existing MPQ archive'
@@ -80,8 +80,6 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
         'create' = [ordered]@{
             '-p'              = 'Archive path for a single file, or prefix for a directory'
             '--path'          = 'Archive path for a single file, or prefix for a directory'
-            '-o'              = 'Output MPQ archive'
-            '--output'        = 'Output MPQ archive'
             '-s'              = 'Sign the MPQ archive'
             '--sign'          = 'Sign the MPQ archive'
             '--locale'        = 'Locale to use for added files'

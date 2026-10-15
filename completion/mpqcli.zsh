@@ -66,7 +66,7 @@ _mpqcli_cmds() {
         'version:Prints program version'
         'about:Prints program information'
         'info:Prints info about an MPQ archive'
-        'create:Create an MPQ archive from target file or directory'
+        'create:Create an MPQ archive from files and directories'
         'add:Add files to an existing MPQ archive'
         'remove:Remove files from an existing MPQ archive'
         'rename:Rename a file in an existing MPQ archive'
@@ -96,9 +96,9 @@ _mpqcli_info() {
 _mpqcli_create() {
     local locales="${_mpqcli_locales[*]}" games="${_mpqcli_games[*]}"
     _arguments \
-        '1:target:_files' \
+        '1:archive:_files' \
+        '*:files:_files' \
         '(-p --path)'{-p,--path}'[archive path for a single file, or prefix for a directory]:path' \
-        '(-o --output)'{-o,--output}'[output archive]:file:_files' \
         '(-s --sign)'{-s,--sign}'[sign the archive]' \
         '--locale[locale for added files]:locale:('"$locales"')' \
         '(-g --game)'{-g,--game}'[game profile]:profile:('"$games"')' \

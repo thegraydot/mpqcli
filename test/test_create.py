@@ -18,13 +18,14 @@ def test_create_mpq_target_does_not_exist(binary_path, generate_test_files):
     target_dir = script_dir / "does" / "not" / "exist"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--format-version", "1", str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", str(target_dir.with_suffix(".mpq")), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
     )
 
-    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert not target_dir.with_suffix(".mpq").exists(), "MPQ file was created"
 
 
 def test_create_mpq_versions(binary_path, generate_test_files):
@@ -47,7 +48,7 @@ def test_create_mpq_versions(binary_path, generate_test_files):
         # test_create_mpq_already_exists
         target_file.unlink(missing_ok=True)
         result = subprocess.run(
-            [str(binary_path), "create", "--format-version", str(version), str(target_dir)],
+            [str(binary_path), "create", "--format-version", str(version), str(target_file), str(target_dir)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -100,7 +101,7 @@ def test_create_mpq_with_output(binary_path, generate_test_files):
                 "--flags", "66048",
                 "--compression", "2",
                 "--compression-next", "4294967295",
-                "-o", str(output_file),
+                str(output_file),
                 str(target_dir),
             ],
             stdout=subprocess.PIPE,
@@ -143,7 +144,7 @@ def test_create_mpq_with_weak_signature(binary_path, generate_test_files):
             "--flags", "512",
             "--compression", "2",
             "--compression-next", "4294967295",
-            "-o", str(output_file),
+            str(output_file),
             str(target_dir),
         ],
         stdout=subprocess.PIPE,
@@ -181,13 +182,13 @@ def test_create_mpq_already_exists(binary_path, generate_test_files):
     output_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--format-version", "1", "-o", str(output_file), str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", str(output_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
     )
 
-    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
 
 
 def test_create_mpq_from_file(binary_path, generate_test_files):
@@ -210,7 +211,7 @@ def test_create_mpq_from_file(binary_path, generate_test_files):
     # test_create_mpq_already_exists
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", str(test_file), "--output", str(target_file)],
+        [str(binary_path), "create", str(target_file), str(test_file)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -243,7 +244,7 @@ def test_create_mpq_from_file_with_path_parameter(binary_path, generate_test_fil
     # test_create_mpq_already_exists
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", str(test_file), "--output", str(target_file), "--path", "messages\\important.txt"],
+        [str(binary_path), "create", str(target_file), str(test_file), "--path", "messages\\important.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -279,7 +280,7 @@ def test_create_mpq_from_directory_with_path_parameter(binary_path, generate_tes
         # test_create_mpq_already_exists
         target_file.unlink(missing_ok=True)
         result = subprocess.run(
-            [str(binary_path), "create", str(target_dir), "--output", str(target_file), "--path", "messages"],
+            [str(binary_path), "create", str(target_file), str(target_dir), "--path", "messages"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -310,7 +311,7 @@ def test_create_mpq_with_illegal_locale(binary_path, generate_test_files):
     output_file = script_dir / "data" / "new_mpq.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "--format-version", "1", "-o", str(output_file), str(target_dir), "--locale", "illegal_locale"],
+        [str(binary_path), "create", "--format-version", "1", str(output_file), str(target_dir), "--locale", "illegal_locale"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -368,7 +369,7 @@ def test_create_mpq_with_game_profile(binary_path, generate_test_files):
         output_file.unlink(missing_ok=True)
 
         result = subprocess.run(
-            [str(binary_path), "create", "-g", profile, "-o", str(output_file), str(target_dir)],
+            [str(binary_path), "create", "-g", profile, str(output_file), str(target_dir)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -425,7 +426,7 @@ def test_create_mpq_with_invalid_game_profile(binary_path, generate_test_files):
     output_file = script_dir / "data" / "mpq_with_invalid_profile.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "-g", "invalid_profile", "-o", str(output_file), str(target_dir)],
+        [str(binary_path), "create", "-g", "invalid_profile", str(output_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -472,7 +473,7 @@ def test_create_mpq_with_all_game_profiles(binary_path, generate_test_files):
         output_file.unlink(missing_ok=True)
 
         result = subprocess.run(
-            [str(binary_path), "create", "-g", profile, "-o", str(output_file), str(target_dir)],
+            [str(binary_path), "create", "-g", profile, str(output_file), str(target_dir)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -526,7 +527,7 @@ def test_deletion_marker_only_for_zero_size_files(binary_path):
     try:
         # Create MPQ with StarCraft2 profile (which has deletion marker rule for size 0)
         result = subprocess.run(
-            [str(binary_path), "create", "-g", "starcraft2", "-o", str(output_file), str(test_dir)],
+            [str(binary_path), "create", "-g", "starcraft2", str(output_file), str(test_dir)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
@@ -591,7 +592,7 @@ def test_create_mpq_no_sign_flag_has_no_signature(binary_path, generate_test_fil
     output_file.unlink(missing_ok=True)
 
     result = subprocess.run(
-        [str(binary_path), "create", str(target_dir), "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -611,48 +612,6 @@ def test_create_mpq_no_sign_flag_has_no_signature(binary_path, generate_test_fil
     assert info.stdout.strip() == "None", f"Expected signature type 'None', got: {info.stdout.strip()!r}"
 
     output_file.unlink(missing_ok=True)
-
-
-def test_create_mpq_directory_with_trailing_slash(binary_path, generate_test_files):
-    """
-    Test MPQ archive creation when the target directory has a trailing slash.
-
-    Regression test for: mpqcli create dir/ producing "dir/.mpq" instead of "dir.mpq".
-
-    This test checks:
-    - The archive is named after the directory, not "<dir>/.mpq".
-    - The archive is created successfully and is non-empty.
-    """
-    _ = generate_test_files
-    script_dir = Path(__file__).parent
-    # Construct the path string with an explicit trailing slash
-    target_dir_str = str(script_dir / "data" / "files") + "/"
-
-    expected_output = script_dir / "data" / "files.mpq"
-    malformed_output = script_dir / "data" / "files" / ".mpq"
-
-    # Clean up from any previous run
-    expected_output.unlink(missing_ok=True)
-    malformed_output.unlink(missing_ok=True)
-
-    result = subprocess.run(
-        [str(binary_path), "create", target_dir_str],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert expected_output.exists(), (
-        f"Expected archive '{expected_output}' was not created. "
-        f"Malformed path exists: {malformed_output.exists()}"
-    )
-    assert expected_output.stat().st_size > 0, "MPQ file is empty"
-    assert not malformed_output.exists(), (
-        f"Malformed archive path '{malformed_output}' was created, trailing slash bug is present"
-    )
-
-    expected_output.unlink(missing_ok=True)
 
 
 def test_create_mpq_skips_special_files(binary_path, tmp_path):
@@ -675,7 +634,7 @@ def test_create_mpq_skips_special_files(binary_path, tmp_path):
     output_file = tmp_path / "output.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", str(source_dir), "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), str(source_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -726,7 +685,7 @@ def test_create_mpq_folder_structure_with_trailing_slash(binary_path, tmp_path):
     output_file = tmp_path / "output.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", str(source_dir) + "/", "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), str(source_dir) + "/"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -758,7 +717,7 @@ def test_create_mpq_folder_structure_with_dot_relative_path(binary_path, tmp_pat
     output_file = tmp_path / "output.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", "./src", "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), "./src"],
         cwd=str(tmp_path),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -788,7 +747,7 @@ def test_create_mpq_skips_dangling_symlink(binary_path, tmp_path):
     output_file = tmp_path / "output.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", str(source_dir), "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), str(source_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -820,7 +779,7 @@ def test_create_mpq_from_empty_directory(binary_path, tmp_path):
     output_file = tmp_path / "empty.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "create", str(empty_dir), "-o", str(output_file)],
+        [str(binary_path), "create", str(output_file), str(empty_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -866,6 +825,149 @@ def test_create_old_version_option_is_rejected(binary_path, tmp_path):
         cwd=tmp_path,
     )
 
-    # --version is not a create option, so the version number is taken as the input
-    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
-    assert list(tmp_path.glob("*.mpq")) == []
+    assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["files"]
+
+
+def test_create_old_directory_form_is_rejected(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    # The directory is taken as the archive, which leaves no files to add
+    assert result.returncode == 106, f"mpqcli failed with error: {result.stderr}"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["files"]
+
+
+def test_create_old_output_option_is_rejected(binary_path, tmp_path):
+    input_dir = tmp_path / "files"
+    input_dir.mkdir()
+    (input_dir / "a.txt").write_text("A file.")
+
+    result = subprocess.run(
+        [str(binary_path), "create", "-o", str(tmp_path / "out.mpq"), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    assert result.returncode == 109, f"mpqcli failed with error: {result.stderr}"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["files"]
+
+
+def test_create_from_several_inputs(binary_path, tmp_path):
+    input_dir = tmp_path / "textures"
+    (input_dir / "bear").mkdir(parents=True)
+    (input_dir / "bear" / "bear.blp").write_text("Bear.")
+    input_file = tmp_path / "readme.txt"
+    input_file.write_text("Read me.")
+    archive_file = tmp_path / "several.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_file), str(input_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert set(list_result.stdout.splitlines()) == {"readme.txt", "bear\\bear.blp"}
+
+
+def test_create_keeps_the_first_of_two_inputs_with_the_same_name(binary_path, tmp_path):
+    first_dir = tmp_path / "first"
+    second_dir = tmp_path / "second"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    (first_dir / "a.txt").write_text("First.")
+    (second_dir / "a.txt").write_text("Second.")
+    archive_file = tmp_path / "duplicate.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(first_dir), str(second_dir)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+    assert "1 file(s) were skipped" in result.stderr
+
+    read_result = subprocess.run(
+        [str(binary_path), "read", str(archive_file), "a.txt"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert read_result.stdout == "First."
+
+
+def test_create_files_via_stdin(binary_path, tmp_path):
+    file_a = tmp_path / "a.txt"
+    file_b = tmp_path / "b.txt"
+    file_a.write_text("A.")
+    file_b.write_text("B.")
+    archive_file = tmp_path / "stdin.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), "-"],
+        input=f"{file_a}\n{file_b}\n",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
+
+    list_result = subprocess.run(
+        [str(binary_path), "list", str(archive_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    assert set(list_result.stdout.splitlines()) == {"a.txt", "b.txt"}
+
+
+def test_create_empty_stdin_creates_nothing(binary_path, tmp_path):
+    archive_file = tmp_path / "empty.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), "-"],
+        input="",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_create_missing_input_creates_nothing(binary_path, tmp_path):
+    input_file = tmp_path / "a.txt"
+    input_file.write_text("A file.")
+    archive_file = tmp_path / "missing.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "create", str(archive_file), str(input_file), str(tmp_path / "typo")],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    assert result.returncode == 1, f"mpqcli failed with error: {result.stderr}"
+    assert "Path does not exist" in result.stderr
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["a.txt"]

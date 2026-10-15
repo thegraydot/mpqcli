@@ -1106,7 +1106,7 @@ def create_mpq_archive_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--format-version", "1", str(target_dir)],
+        [str(binary_path), "create", "--format-version", "1", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1125,7 +1125,7 @@ def create_mpq_archive_with_attrs_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wow1", str(target_dir)],
+        [str(binary_path), "create", "--game", "wow1", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1144,7 +1144,7 @@ def create_mpq_archive_with_crc32_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wc3", str(target_dir)],
+        [str(binary_path), "create", "--game", "wc3", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -1163,7 +1163,7 @@ def create_mpq_archive_with_filetime_for_test(binary_path, script_dir):
     target_file = target_dir.with_suffix(".mpq")
     target_file.unlink(missing_ok=True)
     result = subprocess.run(
-        [str(binary_path), "create", "--game", "wc3", "--attr-flags", "2", str(target_dir)],
+        [str(binary_path), "create", "--game", "wc3", "--attr-flags", "2", str(target_file), str(target_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True

@@ -96,7 +96,7 @@ def generate_locales_mpq_test_files(binary_path):
 
         if locale == "": # Default locale - create a new MPQ file
             result = subprocess.run(
-                [str(binary_path), "create", "--format-version", "1", "-o", str(mpq_many_locales_file_name), str(locales_files_dir)],
+                [str(binary_path), "create", "--format-version", "1", str(mpq_many_locales_file_name), str(locales_files_dir)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -118,7 +118,7 @@ def generate_locales_mpq_test_files(binary_path):
     file_path.write_text(content, newline="\n")
 
     result = subprocess.run(
-        [str(binary_path), "create", "--format-version", "1", "-o", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
+        [str(binary_path), "create", "--format-version", "1", str(mpq_one_locale_file_name), str(locales_files_dir), "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -153,7 +153,7 @@ def generate_mpq_without_internal_listfile(binary_path):
 
         if locale == "": # Default locale - create a new MPQ file
             result = subprocess.run(
-                [str(binary_path), "create", "-o", str(mpq_file_name), str(locales_files_dir), "--file-flags1", "0"],
+                [str(binary_path), "create", str(mpq_file_name), str(locales_files_dir), "--file-flags1", "0"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
@@ -189,7 +189,7 @@ def generate_path_traversal_mpq(binary_path):
 
     # Create a base MPQ containing the safe file
     result = subprocess.run(
-        [str(binary_path), "create", "-o", str(mpq_file), str(traversal_files_dir)],
+        [str(binary_path), "create", str(mpq_file), str(traversal_files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -239,7 +239,7 @@ def generate_tampered_signature_mpq(binary_path):
     )
 
     result = subprocess.run(
-        [str(binary_path), "create", "-s", "-o", str(mpq_file), str(tamper_files_dir)],
+        [str(binary_path), "create", "-s", str(mpq_file), str(tamper_files_dir)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
