@@ -242,10 +242,10 @@ _mpqcli() {
             if [[ "$cur" == -* ]]; then
                 _mpqcli_words "--locale"
             else
-                # Positional 1 is an in-archive path, so it gets no filesystem
-                # completion; positional 2 is the archive
+                # Positional 1 is the archive; positional 2 is an in-archive path,
+                # so it gets no filesystem completion
                 _mpqcli_positional_index
-                if [[ $pos -eq 1 ]]; then
+                if [[ $pos -eq 0 ]]; then
                     _mpqcli_filedir mpq
                 fi
             fi

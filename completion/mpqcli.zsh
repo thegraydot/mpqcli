@@ -171,8 +171,8 @@ _mpqcli_extract() {
 _mpqcli_read() {
     local locales="${_mpqcli_locales[*]}"
     _arguments \
-        '1:file-in-archive' \
-        '2:archive:_mpqcli_archives' \
+        '1:archive:_mpqcli_archives' \
+        '2:file-in-archive' \
         '--locale[preferred locale for read file]:locale:('"$locales"')'
 }
 

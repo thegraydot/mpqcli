@@ -228,10 +228,10 @@ complete -c mpqcli -n '__fish_seen_subcommand_from extract' \
     -r -f -a "$__mpqcli_locales"
 
 # read
-#   read <file> <archive.mpq> [--locale]
-# Positional 1 is an in-archive path, so it gets no filesystem completion;
-# positional 2 is the archive
-complete -c mpqcli -n '__fish_seen_subcommand_from read; and test (__mpqcli_positional_index) -eq 2' -F
+#   read <archive.mpq> <file> [--locale]
+# Positional 1 is the archive; positional 2 is an in-archive path, so it gets
+# no filesystem completion
+complete -c mpqcli -n '__fish_seen_subcommand_from read; and test (__mpqcli_positional_index) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from read' \
     -l locale   -d 'Preferred locale for read file' \

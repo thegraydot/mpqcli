@@ -11,7 +11,7 @@ def test_read_mpq_v1_plain(binary_path):
     }
 
     result = subprocess.run(
-        [str(binary_path), "read", "cats.txt", str(test_file)],
+        [str(binary_path), "read", str(test_file), "cats.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -33,7 +33,7 @@ def test_read_mpq_v1_hex(binary_path):
     }
 
     result = subprocess.run(
-        [str(binary_path), "read", "bytes", str(test_file)],
+        [str(binary_path), "read", str(test_file), "bytes"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -60,7 +60,7 @@ def test_read_file_from_mpq_with_locale(binary_path, generate_locales_mpq_test_f
     locale = "deDE"
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file), "--locale", locale],
+        [str(binary_path), "read", str(test_file), file_to_read, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -90,7 +90,7 @@ def test_read_file_from_mpq_with_default_locale(binary_path, generate_locales_mp
 
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file)],
+        [str(binary_path), "read", str(test_file), file_to_read],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -119,7 +119,7 @@ def test_read_file_from_mpq_with_illegal_locale(binary_path, generate_locales_mp
     locale = "nosuchlocale"
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file), "--locale", locale],
+        [str(binary_path), "read", str(test_file), file_to_read, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -144,7 +144,7 @@ def test_read_file_from_mpq_with_locale_not_in_file(binary_path, generate_locale
     locale = "ptPT"  # There is no file for this locale
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file), "--locale", locale],
+        [str(binary_path), "read", str(test_file), file_to_read, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -174,7 +174,7 @@ def test_read_file_from_mpq_with_no_locale_argument_and_no_default_locale(binary
 
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file)],
+        [str(binary_path), "read", str(test_file), file_to_read],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -209,7 +209,7 @@ def test_read_file_from_mpq_with_wrong_locale_argument_and_no_default_locale(bin
 
 
     result = subprocess.run(
-        [str(binary_path), "read", file_to_read, str(test_file), "--locale", locale],
+        [str(binary_path), "read", str(test_file), file_to_read, "--locale", locale],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -233,7 +233,7 @@ def test_read_mpq_target_does_not_exist(binary_path):
     target_file = script_dir / "does" / "not" / "exist.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "read", "cats.txt", str(target_file)],
+        [str(binary_path), "read", str(target_file), "cats.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -247,7 +247,7 @@ def test_read_file_does_not_exist_in_mpq(binary_path):
     test_file = script_dir / "data" / "mpq_with_output_v1.mpq"
 
     result = subprocess.run(
-        [str(binary_path), "read", "does-not-exist.txt", str(test_file)],
+        [str(binary_path), "read", str(test_file), "does-not-exist.txt"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -256,3 +256,21 @@ def test_read_file_does_not_exist_in_mpq(binary_path):
     assert result.returncode == 1, f"Unexpected exit code: {result.returncode}"
     assert result.stdout == "", f"Unexpected stdout: {result.stdout}"
     assert "does-not-exist.txt" in result.stderr, f"Unexpected stderr: {result.stderr}"
+
+
+def test_read_old_argument_order_is_rejected(binary_path, generate_locales_mpq_test_files, tmp_path):
+    _ = generate_locales_mpq_test_files
+    script_dir = Path(__file__).parent
+    test_file = script_dir / "data" / "mpq_with_many_locales.mpq"
+
+    result = subprocess.run(
+        [str(binary_path), "read", "cats.txt", str(test_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        cwd=tmp_path,
+    )
+
+    # The file name is taken as the archive, and no local file has that name
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout == ""

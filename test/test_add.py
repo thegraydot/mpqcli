@@ -1188,7 +1188,7 @@ def verify_archive_file_content(binary_path, test_file, expected_output):
     assert output_lines == expected_output, f"Unexpected output: {output_lines}"
 
 def verify_file_in_mpq_has_content(binary_path, mpq_archive, file_name, expected_content, locale=None):
-    cmd = [str(binary_path), "read", file_name, str(mpq_archive)]
+    cmd = [str(binary_path), "read", str(mpq_archive), file_name]
     if locale is not None:
         cmd += ["--locale", locale]
     result = subprocess.run(
