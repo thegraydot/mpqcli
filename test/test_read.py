@@ -110,15 +110,13 @@ def test_read_file_from_mpq_with_illegal_locale(binary_path, generate_locales_mp
     Test MPQ archive file reading with an illegal locale.
 
     This test checks:
-    - When a locale is given that does not exist in the file, the file with the default locale is read.
-    - That the file content is correct.
+    - That an unknown locale is rejected and nothing is read.
     """
     _ = generate_locales_mpq_test_files
     script_dir = Path(__file__).parent
     test_file = script_dir / "data" / "mpq_with_many_locales.mpq"
     file_to_read = "cats.txt"
     locale = "nosuchlocale"
-
 
     result = subprocess.run(
         [str(binary_path), "read", file_to_read, str(test_file), "--locale", locale],
@@ -127,17 +125,8 @@ def test_read_file_from_mpq_with_illegal_locale(binary_path, generate_locales_mp
         text=True
     )
 
-    expected_content = {
-        "This is a file about cats.",
-    }
-    expected_warning = {
-        "[!] The locale 'nosuchlocale' is unknown. Will use default locale instead.",
-    }
-
-    output_lines = set(result.stdout.splitlines())
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_content, f"Unexpected output: {output_lines}"
-    assert set(result.stderr.splitlines()) == expected_warning, f"Unexpected stderr: {result.stderr}"
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert result.stdout == "", f"Unexpected output: {result.stdout}"
 
 
 def test_read_file_from_mpq_with_locale_not_in_file(binary_path, generate_locales_mpq_test_files):

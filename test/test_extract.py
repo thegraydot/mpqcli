@@ -283,8 +283,7 @@ def test_extract_file_from_mpq_with_illegal_locale(binary_path, generate_locales
     Test MPQ archive file extraction with an illegal locale.
 
     This test checks:
-    - When a locale is given that does not exist in the file, the file with the default locale is extracted.
-    - If the output files match the expected files.
+    - That an unknown locale is rejected and nothing is extracted.
     """
     _ = generate_locales_mpq_test_files
     script_dir = Path(__file__).parent
@@ -295,7 +294,6 @@ def test_extract_file_from_mpq_with_illegal_locale(binary_path, generate_locales
     if output_dir.exists():
         shutil.rmtree(output_dir)
 
-
     result = subprocess.run(
         [str(binary_path), "extract", "-o", str(output_dir), "-f", file_to_extract, str(test_file), "--locale", locale],
         stdout=subprocess.PIPE,
@@ -303,18 +301,8 @@ def test_extract_file_from_mpq_with_illegal_locale(binary_path, generate_locales
         text=True
     )
 
-    expected_stderr = {
-        "[!] The locale 'nosuchlocale' is unknown. Will use default locale instead.",
-        "[*] Extracted: " + file_to_extract
-    }
-    output_file = output_dir / file_to_extract
-    expected_content = "This is a file about cats."
-
-    output_lines = set(result.stderr.splitlines())
-    assert result.returncode == 0, f"mpqcli failed with error: {result.stderr}"
-    assert output_lines == expected_stderr, f"Unexpected output: {output_lines}"
-    assert output_file.exists(), "Output directory was not created"
-    assert output_file.read_text(encoding="utf-8") == expected_content, "Unexpected file content"
+    assert result.returncode == 105, f"mpqcli failed with error: {result.stderr}"
+    assert not output_dir.exists(), "Output directory was created"
 
 
 def test_extract_file_from_mpq_with_locale_not_in_file(binary_path, generate_locales_mpq_test_files):

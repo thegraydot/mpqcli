@@ -5,6 +5,7 @@
 #include <CLI/CLI.hpp>
 
 #include "commands.h"
+#include "validators.h"
 
 void RegisterExtract(CLI::App &app, Context &context) {
     auto options = std::make_shared<mpqcli::ExtractOptions>();
@@ -19,7 +20,8 @@ void RegisterExtract(CLI::App &app, Context &context) {
                   "Keep folder structure (default false)");
     sub->add_option("-l,--listfile", options->listfile, "File listing content of an MPQ archive")
         ->check(CLI::ExistingFile);
-    sub->add_option("--locale", options->locale, "Preferred locale for extracted file");
+    sub->add_option("--locale", options->locale, "Preferred locale for extracted file")
+        ->check(locale_valid);
 
     sub->callback([options, &context]() {
         context.exit_code = mpqcli::Extract(*options, context.err, context.cancelled) ? 0 : 1;

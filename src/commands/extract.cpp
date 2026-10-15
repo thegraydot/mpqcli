@@ -48,10 +48,6 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     Archive archive = Archive::Open(options.archive, MPQ_OPEN_READ_ONLY);
 
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
-    if (options.locale.has_value() && lcid == default_locale) {
-        err << "[!] The locale '" << options.locale.value()
-            << "' is unknown. Will use default locale instead." << std::endl;
-    }
 
     int result;
     if (options.file.has_value()) {
