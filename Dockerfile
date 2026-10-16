@@ -13,11 +13,13 @@ WORKDIR /src
 COPY . .
 
 # MPQCLI_BUILD_STATIC is what makes the scratch stage viable: the binary carries
-# musl and libstdc++ with it and needs no loader at runtime
+# musl and libstdc++ with it and needs no loader at runtime. The image ships the
+# binary alone, so the tests are not built.
 RUN cmake -B build/release \
         -DCMAKE_BUILD_TYPE=Release \
         -DMPQCLI_BUILD_APP=ON \
         -DMPQCLI_BUILD_STATIC=ON \
+        -DMPQCLI_BUILD_TESTING=OFF \
     && cmake --build build/release --parallel "$(nproc)" \
     && strip build/release/bin/mpqcli
 

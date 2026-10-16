@@ -92,11 +92,13 @@ jobs:
           submodules: true
 
       # Raw cmake rather than make: the Makefile needs a POSIX shell, and the
-      # shipped build gets its own tree rather than the everyday build/dev
+      # shipped build gets its own tree rather than the everyday build/dev.
+      # Testing is off because this job ships the binary; test.yml builds and
+      # runs the tests on Windows in a tree of its own.
       - name: Build
         shell: bash
         run: |
-          cmake -B build/release -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON
+          cmake -B build/release -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON -DMPQCLI_BUILD_TESTING=OFF
           cmake --build build/release --config Release
           mv build/release/bin/mpqcli.exe ./mpqcli-windows-x86_64.exe
 

@@ -7,3 +7,9 @@
 [submodule "extern/hash-library"]
 	path = extern/hash-library
 	url = https://github.com/stbrumme/hash-library.git
+[submodule "extern/Catch2"]
+	path = extern/Catch2
+	url = https://github.com/catchorg/Catch2.git
+[submodule "extern/subprocess.h"]
+	path = extern/subprocess.h
+	url = https://github.com/sheredom/subprocess.h.git
