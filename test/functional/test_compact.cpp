@@ -143,6 +143,24 @@ TEST_CASE("compact: succeeds with a complete external listfile", "[compact]") {
     }
 }
 
+TEST_CASE("compact: ignores an empty listfile, with a warning", "[compact]") {
+    // An archive with its own (listfile), so compacting succeeds without an external one
+    SampleArchive sample;
+    const auto listfile = sample.files.dir.Path() / "empty.txt";
+    WriteFile(listfile, "");
+
+    auto result = Run(mpqcli_binary, {"compact", sample.archive.string(), "-l", listfile.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(
+        LinesToVector(result.stderr_output) ==
+        std::vector<std::string>{"[!] Ignoring the listfile, which is empty: " + listfile.string(),
+                                 compacting_notice});
+    REQUIRE(ArchiveEntries(sample.archive) ==
+            std::set<std::string>{"enUS  bytes", "enUS  cats.txt", "enUS  dogs.txt"});
+}
+
 TEST_CASE("compact: reclaims the space of removed files", "[compact]") {
     TempDir dir;
     const auto source_dir = dir.Path() / "compaction_files";

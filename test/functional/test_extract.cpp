@@ -193,6 +193,25 @@ TEST_CASE("extract: --output with a trailing separator", "[extract]") {
     REQUIRE(DirectoryEntries(output_dir) == expected);
 }
 
+TEST_CASE("extract: ignores an empty listfile, with a warning", "[extract]") {
+    // An archive with its own (listfile), so every file still has a name
+    SampleArchive sample;
+    const auto listfile = sample.files.dir.Path() / "empty.txt";
+    WriteFile(listfile, "");
+    const auto output_dir = sample.files.dir.Path() / "extracted";
+    const std::set<std::string> expected = {"cats.txt", "dogs.txt", "bytes", "(listfile)"};
+
+    auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(), "-l", listfile.string(),
+                                      sample.archive.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    auto lines = ExtractedLines(expected);
+    lines.insert("[!] Ignoring the listfile, which is empty: " + listfile.string());
+    REQUIRE(LinesToSet(result.stderr_output) == lines);
+    REQUIRE(DirectoryEntries(output_dir) == expected);
+}
+
 TEST_CASE("extract: fails when --output is an existing file", "[extract]") {
     SampleArchive sample;
     const auto not_a_dir = sample.files.files_dir / "cats.txt";

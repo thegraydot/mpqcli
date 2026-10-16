@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <optional>
+#include <ostream>
 #include <string>
 #include <system_error>
 
@@ -89,6 +91,18 @@ bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file
 
     // No attributes present, or none matched: re-add the file
     return false;
+}
+
+std::optional<fs::path> UsableListfile(const std::optional<fs::path> &listfile, std::ostream &err) {
+    if (!listfile.has_value()) {
+        return std::nullopt;
+    }
+    std::error_code ec;
+    if (fs::file_size(*listfile, ec) == 0 && !ec) {
+        err << "[!] Ignoring the listfile, which is empty: " << listfile->string() << std::endl;
+        return std::nullopt;
+    }
+    return listfile;
 }
 
 } // namespace mpqcli

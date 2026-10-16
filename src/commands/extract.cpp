@@ -12,6 +12,7 @@
 #include "errors.h"
 #include "mpq/archive.h"
 #include "mpq/extract.h"
+#include "mpq/query.h"
 #include "util/locales.h"
 
 namespace fs = std::filesystem;
@@ -40,7 +41,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     const std::vector<std::string> file_names =
         options.files.has_value()
             ? options.files.value()
-            : ListArchivedFiles(archive.Handle(), options.listfile, cancelled);
+            : ListArchivedFiles(archive.Handle(), UsableListfile(options.listfile, err), cancelled);
     if (file_names.empty()) {
         err << "[*] No files to extract" << std::endl;
         archive.Close();

@@ -529,20 +529,24 @@ TEST_CASE("list: prints the encryption keys of entries listed without a name", "
                                       });
 }
 
+TEST_CASE("list: ignores an empty listfile, with a warning", "[list]") {
+    NoListfileArchive archive;
+    const auto listfile = archive.dir.Path() / "empty.txt";
+    WriteFile(listfile, "");
+    auto without_listfile = Run(mpqcli_binary, {"list", archive.archive.string()});
+    REQUIRE(without_listfile.returncode == 0);
+
+    auto result = Run(mpqcli_binary, {"list", archive.archive.string(), "-l", listfile.string()});
+
+    // An empty listfile names nothing, so the listing is the one without it
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output == without_listfile.stdout_output);
+    REQUIRE(
+        LinesToSet(result.stderr_output) ==
+        std::set<std::string>{"[!] Ignoring the listfile, which is empty: " + listfile.string()});
+}
+
 TEST_CASE("list: fails when no entry can be enumerated", "[list]") {
-    SECTION("an empty external listfile") {
-        NoListfileArchive archive;
-        const auto listfile = archive.dir.Path() / "empty.txt";
-        WriteFile(listfile, "");
-
-        auto result =
-            Run(mpqcli_binary, {"list", archive.archive.string(), "-l", listfile.string()});
-
-        REQUIRE(result.returncode == 1);
-        REQUIRE(result.stdout_output.empty());
-        REQUIRE(LinesToSet(result.stderr_output) == std::set<std::string>{enumeration_failure});
-    }
-
     SECTION("an archive with no entries at all") {
         TempDir dir;
         const auto source_dir = dir.Path() / "empty";
