@@ -1,5 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
+#include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <sstream>
 #include <string>
@@ -71,6 +73,20 @@ TEST_CASE("StormErrorString", "[format]") {
         REQUIRE(StormErrorString(ERROR_UNKNOWN_FILE_KEY) == "Unknown file encryption key");
         REQUIRE(StormErrorString(ERROR_CHECKSUM_ERROR) == "Sector checksum mismatch");
         REQUIRE(StormErrorString(ERROR_FILE_DELETED) == "File contains delete marker");
+    }
+
+    SECTION("describes a code it has no case for in the platform's own words") {
+#ifdef _WIN32
+        // 32 is ERROR_SHARING_VIOLATION. Windows localises the text, so the test checks
+        // where it came from rather than what it says: strerror(32) is "Broken pipe"
+        const std::string text = StormErrorString(32U);
+        REQUIRE_FALSE(text.empty());
+        REQUIRE(text != std::strerror(32));
+        REQUIRE(text.back() != '\n');
+        REQUIRE(text.back() != '.');
+#else
+        REQUIRE(StormErrorString(EISDIR) == std::strerror(EISDIR));
+#endif
     }
 }
 

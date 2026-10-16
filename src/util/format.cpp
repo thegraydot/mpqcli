@@ -14,7 +14,43 @@
 
 #include <StormLib.h>
 
+// After StormLib.h, which includes it with NOMINMAX defined first
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace mpqcli {
+
+namespace {
+
+/// Describes an error code StormLib passed through from the operating system
+///
+/// StormLib reports the platform's own codes: errno values on POSIX, which strerror
+/// describes, and Win32 codes on Windows, which strerror would mistake for errno values.
+std::string SystemErrorString(uint32_t err) {
+#ifdef _WIN32
+    char *buffer = nullptr;
+    const DWORD length = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, err, 0, reinterpret_cast<LPSTR>(&buffer), 0, nullptr);
+    if (length == 0 || buffer == nullptr) {
+        return "Unknown error " + std::to_string(err);
+    }
+    std::string message(buffer, length);
+    LocalFree(buffer);
+    // The system text ends in a full stop and CRLF, which would break the line it is
+    // printed into
+    while (!message.empty() && (message.back() == '\n' || message.back() == '\r' ||
+                                message.back() == ' ' || message.back() == '.')) {
+        message.pop_back();
+    }
+    return message;
+#else
+    return std::strerror(static_cast<int>(err));
+#endif
+}
+
+} // namespace
 
 std::string FileTimeToLsTime(int64_t file_time) {
     if (file_time == 0) {
@@ -65,7 +101,7 @@ std::string StormErrorString(uint32_t err) {
         case ERROR_CANT_FIND_PATCH_PREFIX: return "Cannot find patch prefix";
         case ERROR_FAKE_MPQ_HEADER:        return "Fake MPQ header at this position";
         case ERROR_FILE_DELETED:           return "File contains delete marker";
-        default:                           return std::strerror(static_cast<int>(err));
+        default:                           return SystemErrorString(err);
         // clang-format on
     }
 }
