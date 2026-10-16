@@ -343,16 +343,30 @@ TEST_CASE("extract: an archive with no entries extracts nothing", "[extract]") {
 TEST_CASE("extract: a named file that does not exist in the archive", "[extract]") {
     SampleArchive sample;
     const auto output_dir = sample.files.dir.Path() / "extracted_file";
+    const std::vector<std::string> expected_stderr = {
+        "[!] Failed: File doesn't exist for locale enUS: nope.txt", failed_all};
 
-    auto result = Run(mpqcli_binary,
-                      {"extract", "-o", output_dir.string(), sample.archive.string(), "nope.txt"});
+    SECTION("takes away the output directory it made") {
+        auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(),
+                                          sample.archive.string(), "nope.txt"});
 
-    REQUIRE(result.returncode == 1);
-    REQUIRE(result.stdout_output.empty());
-    REQUIRE(LinesToSet(result.stderr_output) ==
-            std::set<std::string>{"[!] Failed: File doesn't exist for locale enUS: nope.txt", "",
-                                  failed_all});
-    REQUIRE(DirectoryEntries(output_dir).empty());
+        REQUIRE(result.returncode == 1);
+        REQUIRE(result.stdout_output.empty());
+        REQUIRE(LinesToVector(result.stderr_output) == expected_stderr);
+        REQUIRE_FALSE(fs::exists(output_dir));
+    }
+
+    SECTION("leaves an output directory that was already there") {
+        fs::create_directories(output_dir);
+
+        auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(),
+                                          sample.archive.string(), "nope.txt"});
+
+        REQUIRE(result.returncode == 1);
+        REQUIRE(result.stdout_output.empty());
+        REQUIRE(LinesToVector(result.stderr_output) == expected_stderr);
+        REQUIRE(fs::is_directory(output_dir));
+    }
 }
 
 TEST_CASE("extract: a named nested file keeps its folder", "[extract]") {
@@ -594,8 +608,8 @@ TEST_CASE("extract: fails when neither the given nor the default locale has the 
     REQUIRE(LinesToSet(result.stderr_output) ==
             std::set<std::string>{"[!] Failed: File doesn't exist for locale " + reported +
                                       ": cats.txt",
-                                  "", failed_all});
-    REQUIRE(DirectoryEntries(output_dir).empty());
+                                  failed_all});
+    REQUIRE_FALSE(fs::exists(output_dir));
 }
 
 TEST_CASE("extract: all files from an archive without a listfile", "[extract]") {
@@ -679,7 +693,7 @@ TEST_CASE("extract: blocks an entry whose path climbs out of the output director
     REQUIRE(result.stdout_output.empty());
     auto expected_stderr = ExtractedLines({"safe.txt", "(listfile)"});
     expected_stderr.insert(
-        {"[!] Blocked: path traversal attempt detected: " + Native("..\\..\\sneaky.txt"), "",
+        {"[!] Blocked: path traversal attempt detected: " + Native("..\\..\\sneaky.txt"),
          failed_all});
     REQUIRE(LinesToSet(result.stderr_output) == expected_stderr);
     REQUIRE_FALSE(fs::exists(escape_target));
@@ -712,7 +726,7 @@ TEST_CASE("extract: blocks an entry that escapes through a symlink in the output
     REQUIRE(result.stdout_output.empty());
     auto expected_stderr = ExtractedLines({"safe.txt", "(listfile)"});
     expected_stderr.insert(
-        {"[!] Blocked: path traversal attempt detected: " + Native("escape\\evil.txt"), "",
+        {"[!] Blocked: path traversal attempt detected: " + Native("escape\\evil.txt"),
          failed_all});
     REQUIRE(LinesToSet(result.stderr_output) == expected_stderr);
     REQUIRE(DirectoryEntries(outside).empty());

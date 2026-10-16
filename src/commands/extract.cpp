@@ -57,6 +57,10 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
         }
     }
 
+    // Remembered so a run that extracts nothing can take away the directory it made
+    std::error_code exists_ec;
+    const bool output_existed = fs::exists(effective_output, exists_ec);
+
     fs::create_directory(effective_output, ec);
     if (ec) {
         std::error_code query_ec;
@@ -79,7 +83,12 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     archive.Close();
 
     if (result != 0) {
-        err << std::endl << "[!] Failed to extract all files." << std::endl;
+        err << "[!] Failed to extract all files." << std::endl;
+        // fs::remove takes away an empty directory only, so a partial extraction stays
+        std::error_code cleanup_ec;
+        if (!output_existed && fs::is_empty(effective_output, cleanup_ec)) {
+            fs::remove(effective_output, cleanup_ec);
+        }
     }
     return result == 0;
 }
