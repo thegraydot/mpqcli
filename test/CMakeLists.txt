@@ -10,7 +10,27 @@
 # The core's PUBLIC include directory gives them every header in src/, private
 # helpers included.
 add_executable(mpqcli_unit_tests
+    unit/commands/test_add.cpp
+    unit/commands/test_compact.cpp
+    unit/commands/test_create.cpp
+    unit/commands/test_extract.cpp
+    unit/commands/test_info.cpp
+    unit/commands/test_list.cpp
+    unit/commands/test_read.cpp
+    unit/commands/test_remove.cpp
+    unit/commands/test_rename.cpp
+    unit/commands/test_verify.cpp
+    unit/gamerules/test_profiles.cpp
+    unit/gamerules/test_rules.cpp
+    unit/mpq/test_extract.cpp
+    unit/mpq/test_flags.cpp
+    unit/test_errors.cpp
     unit/util/test_capacity.cpp
+    unit/util/test_format.cpp
+    unit/util/test_hash.cpp
+    unit/util/test_locales.cpp
+    unit/util/test_path.cpp
+    unit/util/test_string.cpp
 )
 
 target_include_directories(mpqcli_unit_tests PRIVATE
