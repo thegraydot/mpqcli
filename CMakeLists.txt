@@ -9,6 +9,10 @@ option(MPQCLI_BUILD_STATIC "Build static binary" OFF)
 # On only when mpqcli is the top-level project, so a consumer that adds it with
 # add_subdirectory does not get its tests in their own CTest run
 option(MPQCLI_BUILD_TESTING "Build mpqcli tests" ${PROJECT_IS_TOP_LEVEL})
+# The real-world archives a few functional tests read. They are never committed;
+# a test whose archive is absent is skipped rather than failed.
+set(MPQCLI_INTEGRATION_DATA "${PROJECT_SOURCE_DIR}/test/data/integration" CACHE PATH
+    "Directory of real-world archives for the tests that need them")
 # Off by default, so a new compiler release adding a warning cannot stop a
 # developer working. The Linux CI test builds turn it on, and check_lint holds
 # the same bar: clang-tidy replays these flags and .clang-tidy treats every

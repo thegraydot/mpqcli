@@ -33,8 +33,20 @@ if(NOT MPQCLI_BUILD_APP)
 endif()
 
 add_executable(mpqcli_functional_tests
+    archive_helper.cpp
     subprocess_helper.cpp
     functional/test_about.cpp
+    functional/test_add.cpp
+    functional/test_compact.cpp
+    functional/test_completion.cpp
+    functional/test_create.cpp
+    functional/test_extract.cpp
+    functional/test_info.cpp
+    functional/test_list.cpp
+    functional/test_read.cpp
+    functional/test_remove.cpp
+    functional/test_rename.cpp
+    functional/test_verify.cpp
     functional/test_version.cpp
 )
 
@@ -54,9 +66,11 @@ target_include_directories(mpqcli_functional_tests SYSTEM PRIVATE
 
 # Links neither the core nor the binary: the layer drives mpqcli through its CLI
 # as a user would, and linking the core would let a test quietly call a function
-# instead of running the command
+# instead of running the command. hash-library is vendored, not the core: the
+# verify tests compare a printed signature by its MD5.
 target_link_libraries(mpqcli_functional_tests PRIVATE
     mpqcli::warnings
+    mpqcli::hash_library
     Catch2::Catch2WithMain
 )
 
@@ -82,6 +96,13 @@ target_compile_definitions(mpqcli_functional_tests PRIVATE
     MPQCLI_BINARY_PATH="${MPQCLI_BINARY_PATH}"
     MPQCLI_TEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+# Cleared, the tests fall back to the MPQCLI_INTEGRATION_DATA environment
+# variable at runtime, and skip when neither names a directory that exists
+if(MPQCLI_INTEGRATION_DATA)
+    target_compile_definitions(mpqcli_functional_tests PRIVATE
+        MPQCLI_INTEGRATION_DATA="${MPQCLI_INTEGRATION_DATA}")
+endif()
 
 catch_discover_tests(mpqcli_functional_tests
     PROPERTIES LABELS "functional" SKIP_RETURN_CODE 4)
