@@ -32,15 +32,17 @@ Run `make help` to list all available targets. Common ones:
 |---|---|
 | `make configure` | Configure the cmake build (uses the default compiler) |
 | `make build` | Build the project into build/dev |
-| `make test_create_venv` | Create Python venv and install test dependencies (first-time only) |
-| `make test_mpqcli` | Run the pytest test suite |
+| `make test` | Run the unit tests |
+| `make test_functional` | Run the functional tests against the built binary |
+| `make test_all` | Run every test layer in build/dev |
+| `make fetch_integration_data` | Download the real archives a few functional tests read (needs filenget) |
 | `make check_all` | Run every static check (clang-format, clang-tidy, completion scripts) |
 | `make check_format` | Check formatting only (dry run) |
 | `make format` | Auto-fix formatting in-place |
 | `make configure_lint` | Configure build/lint with clang++ for clang-tidy |
 | `make check_lint` | Run clang-tidy static analysis |
 | `make check_embed` | Syntax-check the embedded completion scripts |
-| `make clean` | Remove all build, test and docs artefacts |
+| `make clean` | Remove all build and docs artefacts |
 
 ## Requirements for a pull request
 
@@ -61,15 +63,20 @@ A PR automatically triggers the CI build workflow, which compiles and tests acro
 Run the test suite before submitting:
 
 ```sh
-make test_create_venv  # first-time setup only
-make test_mpqcli
+make test
+make test_functional
 ```
 
-All tests must pass without errors.
+All tests must pass without errors. A few functional tests need two real Blizzard patch archives and are skipped until you fetch them with `make fetch_integration_data`, which needs [filenget](https://github.com/thomaslaurenson/filenget). The building page explains more.
 
 ### 3. New features should include tests
 
-If your change adds or modifies user-facing functionality - such as a new subcommand flag or a change in output format - please include a corresponding test in the `test/` directory. The existing test files (`test_list.py`, `test_add.py`, etc.) are good references for the test style and fixtures used.
+If your change adds or modifies user-facing functionality - such as a new subcommand flag or a change in output format - please include a corresponding test under `test/`. The tests use Catch2 and come in two layers:
+
+- `test/unit/` mirrors `src/`, with one `test_<source>.cpp` per source file, and calls the core library directly. Prefer it for logic: it is faster, and a failure points at the code.
+- `test/functional/` has one file per subcommand and runs the built `mpqcli` binary, asserting on its exit code, stdout and stderr. Use it for what only the command line shows: argument parsing, exit codes and output.
+
+Shared fixtures live in `test/fixtures/`, one header each. The existing files, such as `test/functional/test_list.cpp` and `test/unit/util/test_path.cpp`, are good references for the style.
 
 ### 4. Linting must pass
 
@@ -89,7 +96,7 @@ Then re-run `make check_all` to confirm everything passes.
 
 ### 5. Match the existing code style
 
-C++ formatting is enforced by `.clang-format` (LLVM style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. Python tests should follow the style of the existing test files.
+C++ formatting is enforced by `.clang-format` (LLVM style base). Static analysis is enforced by `.clang-tidy`. Both configs live in the repo root. The tests are held to the same formatting, but clang-tidy does not analyse them.
 
 #### Suppression policy
 
@@ -134,5 +141,5 @@ If you add a new StormLib call that is locale-sensitive, follow the existing pat
 3. Install the clang tools as shown above
 4. Make your changes and verify they build: `make build`
 5. Run `make check_all`, fixing any issues
-6. Run `make test_mpqcli` and confirm all tests pass
+6. Run `make test` and `make test_functional` and confirm all tests pass
 7. Open a pull request with a clear description of what was changed and why
