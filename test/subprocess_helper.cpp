@@ -11,6 +11,10 @@
 #include <thread>
 #include <vector>
 
+#ifndef _WIN32
+#include <csignal>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace mpqcli::testing {
@@ -67,6 +71,13 @@ RunResult Run(const fs::path &binary, const std::vector<std::string> &args,
     // only after the output has been read, which is too late for such a command
     FILE *stdin_stream = subprocess_stdin(&process);
     if (stdin_stream != nullptr) {
+#ifndef _WIN32
+        // A command that rejects its arguments exits without reading stdin, so the
+        // write can meet a closed pipe. That raises SIGPIPE, whose default action
+        // kills the whole test binary rather than failing the write, so it is ignored
+        // and the write simply comes up short. Windows reports a write error instead.
+        std::signal(SIGPIPE, SIG_IGN);
+#endif
         if (options.stdin_input.has_value()) {
             std::fwrite(options.stdin_input->data(), 1, options.stdin_input->size(), stdin_stream);
         }

@@ -67,6 +67,7 @@ add_executable(mpqcli_functional_tests
     functional/test_read.cpp
     functional/test_remove.cpp
     functional/test_rename.cpp
+    functional/test_subprocess_helper.cpp
     functional/test_verify.cpp
     functional/test_version.cpp
 )
