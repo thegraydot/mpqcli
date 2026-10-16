@@ -568,14 +568,35 @@ TEST_CASE("add: grows the file table when the archive is full", "[add]") {
     const auto extra = sample.files.dir.Path() / "extra.txt";
     WriteFile(extra, "one more");
 
-    // A second invocation rather than one run of sixty-one: filling and growing
-    // in the same run fails with "Disk full", a defect rather than behaviour to pin
+    // A second invocation, so the table is grown on reopening an archive that is
+    // already full
     auto result = Run(mpqcli_binary, {"add", sample.archive.string(), extra.string()});
 
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) ==
             std::set<std::string>{"[+] Adding file: extra.txt"});
+    REQUIRE(InfoProperty(sample.archive, "file-count") == "65");
+    REQUIRE(InfoProperty(sample.archive, "max-files") == "128");
+}
+
+TEST_CASE("add: grows the file table part-way through one run", "[add]") {
+    SampleArchive sample;
+    REQUIRE(InfoProperty(sample.archive, "max-files") == "64");
+    // One more than the sixty free slots, so the table fills mid-run
+    const auto fill_dir = sample.files.dir.Path() / "fill";
+    std::set<std::string> expected;
+    for (int i = 0; i < 61; ++i) {
+        const auto name = "f" + std::to_string(i) + ".txt";
+        WriteFile(fill_dir / name, "file " + std::to_string(i));
+        expected.insert("[+] Adding file: " + name);
+    }
+
+    auto result = Run(mpqcli_binary, {"add", sample.archive.string(), fill_dir.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToSet(result.stderr_output) == expected);
     REQUIRE(InfoProperty(sample.archive, "file-count") == "65");
     REQUIRE(InfoProperty(sample.archive, "max-files") == "128");
 }
