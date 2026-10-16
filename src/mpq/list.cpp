@@ -31,7 +31,12 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
     SFILE_FIND_DATA find_data;
     HANDLE find_handle = SFileFindFirstFile(archive, "*", &find_data, listfile);
     if (find_handle == nullptr) {
-        throw ArchiveError("Failed to find first file in MPQ archive.");
+        // ERROR_NO_MORE_FILES is an archive with no entries: nothing to list, not a failure
+        const auto error = SErrGetLastError();
+        if (error == ERROR_NO_MORE_FILES) {
+            return;
+        }
+        throw StormError("Failed to find first file in MPQ archive", error);
     }
 
     std::vector<std::string> properties_to_print =

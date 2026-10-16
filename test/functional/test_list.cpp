@@ -32,7 +32,6 @@ namespace {
 const fs::path &mpqcli_binary = TestEnvironment::Instance().binary_path;
 
 const std::string open_failure = "[!] Failed to open MPQ archive";
-const std::string enumeration_failure = "[!] Failed to find first file in MPQ archive.";
 
 // Asserts output is exactly these lines. Any order, since list prints entries
 // in hash-table order, but none missing and none repeated, which a set alone
@@ -546,23 +545,27 @@ TEST_CASE("list: ignores an empty listfile, with a warning", "[list]") {
         std::set<std::string>{"[!] Ignoring the listfile, which is empty: " + listfile.string()});
 }
 
-TEST_CASE("list: fails when no entry can be enumerated", "[list]") {
-    SECTION("an archive with no entries at all") {
-        TempDir dir;
-        const auto source_dir = dir.Path() / "empty";
-        fs::create_directories(source_dir);
-        const auto archive = dir.Path() / "bare.mpq";
-        // No files and no (listfile) either, so the hash table is empty
-        REQUIRE(Run(mpqcli_binary,
-                    {"create", archive.string(), source_dir.string(), "--file-flags1", "0"})
-                    .returncode == 0);
-
-        auto result = Run(mpqcli_binary, {"list", "-a", archive.string()});
-
-        REQUIRE(result.returncode == 1);
-        REQUIRE(result.stdout_output.empty());
-        REQUIRE(LinesToSet(result.stderr_output) == std::set<std::string>{enumeration_failure});
+TEST_CASE("list: an archive with no entries lists nothing", "[list]") {
+    const auto detailed = GENERATE(false, true);
+    CAPTURE(detailed);
+    TempDir dir;
+    const auto source_dir = dir.Path() / "empty";
+    fs::create_directories(source_dir);
+    const auto archive = dir.Path() / "bare.mpq";
+    // No files and no (listfile) either, so the hash table is empty
+    REQUIRE(
+        Run(mpqcli_binary, {"create", archive.string(), source_dir.string(), "--file-flags1", "0"})
+            .returncode == 0);
+    std::vector<std::string> args = {"list", "-a", archive.string()};
+    if (detailed) {
+        args.push_back("-d");
     }
+
+    auto result = Run(mpqcli_binary, args);
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(result.stderr_output.empty());
 }
 
 TEST_CASE("list: counts a Blizzard patch's entries and special files", "[list]") {

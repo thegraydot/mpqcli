@@ -321,6 +321,25 @@ TEST_CASE("extract: an empty stdin extracts nothing", "[extract]") {
     REQUIRE_FALSE(fs::exists(output_dir));
 }
 
+TEST_CASE("extract: an archive with no entries extracts nothing", "[extract]") {
+    TempDir dir;
+    const auto source_dir = dir.Path() / "empty";
+    fs::create_directories(source_dir);
+    const auto archive = dir.Path() / "bare.mpq";
+    // No files and no (listfile) either, so the hash table is empty
+    REQUIRE(
+        Run(mpqcli_binary, {"create", archive.string(), source_dir.string(), "--file-flags1", "0"})
+            .returncode == 0);
+    const auto output_dir = dir.Path() / "extracted";
+
+    auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(), archive.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToSet(result.stderr_output) == std::set<std::string>{"[*] No files to extract"});
+    REQUIRE_FALSE(fs::exists(output_dir));
+}
+
 TEST_CASE("extract: a named file that does not exist in the archive", "[extract]") {
     SampleArchive sample;
     const auto output_dir = sample.files.dir.Path() / "extracted_file";
