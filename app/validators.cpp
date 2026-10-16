@@ -34,12 +34,8 @@ extern const CLI::Validator locale_valid = CLI::Validator(
         if (str == "default")
             return std::string();
 
-        if (ParseHexLocale(str) != default_locale) {
-            return std::string();
-        }
-
-        const LCID locale = LangToLocale(str);
-        if (locale == 0) {
+        // The same resolution every command uses, a name in any case or else four hex digits
+        if (LangToLocale(str) == default_locale) {
             std::string valid_locales = "Locale must be nothing, or one of:";
             for (const auto &l : GetAllLocales()) {
                 valid_locales += " " + l;

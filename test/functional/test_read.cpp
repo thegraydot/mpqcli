@@ -249,12 +249,15 @@ TEST_CASE("read: prints nothing for an empty entry", "[read]") {
 }
 
 TEST_CASE("read: the variant under the given locale", "[read]") {
-    // The locale as given, and the variant it selects: a language code, the
-    // hexadecimal LCID the locale table does not name, and the hexadecimal
-    // LCID of one it does (0407 is deDE)
+    // The locale as given, and the variant it selects: a language code in any
+    // case, the hexadecimal LCID the locale table does not name, and the
+    // hexadecimal LCID of one it does (0407 is deDE). "dede" is a name before it
+    // is hexadecimal.
     const auto [locale, variant] = GENERATE(table<std::string, std::string>({
         {"deDE", "deDE"},
         {"esES", "esES"},
+        {"dede", "deDE"},
+        {"ESES", "esES"},
         {"041D", "041D"},
         {"0407", "deDE"},
     }));

@@ -40,6 +40,12 @@ TEST_CASE("LangToLocale", "[locales]") {
         REQUIRE(LangToLocale("zhTW") == 0x404U);
     }
 
+    SECTION("resolves a name whatever its case") {
+        REQUIRE(LangToLocale("dede") == 0x407U);
+        REQUIRE(LangToLocale("DEDE") == 0x407U);
+        REQUIRE(LangToLocale("ENgb") == 0x809U);
+    }
+
     SECTION("resolves enUS to its own locale rather than the default") {
         REQUIRE(LangToLocale("enUS") == 0x409U);
     }
