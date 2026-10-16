@@ -51,6 +51,7 @@ void RegisterCreate(CLI::App &app, Context &context) {
     sub->add_option("--stream-flags", create.stream_flags, "Override stream flags")
         ->group("Game setting overrides");
     sub->add_option("--sector-size", create.sector_size, "Override sector size")
+        ->check(sector_size_valid)
         ->group("Game setting overrides");
     sub->add_option("--raw-chunk-size", create.raw_chunk_size, "Override raw chunk size for MPQ v4")
         ->group("Game setting overrides");

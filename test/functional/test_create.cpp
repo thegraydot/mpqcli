@@ -725,10 +725,7 @@ TEST_CASE("create: rejects a format version outside 1 to 4", "[create]") {
 }
 
 TEST_CASE("create: --sector-size sets the header's sector exponent", "[create]") {
-    // Sector size in bytes, and the exponent the header stores for it. 512 is
-    // left out: create accepts it and exits 0, but StormLib then refuses to
-    // open the result with "Bad MPQ format", which is a defect to fix rather
-    // than a contract to pin here
+    // Sector size in bytes, and the exponent the header stores for it
     const auto [sector_size, exponent] = GENERATE(table<std::string, std::uint64_t>({
         {"1024", 1},
         {"4096", 3},
@@ -747,6 +744,24 @@ TEST_CASE("create: --sector-size sets the header's sector exponent", "[create]")
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, sample_entries));
     REQUIRE(HeaderField(archive, header_sector_size_offset, 2) == exponent);
     REQUIRE(ArchiveEntries(archive).size() == 3);
+}
+
+TEST_CASE("create: --sector-size rejects a size StormLib cannot write or read back", "[create]") {
+    // 512 is written as a sector shift of 0, which StormLib refuses to open
+    const auto sector_size = GENERATE(as<std::string>{}, "0", "512", "3000");
+    CAPTURE(sector_size);
+    SampleFiles files;
+    const auto archive = files.dir.Path() / "sector.mpq";
+
+    auto result = Run(mpqcli_binary, {"create", "--sector-size", sector_size, archive.string(),
+                                      files.files_dir.string()});
+
+    // 105 is CLI11's ValidationError, from sector_size_valid
+    REQUIRE(result.returncode == 105);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE_THAT(result.stderr_output,
+                 ContainsSubstring("Sector size must be a power of two of at least 1024"));
+    REQUIRE_FALSE(fs::exists(archive));
 }
 
 TEST_CASE("create: --raw-chunk-size sets the v4 header's raw chunk size", "[create]") {
