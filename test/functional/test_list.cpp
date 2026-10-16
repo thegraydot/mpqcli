@@ -103,8 +103,8 @@ const std::vector<PropertyListing> property_listings = {
      {"      16  bytes", "      35  cats.txt", "      35  dogs.txt", "      35  (listfile)",
       "     124  (attributes)"}},
     {"flags",
-     {"   cexmn  bytes", "   cexmn  cats.txt", "   cexmn  dogs.txt", " ce2xmnf  (listfile)",
-      " ce2xmnf  (attributes)"}},
+     {"     cex  bytes", "     cex  cats.txt", "     cex  dogs.txt", "    ce2x  (listfile)",
+      "    ce2x  (attributes)"}},
     {"encryption-key",
      {"eaa753f9  bytes", "935a7772  cats.txt", "a073c614  dogs.txt", "2d2f0b11  (listfile)",
       "50e315dd  (attributes)"}},
@@ -260,12 +260,12 @@ TEST_CASE("list: shows the signature entry stored raw", "[list]") {
     // The (signature) is neither compressed nor encrypted, and signing adds a
     // row to the (attributes) block, which is why it is larger than unsigned
     RequireLines(result.stdout_output, {
-                                           "   cexmn       16  bytes",
-                                           "   cexmn       35  cats.txt",
-                                           "   cexmn       35  dogs.txt",
-                                           " ce2xmnf       35  (listfile)",
-                                           " ce2xmnf      143  (attributes)",
-                                           "      xn       72  (signature)",
+                                           "     cex       16  bytes",
+                                           "     cex       35  cats.txt",
+                                           "     cex       35  dogs.txt",
+                                           "    ce2x       35  (listfile)",
+                                           "    ce2x      143  (attributes)",
+                                           "       x       72  (signature)",
                                        });
 }
 
@@ -295,11 +295,11 @@ TEST_CASE("list: prints several properties as columns", "[list]") {
     RequireLines(
         result.stdout_output,
         {
-            "   35 147178ed c99b9ee2 0000000000000000       16    cexmn eaa753f9  bytes",
-            "   44 0fd58937 70ab788e 0000000000000000       35    cexmn 935a7772  cats.txt",
-            "    0 eb30456b 48345fbb 0000000000000000       35    cexmn a073c614  dogs.txt",
-            "   25 fd657910 4e9b98a7 0000000000000000       35  ce2xmnf 2d2f0a94  (listfile)",
-            "   14 d38437cb 07dfeaec 0000000000000000      124  ce2xmnf 50e314af  (attributes)",
+            "   35 147178ed c99b9ee2 0000000000000000       16      cex eaa753f9  bytes",
+            "   44 0fd58937 70ab788e 0000000000000000       35      cex 935a7772  cats.txt",
+            "    0 eb30456b 48345fbb 0000000000000000       35      cex a073c614  dogs.txt",
+            "   25 fd657910 4e9b98a7 0000000000000000       35     ce2x 2d2f0a94  (listfile)",
+            "   14 d38437cb 07dfeaec 0000000000000000      124     ce2x 50e314af  (attributes)",
         });
 }
 
@@ -515,16 +515,16 @@ TEST_CASE("list: prints the encryption keys of entries listed without a name", "
     REQUIRE(unnamed.returncode == 0);
     REQUIRE(unnamed.stderr_output.empty());
     RequireLines(unnamed.stdout_output, {
-                                            "    0    cexmn 40526ca5 40526ca5  File00000000.xxx",
-                                            "    1    cexmn 935a7772 935a7772  File00000001.xxx",
-                                            "    2    cexmn a073c614 a073c614  File00000002.xxx",
+                                            "    0      cex 40526ca5 40526ca5  File00000000.xxx",
+                                            "    1      cex 935a7772 935a7772  File00000001.xxx",
+                                            "    2      cex a073c614 a073c614  File00000002.xxx",
                                         });
     REQUIRE(named.returncode == 0);
     REQUIRE(named.stderr_output.empty());
     RequireLines(named.stdout_output, {
-                                          "    0    cexmn 40526ca5 40526ca5  capybaras.txt",
-                                          "    1    cexmn 935a7772 935a7772  cats.txt",
-                                          "    2    cexmn a073c614 a073c614  dogs.txt",
+                                          "    0      cex 40526ca5 40526ca5  capybaras.txt",
+                                          "    1      cex 935a7772 935a7772  cats.txt",
+                                          "    2      cex a073c614 a073c614  dogs.txt",
                                       });
 }
 

@@ -38,6 +38,21 @@ TEST_CASE("GetFlagString", "[flags]") {
         }
     }
 
+    SECTION("prints exactly one letter for a single flag") {
+        for (const auto &[flag, letter] : flag_letters) {
+            CAPTURE(flag, letter);
+            REQUIRE(GetFlagString(flag) == std::string(1, letter));
+        }
+    }
+
+    SECTION("prints one letter per flag set, and nothing for the masks") {
+        uint32_t all_flags = 0U;
+        for (const auto &entry : flag_letters) {
+            all_flags |= entry.flag;
+        }
+        REQUIRE(GetFlagString(all_flags) == "ice2pudrsx");
+    }
+
     SECTION("prints no other flag's letter") {
         for (const auto &[flag, letter] : flag_letters) {
             const std::string flags = GetFlagString(flag);
