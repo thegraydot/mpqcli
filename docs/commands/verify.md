@@ -20,8 +20,14 @@ $ echo $?
 
 ## Verify an MPQ archive and print the digital signature
 
-Check the digital signature of an MPQ archive, by verifying the signature in the archive and also printing the digital signature value in hexadecimal using the `-x` or `--print` argument.
+Check the digital signature of an MPQ archive, and also write the signature's raw bytes to stdout, using the `-x` or `--print` argument. The verification result still goes to stderr, so the bytes can be redirected to a file on their own:
 
 ```bash
 $ mpqcli verify --print wow-patch.mpq > signature
+```
+
+To view the signature as hexadecimal, pipe it through a tool such as `xxd`:
+
+```bash
+$ mpqcli verify --print wow-patch.mpq | xxd
 ```
