@@ -44,12 +44,21 @@ TEST_CASE("Extract", "[extract]") {
         REQUIRE_FALSE(fs::exists(output));
     }
 
-    SECTION("throws Interrupted when cancelled before the first named file, extracting nothing") {
+    SECTION("throws Interrupted when cancelled before the first named file, leaving no output "
+            "directory") {
         options.files = std::vector<std::string>{"cats.txt", "dogs.txt"};
         const std::atomic<bool> cancelled{true};
         REQUIRE_THROWS_AS(Extract(options, err, cancelled), mpqcli::Interrupted);
-        const bool nothing_extracted = !fs::exists(output) || fs::is_empty(output);
-        REQUIRE(nothing_extracted);
+        REQUIRE_FALSE(fs::exists(output));
+    }
+
+    SECTION("keeps an output directory that already existed when cancelled") {
+        fs::create_directories(output);
+        options.files = std::vector<std::string>{"cats.txt", "dogs.txt"};
+        const std::atomic<bool> cancelled{true};
+        REQUIRE_THROWS_AS(Extract(options, err, cancelled), mpqcli::Interrupted);
+        REQUIRE(fs::is_directory(output));
+        REQUIRE(fs::is_empty(output));
     }
 
     SECTION("stops after the first named file when cancelled part-way") {
