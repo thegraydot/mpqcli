@@ -11,6 +11,10 @@
 #include <utility>
 #include <vector>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include "integration_data.h"
 #include "read_file.h"
 #include "sample_archive.h"
@@ -286,6 +290,11 @@ TEST_CASE("info: prints the documented values for a Blizzard patch archive", "[i
 }
 
 TEST_CASE("info: reads an archive it has no permission to write", "[info]") {
+#ifndef _WIN32
+    if (geteuid() == 0) {
+        SKIP("root can write a file whatever its permissions");
+    }
+#endif
     SampleArchive sample;
     fs::permissions(sample.archive,
                     fs::perms::owner_read | fs::perms::group_read | fs::perms::others_read,

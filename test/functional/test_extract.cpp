@@ -146,6 +146,7 @@ TEST_CASE("extract: fails when the archive is not an MPQ", "[extract]") {
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to open MPQ archive"));
+    REQUIRE(LinesToVector(result.stderr_output).size() == 1);
 }
 
 TEST_CASE("extract: all files to a directory named after the archive", "[extract]") {
@@ -230,6 +231,7 @@ TEST_CASE("extract: fails when --output is an existing file", "[extract]") {
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to create output directory"));
+    REQUIRE(LinesToVector(result.stderr_output).size() == 1);
 }
 
 TEST_CASE("extract: fails when the archive has no extension", "[extract]") {
@@ -242,6 +244,7 @@ TEST_CASE("extract: fails when the archive has no extension", "[extract]") {
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to create output directory"));
+    REQUIRE(LinesToVector(result.stderr_output).size() == 1);
 }
 
 TEST_CASE("extract: overwrites files from a previous extraction", "[extract]") {

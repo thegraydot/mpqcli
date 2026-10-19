@@ -93,6 +93,7 @@ TEST_CASE("add: fails when the archive is not an MPQ", "[add]") {
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to open MPQ archive"));
+    REQUIRE(LinesToVector(result.stderr_output).size() == 1);
 }
 
 TEST_CASE("add: input path does not exist", "[add]") {
@@ -662,6 +663,8 @@ TEST_CASE("add: --update is idempotent", "[add]") {
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, !ContainsSubstring("[+] Adding file:"));
     REQUIRE_THAT(result.stderr_output, ContainsSubstring(UpdateSummary(update_dir, 0, 1)));
+    // The skip and the summary
+    REQUIRE(LinesToVector(result.stderr_output).size() == 2);
     REQUIRE(ReadEntry(sample.archive, "cats.txt") ==
             std::set<std::string>{"This cat content is completely different and longer now."});
 }

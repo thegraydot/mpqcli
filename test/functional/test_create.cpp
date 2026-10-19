@@ -204,6 +204,8 @@ TEST_CASE("create: fails when the archive's directory does not exist", "[create]
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to create MPQ archive"));
+    // The game profile line, then the failure
+    REQUIRE(LinesToVector(result.stderr_output).size() == 2);
     REQUIRE(DirectoryEntries(files.dir.Path()) == std::set<std::string>{"files"});
 }
 
@@ -325,6 +327,9 @@ TEST_CASE("create: creates nothing when two inputs hold the same name", "[create
                  ContainsSubstring("[!] 1 file(s) were not added because an earlier input added "
                                    "a file by the same name"));
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("no archive was created"));
+    // The game profile line, the first a.txt added, the second skipped, the count of
+    // skips, and the summary
+    REQUIRE(LinesToVector(result.stderr_output).size() == 5);
     REQUIRE(DirectoryEntries(dir.Path()) == std::set<std::string>{"first", "second"});
 }
 
@@ -420,6 +425,8 @@ TEST_CASE("create: creates nothing when a file cannot be read", "[create]") {
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to add: locked.txt"));
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("no archive was created"));
+    // The game profile line, three files added, the one failure, and the summary
+    REQUIRE(LinesToVector(result.stderr_output).size() == 6);
     // Neither the archive nor the .partial it was written to is left behind
     REQUIRE(DirectoryEntries(dir.Path()) == std::set<std::string>{"b.txt", "mod"});
 }
@@ -438,6 +445,8 @@ TEST_CASE("create: skips the archive inside its own input directory", "[create]"
     REQUIRE(result.stdout_output.empty());
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[*] Skipping the archive itself"));
     REQUIRE_THAT(result.stderr_output, ContainsSubstring("[+] Adding file: a.txt"));
+    // The game profile line, the skip and the one file added
+    REQUIRE(LinesToVector(result.stderr_output).size() == 3);
     REQUIRE(DirectoryEntries(input_dir) == std::set<std::string>{"a.txt", "out.mpq"});
     REQUIRE(ArchiveEntries(input_dir / "out.mpq") == std::set<std::string>{"enUS  a.txt"});
 }
@@ -793,6 +802,7 @@ TEST_CASE("create: --stream-flags reaches the archive stream", "[create]") {
         REQUIRE(result.returncode == 1);
         REQUIRE(result.stdout_output.empty());
         REQUIRE_THAT(result.stderr_output, ContainsSubstring("[!] Failed to create MPQ archive"));
+        REQUIRE(LinesToVector(result.stderr_output).size() == 2);
         // Neither the archive nor the .partial it was written to is left behind
         REQUIRE(DirectoryEntries(files.dir.Path()) == std::set<std::string>{"files"});
     }
