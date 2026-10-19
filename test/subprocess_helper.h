@@ -20,7 +20,9 @@ struct RunOptions {
 
 /// What the binary did: both streams as raw bytes, its exit code, and whether the limit hit
 ///
-/// returncode is -1 when the process was killed for exceeding the timeout.
+/// returncode is -1 when the process was killed for exceeding the timeout. On POSIX, a
+/// process killed by a signal gives 128 plus the signal number, as a shell reports it,
+/// so a crash never passes for an expected failure.
 struct RunResult {
     std::string stdout_output;
     std::string stderr_output;
@@ -32,7 +34,7 @@ struct RunResult {
 ///
 /// Every functional test is written against this signature; how it is implemented is
 /// the helper's own business. Throws std::runtime_error if the process cannot be spawned
-/// at all, which is a broken test environment rather than a result to assert on.
+/// or waited for, which is a broken test environment rather than a result to assert on.
 ///
 /// @param binary Path to the executable to run.
 /// @param args Arguments after the program name, one string each, unquoted.

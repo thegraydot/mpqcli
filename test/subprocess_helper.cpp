@@ -1,10 +1,13 @@
 #include "subprocess_helper.h"
 
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
+#include <iostream>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <subprocess.h>
@@ -12,7 +15,10 @@
 #include <vector>
 
 #ifndef _WIN32
+#include <cerrno>
 #include <csignal>
+#include <sys/types.h>
+#include <sys/wait.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -34,6 +40,44 @@ std::string ReadAll(FILE *stream) {
         output.append(buffer, count);
     }
     return output;
+}
+
+// Writes any input, then closes stdin so a command reading paths from stdin sees EOF
+// instead of waiting forever
+void WriteInput(subprocess_s &process, const std::optional<std::string> &input) {
+    FILE *stdin_stream = subprocess_stdin(&process);
+    if (stdin_stream == nullptr) {
+        return;
+    }
+    if (input.has_value()) {
+        std::fwrite(input->data(), 1, input->size(), stdin_stream);
+    }
+    std::fclose(stdin_stream);
+    process.stdin_file = nullptr;
+}
+
+// Reaps the child and returns its exit code, or nothing if it cannot be waited for. On
+// POSIX a child killed by a signal gives 128 plus the signal number, as a shell reports
+// it. subprocess_join is no use for that there: it reports any signal as EXIT_FAILURE,
+// so a crash would pass for an expected failure.
+std::optional<int> WaitForExit(subprocess_s &process) {
+#ifdef _WIN32
+    int returncode = -1;
+    if (subprocess_join(&process, &returncode) != 0) {
+        return std::nullopt;
+    }
+    return returncode;
+#else
+    int status = 0;
+    pid_t reaped = -1;
+    do {
+        reaped = waitpid(process.child, &status, 0);
+    } while (reaped == -1 && errno == EINTR);
+    if (reaped != process.child) {
+        return std::nullopt;
+    }
+    return WIFSIGNALED(status) ? 128 + WTERMSIG(status) : WEXITSTATUS(status);
+#endif
 }
 
 } // namespace
@@ -66,29 +110,18 @@ RunResult Run(const fs::path &binary, const std::vector<std::string> &args,
         throw std::runtime_error("subprocess_helper: failed to spawn " + binary.string());
     }
 
-    // Write any input, then close stdin so a command reading paths from stdin
-    // sees EOF instead of waiting forever. subprocess_join closes it too, but
-    // only after the output has been read, which is too late for such a command
-    FILE *stdin_stream = subprocess_stdin(&process);
-    if (stdin_stream != nullptr) {
 #ifndef _WIN32
-        // A command that rejects its arguments exits without reading stdin, so the
-        // write can meet a closed pipe. That raises SIGPIPE, whose default action
-        // kills the whole test binary rather than failing the write, so it is ignored
-        // and the write simply comes up short. Windows reports a write error instead.
-        std::signal(SIGPIPE, SIG_IGN);
+    // A command that rejects its arguments exits without reading stdin, so the write
+    // can meet a closed pipe. That raises SIGPIPE, whose default action kills the whole
+    // test binary rather than failing the write, so it is ignored and the write simply
+    // comes up short. Windows reports a write error instead.
+    std::signal(SIGPIPE, SIG_IGN);
 #endif
-        if (options.stdin_input.has_value()) {
-            std::fwrite(options.stdin_input->data(), 1, options.stdin_input->size(), stdin_stream);
-        }
-        std::fclose(stdin_stream);
-        process.stdin_file = nullptr;
-    }
 
     RunResult result;
 
-    // Watchdog: a hung binary is killed and reported rather than hanging the
-    // whole ctest run
+    // Watchdog: a hung binary is killed and reported rather than hanging the whole
+    // ctest run. It starts before any I/O, so nothing below can block without a limit.
     std::mutex finished_mutex;
     std::condition_variable finished_cv;
     bool finished = false;
@@ -100,23 +133,39 @@ RunResult Run(const fs::path &binary, const std::vector<std::string> &args,
         }
     });
 
-    // stderr is drained on its own thread: a process that fills one pipe while
-    // the parent is blocked reading the other would otherwise deadlock
+    // Input is written beside the readers rather than before them: a child that ignores
+    // its stdin and fills its stdout would otherwise block on the output while the
+    // helper blocked on the input. stderr gets its own thread for the same reason.
+    std::thread stdin_writer([&] { WriteInput(process, options.stdin_input); });
     std::thread stderr_reader([&] { result.stderr_output = ReadAll(subprocess_stderr(&process)); });
     result.stdout_output = ReadAll(subprocess_stdout(&process));
     stderr_reader.join();
+    stdin_writer.join();
 
-    int returncode = 0;
-    subprocess_join(&process, &returncode);
+    // The watchdog stops before the child is reaped, never after: subprocess_terminate
+    // signals the child's pid, which is free for reuse once the child is reaped. Both
+    // pipes are closed by now, so the child has exited or is about to.
     {
         std::lock_guard<std::mutex> lock(finished_mutex);
         finished = true;
     }
     finished_cv.notify_all();
     watchdog.join();
-    subprocess_destroy(&process);
 
-    result.returncode = result.timed_out ? -1 : returncode;
+    const std::optional<int> returncode = WaitForExit(process);
+    subprocess_destroy(&process);
+    if (!returncode.has_value()) {
+        throw std::runtime_error("subprocess_helper: failed to wait for " + binary.string());
+    }
+
+    if (result.timed_out) {
+        // Said here because a test sees only the returncode of -1
+        std::cerr << "subprocess_helper: killed " << binary.string() << " after "
+                  << options.timeout.count() << " s" << std::endl;
+        result.returncode = -1;
+    } else {
+        result.returncode = *returncode;
+    }
     return result;
 }
 
