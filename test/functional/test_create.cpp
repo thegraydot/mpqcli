@@ -234,7 +234,6 @@ TEST_CASE("create: from a single file", "[create]") {
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, {"test.txt"}));
-    REQUIRE(fs::file_size(archive) > 0);
     REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  test.txt"});
 }
 
@@ -504,7 +503,6 @@ TEST_CASE("create: from an empty directory", "[create]") {
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, {}));
-    REQUIRE(fs::file_size(archive) > 0);
     REQUIRE(ArchiveEntries(archive).empty());
     REQUIRE(InfoProperty(archive, "file-count") == "1"); // The (listfile) alone
     // The smallest max file count create gives an archive
@@ -612,7 +610,6 @@ TEST_CASE("create: applies the game profile's version and compression", "[create
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, sample_entries, profile));
-    REQUIRE(fs::file_size(archive) > 0);
     REQUIRE(InfoProperty(archive, "format-version") == expected_version);
     const auto flags = EntryProperty(archive, "cats.txt", "flags");
     CAPTURE(flags);
@@ -690,7 +687,6 @@ TEST_CASE("create: writes each MPQ format version", "[create]") {
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, sample_entries));
-    REQUIRE(fs::file_size(archive) > 0);
     REQUIRE(InfoProperty(archive, "format-version") == version);
 }
 

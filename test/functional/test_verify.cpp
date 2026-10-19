@@ -155,16 +155,16 @@ TEST_CASE("verify: --print writes a strong signature's bytes to stdout", "[verif
     REQUIRE(LinesToVector(result.stderr_output) == verify_success);
 }
 
-TEST_CASE("verify: -x prints the same signature as --print", "[verify]") {
+TEST_CASE("verify: -x prints the weak signature mpqcli wrote", "[verify]") {
     SampleArchive sample({"-s"});
 
-    auto short_form = Run(mpqcli_binary, {"verify", "-x", sample.archive.string()});
-    auto long_form = Run(mpqcli_binary, {"verify", "--print", sample.archive.string()});
+    auto result = Run(mpqcli_binary, {"verify", "-x", sample.archive.string()});
 
-    REQUIRE(short_form.returncode == 0);
-    REQUIRE_FALSE(short_form.stdout_output.empty());
-    REQUIRE(LinesToVector(short_form.stderr_output) == verify_success);
-    REQUIRE(long_form.returncode == 0);
-    REQUIRE(LinesToVector(long_form.stderr_output) == verify_success);
-    REQUIRE(short_form.stdout_output == long_form.stdout_output);
+    REQUIRE(result.returncode == 0);
+    // The (signature) entry, raw. The generic profile stores no file times, so the signed
+    // bytes, and with them the signature, are the same in every time zone.
+    MD5 md5;
+    REQUIRE(result.stdout_output.size() == 72);
+    REQUIRE(md5(result.stdout_output) == "1d1947092567f94043bca01b1e1ac1c9");
+    REQUIRE(LinesToVector(result.stderr_output) == verify_success);
 }

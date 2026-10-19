@@ -660,14 +660,14 @@ TEST_CASE("extract: all files from an archive without a listfile", "[extract]") 
         {"File00000001.xxx", "cats.txt"},
         {"File00000002.xxx", "dogs.txt"},
     };
+    const auto entries = NoListfileArchive::Entries();
     for (const auto &name : expected) {
+        CAPTURE(name);
         const auto stored = contents.count(name) != 0 ? contents.at(name) : name;
-        for (const auto &entry : NoListfileArchive::Entries()) {
-            if (entry.name == stored) {
-                CAPTURE(name);
-                REQUIRE(ReadFile(output_dir / name) == entry.content);
-            }
-        }
+        const auto entry = std::find_if(entries.begin(), entries.end(),
+                                        [&](const auto &e) { return e.name == stored; });
+        REQUIRE(entry != entries.end());
+        REQUIRE(ReadFile(output_dir / name) == entry->content);
     }
 }
 
