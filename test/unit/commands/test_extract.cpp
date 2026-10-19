@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "cancel_after.h"
 #include "commands/extract.h"
 #include "created_archive.h"
 #include "errors.h"
@@ -15,6 +16,7 @@ namespace fs = std::filesystem;
 
 using mpqcli::Extract;
 using mpqcli::ExtractOptions;
+using mpqcli::testing::CancelAfter;
 using mpqcli::testing::CreatedArchive;
 using mpqcli::testing::ReadFile;
 using mpqcli::testing::SampleFiles;
@@ -48,5 +50,13 @@ TEST_CASE("Extract", "[extract]") {
         REQUIRE_THROWS_AS(Extract(options, err, cancelled), mpqcli::Interrupted);
         const bool nothing_extracted = !fs::exists(output) || fs::is_empty(output);
         REQUIRE(nothing_extracted);
+    }
+
+    SECTION("stops after the first named file when cancelled part-way") {
+        options.files = std::vector<std::string>{"cats.txt", "dogs.txt"};
+        CancelAfter cancel("[*] Extracted:");
+        REQUIRE_THROWS_AS(Extract(options, cancel.Err(), cancel.Cancelled()), mpqcli::Interrupted);
+        REQUIRE(ReadFile(output / "cats.txt") == "This is a file about cats.\n");
+        REQUIRE_FALSE(fs::exists(output / "dogs.txt"));
     }
 }
