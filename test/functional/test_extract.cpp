@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include "many_locales_archive.h"
@@ -711,8 +712,6 @@ TEST_CASE("extract: blocks an entry whose path climbs out of the output director
     REQUIRE(DirectoryEntries(output_dir) == std::set<std::string>{"safe.txt", "(listfile)"});
 }
 
-#ifndef _WIN32
-// Creating a symlink needs privileges on Windows, so this case is POSIX only
 TEST_CASE("extract: blocks an entry that escapes through a symlink in the output directory",
           "[extract]") {
     TempDir dir;
@@ -729,7 +728,12 @@ TEST_CASE("extract: blocks an entry that escapes through a symlink in the output
     const auto output_dir = dir.Path() / "out";
     fs::create_directories(outside);
     fs::create_directories(output_dir);
-    fs::create_directory_symlink(outside, output_dir / "escape");
+    // Windows creates a symlink only with Developer Mode or elevation
+    std::error_code link_ec;
+    fs::create_directory_symlink(outside, output_dir / "escape", link_ec);
+    if (link_ec) {
+        SKIP("cannot create a symlink here: " << link_ec.message());
+    }
 
     auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(), archive.string()});
 
@@ -742,4 +746,3 @@ TEST_CASE("extract: blocks an entry that escapes through a symlink in the output
     REQUIRE(LinesToSet(result.stderr_output) == expected_stderr);
     REQUIRE(DirectoryEntries(outside).empty());
 }
-#endif

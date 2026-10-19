@@ -9,6 +9,7 @@
 #include <ios>
 #include <set>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #ifndef _WIN32
@@ -483,13 +484,16 @@ TEST_CASE("create: keeps folder structure with a dot-relative input", "[create]"
     REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  sub\\nested.txt"});
 }
 
-#ifndef _WIN32
-// Creating a symlink needs privileges on Windows, so this case is POSIX only
 TEST_CASE("create: skips a dangling symlink", "[create]") {
     TempDir dir;
     const auto source_dir = dir.Path() / "src";
     WriteFile(source_dir / "real.txt", "real file");
-    fs::create_symlink(dir.Path() / "missing.txt", source_dir / "dangling.txt");
+    // Windows creates a symlink only with Developer Mode or elevation
+    std::error_code link_ec;
+    fs::create_symlink(dir.Path() / "missing.txt", source_dir / "dangling.txt", link_ec);
+    if (link_ec) {
+        SKIP("cannot create a symlink here: " << link_ec.message());
+    }
     const auto archive = dir.Path() / "output.mpq";
 
     auto result = Run(mpqcli_binary, {"create", archive.string(), source_dir.string()});
@@ -499,7 +503,6 @@ TEST_CASE("create: skips a dangling symlink", "[create]") {
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, {"real.txt"}));
     REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  real.txt"});
 }
-#endif
 
 TEST_CASE("create: from an empty directory", "[create]") {
     TempDir dir;

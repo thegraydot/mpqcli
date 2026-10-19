@@ -173,18 +173,19 @@ TEST_CASE("ListFilesRecursive", "[path]") {
         REQUIRE(ec);
     }
 
-#ifndef _WIN32
-    // Windows creates a symlink only with Developer Mode or elevation, which a test
-    // cannot count on
     SECTION("skips a dangling symlink") {
         WriteFile(dir.Path() / "a.txt", "a");
-        fs::create_symlink(dir.Path() / "missing", dir.Path() / "dangling");
+        // Windows creates a symlink only with Developer Mode or elevation
+        std::error_code link_ec;
+        fs::create_symlink(dir.Path() / "missing", dir.Path() / "dangling", link_ec);
+        if (link_ec) {
+            SKIP("cannot create a symlink here: " << link_ec.message());
+        }
 
         const std::vector<fs::path> expected = {dir.Path() / "a.txt"};
         REQUIRE(ListFilesRecursive(dir.Path(), ec) == expected);
         REQUIRE_FALSE(ec);
     }
-#endif
 }
 
 TEST_CASE("ExpandStdinMarker", "[path]") {
