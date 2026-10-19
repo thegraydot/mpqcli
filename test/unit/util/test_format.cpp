@@ -78,10 +78,12 @@ TEST_CASE("StormErrorString", "[format]") {
     SECTION("describes a code it has no case for in the platform's own words") {
 #ifdef _WIN32
         // 32 is ERROR_SHARING_VIOLATION. Windows localises the text, so the test checks
-        // where it came from rather than what it says: strerror(32) is "Broken pipe"
+        // where it came from rather than what it says: strerror(32) is "Broken pipe", and
+        // "Unknown error 32" is what is left when FormatMessage fails
         const std::string text = StormErrorString(32U);
         REQUIRE_FALSE(text.empty());
         REQUIRE(text != std::strerror(32));
+        REQUIRE(text != "Unknown error 32");
         REQUIRE(text.back() != '\n');
         REQUIRE(text.back() != '.');
 #else

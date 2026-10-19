@@ -6,7 +6,7 @@
 
 using mpqcli::FindFlatCollision;
 
-TEST_CASE("FindFlatCollision", "[extract]") {
+TEST_CASE("FindFlatCollision", "[mpq/extract]") {
     SECTION("finds nothing when every file name differs") {
         REQUIRE_FALSE(FindFlatCollision({"a\\cats.txt", "b\\dogs.txt", "bytes"}).has_value());
     }

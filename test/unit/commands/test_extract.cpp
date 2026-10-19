@@ -22,7 +22,7 @@ using mpqcli::testing::CreateWithoutListfile;
 using mpqcli::testing::ReadFile;
 using mpqcli::testing::SampleFiles;
 
-TEST_CASE("Extract", "[extract]") {
+TEST_CASE("Extract", "[commands/extract]") {
     CreatedArchive created;
     const fs::path output = created.files.dir.Path() / "out";
     ExtractOptions options;

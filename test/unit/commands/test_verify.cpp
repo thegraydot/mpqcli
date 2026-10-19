@@ -37,5 +37,6 @@ TEST_CASE("Verify", "[verify]") {
         VerifyOptions options;
         options.archive = created.archive;
         REQUIRE_FALSE(Verify(options, out, err));
+        REQUIRE(err.str() == "[!] Verify failed: archive has no signature\n");
     }
 }
