@@ -319,15 +319,22 @@ TEST_CASE("completion: every script covers every subcommand and option", "[compl
     // A subcommand or option wired into the CLI but into only some of the
     // hand-written scripts, or under the wrong subcommand, is the failure this
     // guards against
+    // Options come from scraping the help text, so an empty scrape is checked rather than
+    // skipped: after a change to CLI11's layout it would otherwise check nothing and pass
+    const std::set<std::string> without_options = {"about", "completion", "version"};
     for (const auto &subcommand : Subcommands()) {
         CAPTURE(subcommand);
         REQUIRE(HasToken(script, subcommand));
         auto options = LongOptions(subcommand);
         const auto short_options = ShortOptions(subcommand);
-        options.insert(short_options.begin(), short_options.end());
-        if (options.empty()) {
+        if (without_options.count(subcommand) != 0) {
+            REQUIRE(options.empty());
+            REQUIRE(short_options.empty());
             continue;
         }
+        REQUIRE_FALSE(options.empty());
+        REQUIRE_FALSE(short_options.empty());
+        options.insert(short_options.begin(), short_options.end());
         const auto section = SubcommandSection(shell, script, subcommand);
         REQUIRE_FALSE(section.empty());
         for (const auto &option : options) {
@@ -350,8 +357,11 @@ TEST_CASE("completion: no script offers a subcommand a short option it rejects",
         {"extract", "-k"},
     }));
     CAPTURE(subcommand, option);
-    // The subcommand's own help agrees it takes no such option
-    REQUIRE(ShortOptions(subcommand).count(option) == 0);
+    // The subcommand's own help agrees it takes no such option. The scrape must find its
+    // other short options, or the check that follows would pass on an empty set.
+    const auto short_options = ShortOptions(subcommand);
+    REQUIRE_FALSE(short_options.empty());
+    REQUIRE(short_options.count(option) == 0);
 
     for (const auto &shell : shells) {
         CAPTURE(shell.name);
