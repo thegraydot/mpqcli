@@ -47,6 +47,24 @@ struct CreatedArchive {
     }
 };
 
+/// Creates an archive over input with no (listfile), by calling Create directly
+///
+/// The entries then have no names, and an empty directory as input gives an archive with
+/// no entries at all. A failed create throws, since that is a broken fixture rather than
+/// a result.
+inline void CreateWithoutListfile(const std::filesystem::path &archive,
+                                  const std::filesystem::path &input) {
+    CreateOptions options;
+    options.archive = archive;
+    options.files = {input};
+    options.create_overrides.file_flags1 = 0U;
+    std::ostringstream err;
+    const std::atomic<bool> cancelled{false};
+    if (!Create(options, err, cancelled)) {
+        throw std::runtime_error("CreateWithoutListfile: create failed: " + err.str());
+    }
+}
+
 } // namespace mpqcli::testing
 
 #endif // CREATED_ARCHIVE_H

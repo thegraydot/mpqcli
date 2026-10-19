@@ -18,6 +18,7 @@ using mpqcli::Extract;
 using mpqcli::ExtractOptions;
 using mpqcli::testing::CancelAfter;
 using mpqcli::testing::CreatedArchive;
+using mpqcli::testing::CreateWithoutListfile;
 using mpqcli::testing::ReadFile;
 using mpqcli::testing::SampleFiles;
 
@@ -36,6 +37,24 @@ TEST_CASE("Extract", "[extract]") {
             CAPTURE(name);
             REQUIRE(ReadFile(output / name) == content);
         }
+    }
+
+    SECTION("fails on a named file missing from the archive, leaving no output directory") {
+        options.files = std::vector<std::string>{"nope.txt"};
+        const std::atomic<bool> cancelled{false};
+        REQUIRE_FALSE(Extract(options, err, cancelled));
+        REQUIRE_FALSE(fs::exists(output));
+    }
+
+    SECTION("extracts nothing from an archive with no entries, creating no output directory") {
+        const fs::path empty_dir = created.files.dir.Path() / "empty";
+        fs::create_directories(empty_dir);
+        options.archive = created.files.dir.Path() / "bare.mpq";
+        CreateWithoutListfile(options.archive, empty_dir);
+        const std::atomic<bool> cancelled{false};
+        REQUIRE(Extract(options, err, cancelled));
+        REQUIRE(err.str() == "[*] No files to extract\n");
+        REQUIRE_FALSE(fs::exists(output));
     }
 
     SECTION("throws Interrupted when cancelled while listing, creating no output directory") {
