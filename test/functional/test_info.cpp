@@ -271,9 +271,16 @@ TEST_CASE("info: file count and signature type follow the special entries", "[in
 }
 
 TEST_CASE("info: prints the documented values for a Blizzard patch archive", "[info]") {
+    // Both archives are resolved ahead of the generator, so a missing one skips the whole
+    // test rather than leaving the other half to pass on its own
+    std::vector<std::string> archive_names;
+    for (const auto &entry : patch_archives) {
+        archive_names.push_back(entry.name);
+    }
+    const auto archives = IntegrationArchives(archive_names);
     const auto patch = GENERATE(from_range(patch_archives));
     CAPTURE(patch.name);
-    const auto archive = IntegrationArchive(patch.name);
+    const auto archive = archives.at(patch.name);
 
     auto result = Run(mpqcli_binary, {"info", archive.string()});
 

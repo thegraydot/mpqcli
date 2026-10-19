@@ -579,9 +579,16 @@ TEST_CASE("list: an archive with no entries lists nothing", "[list]") {
 }
 
 TEST_CASE("list: counts a Blizzard patch's entries and special files", "[list]") {
+    // Both archives are resolved ahead of the generator, so a missing one skips the whole
+    // test rather than leaving the other half to pass on its own
+    std::vector<std::string> archive_names;
+    for (const auto &entry : patch_listings) {
+        archive_names.push_back(entry.name);
+    }
+    const auto archives = IntegrationArchives(archive_names);
     const auto patch = GENERATE(from_range(patch_listings));
     CAPTURE(patch.name);
-    const auto archive = IntegrationArchive(patch.name);
+    const auto archive = archives.at(patch.name);
 
     auto result = Run(mpqcli_binary, {"list", archive.string()});
     auto all = Run(mpqcli_binary, {"list", "-a", archive.string()});
