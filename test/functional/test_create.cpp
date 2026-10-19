@@ -587,18 +587,19 @@ TEST_CASE("create: rejects an unknown game profile", "[create]") {
 }
 
 TEST_CASE("create: applies the game profile's version and compression", "[create]") {
-    // Profile, the MPQ version it selects, and the flag letters a .txt file gets
+    // Profile, the MPQ version it selects, and the exact flags a .txt file gets. Every
+    // entry ends in x, for a file that exists.
     const auto [profile, expected_version, expected_flags] =
         GENERATE(table<std::string, std::string, std::string>({
-            {"generic", "1", "ce"},     // Compressed + encrypted
-            {"diablo1", "1", "ie"},     // Imploded + encrypted
-            {"starcraft1", "1", "ce2"}, // Compressed + encrypted + key v2
-            {"warcraft3", "1", "ce2"},  // Compressed + encrypted + key v2
-            {"diablo2", "1", "c"},      // Compressed, .txt files not encrypted
-            {"wow1", "1", "c"},         // Compressed
-            {"wow2", "2", "cr"},        // Compressed + sector CRC
-            {"starcraft2", "2", "c"},   // Compressed, small files as a single unit
-            {"diablo3", "4", "c"},      // Compressed
+            {"generic", "1", "cex"},     // Compressed, encrypted
+            {"diablo1", "1", "iex"},     // Imploded, encrypted
+            {"starcraft1", "1", "ce2x"}, // Compressed, encrypted, key v2
+            {"warcraft3", "1", "ce2x"},  // Compressed, encrypted, key v2
+            {"diablo2", "1", "cx"},      // Compressed; .txt files are not encrypted
+            {"wow1", "1", "cx"},         // Compressed
+            {"wow2", "2", "crx"},        // Compressed, sector CRC
+            {"starcraft2", "2", "cux"},  // Compressed, small files as a single unit
+            {"diablo3", "4", "cux"},     // Compressed, small files as a single unit
         }));
     CAPTURE(profile);
     SampleFiles files;
@@ -611,12 +612,7 @@ TEST_CASE("create: applies the game profile's version and compression", "[create
     REQUIRE(result.stdout_output.empty());
     REQUIRE(LinesToSet(result.stderr_output) == ProgressLines(archive, sample_entries, profile));
     REQUIRE(InfoProperty(archive, "format-version") == expected_version);
-    const auto flags = EntryProperty(archive, "cats.txt", "flags");
-    CAPTURE(flags);
-    for (const char letter : expected_flags) {
-        CAPTURE(letter);
-        REQUIRE(flags.find(letter) != std::string::npos);
-    }
+    REQUIRE(EntryProperty(archive, "cats.txt", "flags") == expected_flags);
 }
 
 TEST_CASE("create: accepts every game profile", "[create]") {

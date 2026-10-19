@@ -371,15 +371,15 @@ TEST_CASE("add: re-adds a file after every locale variant was removed", "[add]")
 }
 
 TEST_CASE("add: applies the game profile's compression", "[add]") {
-    // Profile, and the flag letters a .txt file added under it gets
+    // Profile, and the exact flags a .txt file added under it gets, as for create
     const auto [profile, expected_flags] = GENERATE(table<std::string, std::string>({
-        {"generic", "ce"},
-        {"diablo1", "ie"},
-        {"starcraft1", "ce2"},
-        {"wow1", "c"},
-        {"wow2", "cr"},
-        {"starcraft2", "c"},
-        {"diablo3", "c"},
+        {"generic", "cex"},
+        {"diablo1", "iex"},
+        {"starcraft1", "ce2x"},
+        {"wow1", "cx"},
+        {"wow2", "crx"},
+        {"starcraft2", "cux"},
+        {"diablo3", "cux"},
     }));
     CAPTURE(profile);
     SampleArchive sample;
@@ -395,12 +395,7 @@ TEST_CASE("add: applies the game profile's compression", "[add]") {
     REQUIRE(
         LinesToSet(result.stderr_output) ==
         std::set<std::string>{"[*] Using game profile: " + profile, "[+] Adding file: " + name});
-    const auto flags = EntryProperty(sample.archive, name, "flags");
-    CAPTURE(flags);
-    for (const char letter : expected_flags) {
-        CAPTURE(letter);
-        REQUIRE(flags.find(letter) != std::string::npos);
-    }
+    REQUIRE(EntryProperty(sample.archive, name, "flags") == expected_flags);
 }
 
 TEST_CASE("add: rejects an unknown game profile", "[add]") {
