@@ -63,7 +63,11 @@ TEST_CASE("compact: prints its help with --help", "[compact]") {
 }
 
 TEST_CASE("compact: archive does not exist", "[compact]") {
-    auto result = Run(mpqcli_binary, {"compact", "no-such-archive.mpq"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"compact", "no-such-archive.mpq"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);
@@ -74,9 +78,13 @@ TEST_CASE("compact: archive does not exist", "[compact]") {
 
 TEST_CASE("compact: listfile does not exist", "[compact]") {
     SampleArchive sample;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
     auto result =
-        Run(mpqcli_binary, {"compact", sample.archive.string(), "--listfile", "no-such-list.txt"});
+        Run(mpqcli_binary, {"compact", sample.archive.string(), "--listfile", "no-such-list.txt"},
+            options);
 
     REQUIRE(result.returncode == 105);
     REQUIRE(result.stdout_output.empty());

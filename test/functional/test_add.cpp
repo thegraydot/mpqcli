@@ -69,9 +69,13 @@ TEST_CASE("add: prints its help with --help", "[add]") {
 
 TEST_CASE("add: archive does not exist", "[add]") {
     SampleFiles files;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
     auto result =
-        Run(mpqcli_binary, {"add", "no-such-archive.mpq", (files.files_dir / "cats.txt").string()});
+        Run(mpqcli_binary, {"add", "no-such-archive.mpq", (files.files_dir / "cats.txt").string()},
+            options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);
@@ -93,8 +97,11 @@ TEST_CASE("add: fails when the archive is not an MPQ", "[add]") {
 
 TEST_CASE("add: input path does not exist", "[add]") {
     SampleArchive sample;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
-    auto result = Run(mpqcli_binary, {"add", sample.archive.string(), "no-such-file.txt"});
+    auto result = Run(mpqcli_binary, {"add", sample.archive.string(), "no-such-file.txt"}, options);
 
     REQUIRE(result.returncode == 1);
     REQUIRE(result.stdout_output.empty());
@@ -107,9 +114,12 @@ TEST_CASE("add: continues past a missing input and still fails", "[add]") {
     SampleArchive sample;
     const auto real = sample.files.dir.Path() / "real.txt";
     WriteFile(real, "real file");
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
-    auto result =
-        Run(mpqcli_binary, {"add", sample.archive.string(), "no-such-file.txt", real.string()});
+    auto result = Run(mpqcli_binary,
+                      {"add", sample.archive.string(), "no-such-file.txt", real.string()}, options);
 
     // The run carries on to the remaining inputs, but a missing one is still a failure
     REQUIRE(result.returncode == 1);

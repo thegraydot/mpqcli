@@ -16,6 +16,7 @@
 #include "sample_archive.h"
 #include "sample_files.h"
 #include "subprocess_helper.h"
+#include "temp_dir.h"
 #include "test_environment.h"
 #include "write_file.h"
 
@@ -130,7 +131,11 @@ TEST_CASE("info: prints its help with --help", "[info]") {
 }
 
 TEST_CASE("info: archive does not exist", "[info]") {
-    auto result = Run(mpqcli_binary, {"info", "no-such-archive.mpq"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"info", "no-such-archive.mpq"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);
@@ -174,8 +179,12 @@ TEST_CASE("info: rejects an unknown property", "[info]") {
 
 TEST_CASE("info: rejects -p, which is not one of its options", "[info]") {
     SampleArchive sample;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
-    auto result = Run(mpqcli_binary, {"info", "-p", "file-count", sample.archive.string()});
+    auto result =
+        Run(mpqcli_binary, {"info", "-p", "file-count", sample.archive.string()}, options);
 
     // The unknown -p is set aside and the property name fills the archive
     // positional, whose CLI::ExistingFile check fails first: 105 is CLI11's

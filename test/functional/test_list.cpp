@@ -140,7 +140,11 @@ TEST_CASE("list: prints its help with --help", "[list]") {
 }
 
 TEST_CASE("list: archive does not exist", "[list]") {
-    auto result = Run(mpqcli_binary, {"list", "no-such-archive.mpq"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"list", "no-such-archive.mpq"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);
@@ -151,9 +155,12 @@ TEST_CASE("list: archive does not exist", "[list]") {
 
 TEST_CASE("list: listfile does not exist", "[list]") {
     SampleArchive sample;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
-    auto result =
-        Run(mpqcli_binary, {"list", sample.archive.string(), "--listfile", "no-such-list.txt"});
+    auto result = Run(mpqcli_binary,
+                      {"list", sample.archive.string(), "--listfile", "no-such-list.txt"}, options);
 
     REQUIRE(result.returncode == 105);
     REQUIRE(result.stdout_output.empty());
@@ -185,8 +192,11 @@ TEST_CASE("list: rejects an unknown property", "[list]") {
 
 TEST_CASE("list: rejects -p, which is not one of its options", "[list]") {
     SampleArchive sample;
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
 
-    auto result = Run(mpqcli_binary, {"list", "-p", "locale", sample.archive.string()});
+    auto result = Run(mpqcli_binary, {"list", "-p", "locale", sample.archive.string()}, options);
 
     // The unknown -p is set aside and the property name fills the archive
     // positional, whose CLI::ExistingFile check fails first: 105 is CLI11's

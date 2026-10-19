@@ -5,7 +5,6 @@
 #include <filesystem>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -43,12 +42,14 @@ std::string EntryProperty(const fs::path &archive, const std::string &name,
     auto result = Run(TestEnvironment::Instance().binary_path,
                       {"list", archive.string(), "-d", "-q", property});
     REQUIRE(result.returncode == 0);
+    // The name is matched at the end of the line, after the two spaces list puts before
+    // it, rather than split off at whitespace: a file time holds a space, and so may a name
+    const std::string name_field = "  " + name;
     for (const auto &line : LinesToSet(result.stdout_output)) {
-        std::istringstream fields(line);
-        std::string value;
-        std::string entry;
-        fields >> value >> entry;
-        if (entry == name) {
+        if (line.size() >= name_field.size() &&
+            line.compare(line.size() - name_field.size(), name_field.size(), name_field) == 0) {
+            std::string value = line.substr(0, line.size() - name_field.size());
+            value.erase(0, value.find_first_not_of(' '));
             return value;
         }
     }

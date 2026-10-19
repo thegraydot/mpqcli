@@ -66,7 +66,11 @@ TEST_CASE("verify: prints its help with --help", "[verify]") {
 }
 
 TEST_CASE("verify: archive does not exist", "[verify]") {
-    auto result = Run(mpqcli_binary, {"verify", "no-such-archive.mpq"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"verify", "no-such-archive.mpq"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);

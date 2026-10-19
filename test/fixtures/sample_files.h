@@ -17,7 +17,10 @@ namespace mpqcli::testing {
 ///
 /// An archive's (attributes) block stores each file's time, so the archive sizes and
 /// listings the tests assert only hold when the inputs always carry the same one. Local
-/// time, because that is what mpqcli prints back in a detailed listing.
+/// time, because that is what mpqcli prints back in a detailed listing. The block itself
+/// stores UTC, so its compressed size depends in principle on the time zone the tests
+/// run in. For this time and these files it comes out the same at every UTC offset in
+/// use, but changing either can make one zone see different archive sizes.
 inline std::filesystem::file_time_type SampleFileTime() {
     std::tm calendar{};
     calendar.tm_year = 2025 - 1900;

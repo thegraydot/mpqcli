@@ -82,7 +82,12 @@ TEST_CASE("rename: prints its help with --help", "[rename]") {
 }
 
 TEST_CASE("rename: archive does not exist", "[rename]") {
-    auto result = Run(mpqcli_binary, {"rename", "no-such-archive.mpq", "cats.txt", "felines.txt"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result =
+        Run(mpqcli_binary, {"rename", "no-such-archive.mpq", "cats.txt", "felines.txt"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);

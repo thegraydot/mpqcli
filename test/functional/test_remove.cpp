@@ -71,7 +71,11 @@ TEST_CASE("remove: prints its help with --help", "[remove]") {
 }
 
 TEST_CASE("remove: archive does not exist", "[remove]") {
-    auto result = Run(mpqcli_binary, {"remove", "no-such-archive.mpq", "cats.txt"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"remove", "no-such-archive.mpq", "cats.txt"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);

@@ -104,7 +104,11 @@ TEST_CASE("read: every subcommand with a locale offers it as -e", "[read]") {
 }
 
 TEST_CASE("read: archive does not exist", "[read]") {
-    auto result = Run(mpqcli_binary, {"read", "no-such-archive.mpq", "cats.txt"});
+    TempDir working_dir;
+    RunOptions options;
+    options.working_dir = working_dir.Path();
+
+    auto result = Run(mpqcli_binary, {"read", "no-such-archive.mpq", "cats.txt"}, options);
 
     // 105 is CLI11's ValidationError, from the CLI::ExistingFile check
     REQUIRE(result.returncode == 105);
