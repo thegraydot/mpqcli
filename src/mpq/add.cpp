@@ -45,8 +45,8 @@ bool GrowFileTable(HANDLE archive, std::ostream &err) {
     const uint32_t new_max_files = NextPowerOfTwo(max_files + 1);
     if (!SFileSetMaxFileCount(archive, new_max_files)) {
         const auto error = SErrGetLastError();
-        err << "[!] Failed to increase new max file count to " << new_max_files << ": (" << error
-            << ") " << StormErrorString(error) << std::endl;
+        err << "[!] Failed to increase new max file count to " << new_max_files << ": "
+            << StormErrorString(error) << std::endl;
         return false;
     }
     return true;
@@ -206,8 +206,8 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
 
     if (!added_file) {
         const auto error = SErrGetLastError();
-        err << "[!] Failed to add: " << archive_file_path << ": (" << error << ") "
-            << StormErrorString(error) << std::endl;
+        err << "[!] Failed to add: " << archive_file_path << ": " << StormErrorString(error)
+            << std::endl;
         return 1;
     }
 

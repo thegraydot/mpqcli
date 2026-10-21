@@ -101,7 +101,7 @@ std::string StormErrorString(uint32_t err) {
         case ERROR_CANT_FIND_PATCH_PREFIX: return "Cannot find patch prefix";
         case ERROR_FAKE_MPQ_HEADER:        return "Fake MPQ header at this position";
         case ERROR_FILE_DELETED:           return "File contains delete marker";
-        default:                           return SystemErrorString(err);
+        default:                           return "(" + std::to_string(err) + ") " + SystemErrorString(err);
         // clang-format on
     }
 }

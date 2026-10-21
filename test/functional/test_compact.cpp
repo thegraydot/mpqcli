@@ -34,8 +34,7 @@ const fs::path &mpqcli_binary = TestEnvironment::Instance().binary_path;
 
 const std::string compacting_notice = "[*] Compacting archive. This may take some time...";
 const std::string incomplete_listfile_error =
-    "[!] Failed to compact archive: (10007) At least one file name is unknown (listfile is "
-    "incomplete)";
+    "[!] Failed to compact archive: At least one file name is unknown (listfile is incomplete)";
 
 // Bytes no compressor can shrink, the same on every run, so a removed file of
 // this size leaves a gap compaction has to reclaim in full

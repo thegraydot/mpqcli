@@ -209,8 +209,8 @@ TEST_CASE("info: fails when the archive cannot be opened as an MPQ", "[info]") {
         REQUIRE(result.stdout_output.empty());
         REQUIRE(LinesToSet(result.stderr_output).size() == 1);
         REQUIRE_THAT(result.stderr_output, ContainsSubstring(open_failure));
-        // StormLib's error code and text are forwarded, not just the failure
-        REQUIRE_THAT(result.stderr_output, ContainsSubstring("(1000) Bad MPQ format"));
+        // StormLib's error is forwarded, not just the failure
+        REQUIRE_THAT(result.stderr_output, ContainsSubstring(": Bad MPQ format"));
     }
 
     SECTION("an archive cut short of its tables") {

@@ -8,6 +8,10 @@
 namespace mpqcli {
 
 std::string FileTimeToLsTime(int64_t file_time);
+/// Describes a StormLib error code in words that are the same on every platform
+///
+/// The code's value differs by platform, so it is left out. A code with no words of its
+/// own is described in the platform's words instead, behind the code that names it.
 std::string StormErrorString(uint32_t err);
 
 /// Writes size bytes of buffer to out without line-ending translation

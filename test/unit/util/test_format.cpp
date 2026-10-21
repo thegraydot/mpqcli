@@ -75,19 +75,23 @@ TEST_CASE("StormErrorString", "[format]") {
         REQUIRE(StormErrorString(ERROR_FILE_DELETED) == "File contains delete marker");
     }
 
-    SECTION("describes a code it has no case for in the platform's own words") {
+    SECTION("describes a code it has no case for by the code and the platform's own words") {
 #ifdef _WIN32
         // 32 is ERROR_SHARING_VIOLATION. Windows localises the text, so the test checks
         // where it came from rather than what it says: strerror(32) is "Broken pipe", and
         // "Unknown error 32" is what is left when FormatMessage fails
+        const std::string prefix = "(32) ";
         const std::string text = StormErrorString(32U);
-        REQUIRE_FALSE(text.empty());
-        REQUIRE(text != std::strerror(32));
-        REQUIRE(text != "Unknown error 32");
-        REQUIRE(text.back() != '\n');
-        REQUIRE(text.back() != '.');
+        REQUIRE(text.rfind(prefix, 0) == 0);
+        const std::string words = text.substr(prefix.size());
+        REQUIRE_FALSE(words.empty());
+        REQUIRE(words != std::strerror(32));
+        REQUIRE(words != "Unknown error 32");
+        REQUIRE(words.back() != '\n');
+        REQUIRE(words.back() != '.');
 #else
-        REQUIRE(StormErrorString(EISDIR) == std::strerror(EISDIR));
+        REQUIRE(StormErrorString(EISDIR) ==
+                "(" + std::to_string(EISDIR) + ") " + std::strerror(EISDIR));
 #endif
     }
 }

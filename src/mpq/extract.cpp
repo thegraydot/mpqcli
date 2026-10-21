@@ -162,8 +162,7 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
         err << "[*] Extracted: " << file_name_string << std::endl;
     } else {
         const auto error = SErrGetLastError();
-        err << "[!] Failed: (" << error << ") " << StormErrorString(error) << ": " << file_name
-            << std::endl;
+        err << "[!] Failed: " << StormErrorString(error) << ": " << file_name << std::endl;
         return 1;
     }
 

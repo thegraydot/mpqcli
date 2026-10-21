@@ -91,33 +91,30 @@ TEST_CASE("ArchiveError", "[errors]") {
 }
 
 TEST_CASE("StormError", "[errors]") {
-    SECTION("ends its message with the code and the code's text") {
+    SECTION("ends its message with the error's text") {
         const StormError error("Failed to read", corrupt);
-        REQUIRE(std::string(error.what()) ==
-                "Failed to read: (" + std::to_string(corrupt) + ") File is corrupt");
+        REQUIRE(std::string(error.what()) == "Failed to read: File is corrupt");
         REQUIRE(error.ErrorCode() == corrupt);
     }
 }
 
 TEST_CASE("ArchiveOpenError", "[errors]") {
-    SECTION("names the archive ahead of the code and its text") {
+    SECTION("names the archive ahead of the error's text") {
         const fs::path path = fs::path("dir") / "a.mpq";
         const ArchiveOpenError error(path, corrupt);
-        REQUIRE(std::string(error.what()) == "Failed to open MPQ archive: " + path.string() +
-                                                 ": (" + std::to_string(corrupt) +
-                                                 ") File is corrupt");
+        REQUIRE(std::string(error.what()) ==
+                "Failed to open MPQ archive: " + path.string() + ": File is corrupt");
         REQUIRE(error.Path() == path);
         REQUIRE(error.ErrorCode() == corrupt);
     }
 }
 
 TEST_CASE("ArchiveCreateError", "[errors]") {
-    SECTION("names the archive ahead of the code and its text") {
+    SECTION("names the archive ahead of the error's text") {
         const fs::path path = fs::path("dir") / "a.mpq";
         const ArchiveCreateError error(path, corrupt);
-        REQUIRE(std::string(error.what()) == "Failed to create MPQ archive: " + path.string() +
-                                                 ": (" + std::to_string(corrupt) +
-                                                 ") File is corrupt");
+        REQUIRE(std::string(error.what()) ==
+                "Failed to create MPQ archive: " + path.string() + ": File is corrupt");
         REQUIRE(error.Path() == path);
         REQUIRE(error.ErrorCode() == corrupt);
     }
