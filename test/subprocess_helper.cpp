@@ -110,11 +110,19 @@ RunResult Run(const fs::path &binary, const std::vector<std::string> &args,
         throw std::runtime_error("subprocess_helper: failed to spawn " + binary.string());
     }
 
-#ifndef _WIN32
     // A command that rejects its arguments exits without reading stdin, so the write
-    // can meet a closed pipe. That raises SIGPIPE, whose default action kills the whole
-    // test binary rather than failing the write, so it is ignored and the write simply
-    // comes up short. Windows reports a write error instead.
+    // can meet a closed pipe.
+#ifdef _WIN32
+    // subprocess.h keeps the parent's copy of the child's stdin read end open until
+    // join, so the pipe never closes: the write fills it and blocks forever, and the
+    // watchdog cannot free it by killing a child that has already exited. Closing that
+    // copy now, as POSIX does, leaves the child the only reader, so the write fails
+    // once the child is gone.
+    CloseHandle(process.hStdInput);
+    process.hStdInput = nullptr;
+#else
+    // That raises SIGPIPE, whose default action kills the whole test binary rather
+    // than failing the write, so it is ignored and the write simply comes up short.
     std::signal(SIGPIPE, SIG_IGN);
 #endif
 
