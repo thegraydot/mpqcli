@@ -119,12 +119,12 @@ TEST_CASE("GameRules::GetCompressionSettings", "[rules]") {
 
     SECTION("includes both bounds of a size rule") {
         const GameRules rules(GameProfile::WOW_4X);
-        const std::string small =
+        const std::string single_unit =
             Describe(MPQ_FILE_COMPRESS | MPQ_FILE_SINGLE_UNIT, MPQ_COMPRESSION_ZLIB);
         const std::string fallback =
             Describe(MPQ_FILE_COMPRESS | MPQ_FILE_SECTOR_CRC, MPQ_COMPRESSION_ZLIB);
-        REQUIRE(Describe(rules.GetCompressionSettings("a.dat", 1U)) == small);
-        REQUIRE(Describe(rules.GetCompressionSettings("a.dat", 0x4000U)) == small);
+        REQUIRE(Describe(rules.GetCompressionSettings("a.dat", 1U)) == single_unit);
+        REQUIRE(Describe(rules.GetCompressionSettings("a.dat", 0x4000U)) == single_unit);
         REQUIRE(Describe(rules.GetCompressionSettings("a.dat", 0x4001U)) == fallback);
         REQUIRE(Describe(rules.GetCompressionSettings("a.dat", UINT32_MAX)) == fallback);
     }
