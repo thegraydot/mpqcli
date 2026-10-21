@@ -1,7 +1,6 @@
 # Local build, docs and test output: large, stale and never read by the image build
 build/
 book/
-.venv/
 test/data/
 
 # .git is deliberately not ignored. The root CMakeLists runs git rev-parse to

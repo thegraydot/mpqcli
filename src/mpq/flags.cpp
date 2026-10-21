@@ -22,9 +22,6 @@ std::string GetFlagString(uint32_t flags) {
     if (flags & MPQ_FILE_SECTOR_CRC)         result += 'r';
     if (flags & MPQ_FILE_SIGNATURE)          result += 's';
     if (flags & MPQ_FILE_EXISTS)             result += 'x';
-    if (flags & MPQ_FILE_COMPRESS_MASK)      result += 'm';
-    if (flags & MPQ_FILE_DEFAULT_INTERNAL)   result += 'n';
-    if (flags & MPQ_FILE_FIX_KEY)            result += 'f';
     // clang-format on
 
     return result;

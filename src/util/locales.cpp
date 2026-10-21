@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "util/string.h"
+
 namespace mpqcli {
 
 namespace {
@@ -34,11 +36,12 @@ const std::map<LCID, std::string> locale_to_lang_map = {
     {0x816, "ptPT"}, // Portuguese (Portugal)
 };
 
+// Keyed by the lower-cased name, so a name matches whatever its case
 const std::map<std::string, LCID> lang_to_locale_map = []() {
     std::map<std::string, LCID> reverse_map;
     for (const auto &[locale, lang] : locale_to_lang_map) {
         if (locale != default_locale) { // 0x000 prints as enUS but enUS resolves to 0x409
-            reverse_map[lang] = locale;
+            reverse_map[ToLower(lang)] = locale;
         }
     }
     return reverse_map;
@@ -81,7 +84,10 @@ std::string LocaleToLang(const LCID locale) {
 }
 
 LCID LangToLocale(const std::string &lang) {
-    auto it = lang_to_locale_map.find(lang);
+    // A name is tried before hexadecimal, so "dede" is deDE rather than the locale
+    // 0xDEDE. deDE is the only name made entirely of hex digits, and 0xDEDE is not a
+    // Windows locale, so nothing real is lost.
+    auto it = lang_to_locale_map.find(ToLower(lang));
     if (it != lang_to_locale_map.end()) {
         return it->second;
     }

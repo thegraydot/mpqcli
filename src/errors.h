@@ -59,13 +59,12 @@ public:
     explicit ArchiveError(const std::string &message) : Error(message) {}
 };
 
-/// Thrown when a StormLib call fails; the message ends with the code and its text
+/// Thrown when a StormLib call fails; the message ends with the error's text
 class StormError : public ArchiveError {
 public:
     StormError(const std::string &what_failed, uint32_t error_code)
-        : ArchiveError(what_failed + ": (" + std::to_string(error_code) + ") " +
-                       StormErrorString(error_code)),
-          error_code_(error_code) {}
+        : ArchiveError(what_failed + ": " + StormErrorString(error_code)), error_code_(error_code) {
+    }
 
     uint32_t ErrorCode() const { return error_code_; }
 

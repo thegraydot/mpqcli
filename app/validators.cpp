@@ -1,5 +1,6 @@
 #include "validators.h"
 
+#include <cstdint>
 #include <string>
 
 #include "gamerules/rules.h"
@@ -33,12 +34,8 @@ extern const CLI::Validator locale_valid = CLI::Validator(
         if (str == "default")
             return std::string();
 
-        if (ParseHexLocale(str) != default_locale) {
-            return std::string();
-        }
-
-        const LCID locale = LangToLocale(str);
-        if (locale == 0) {
+        // The same resolution every command uses, a name in any case or else four hex digits
+        if (LangToLocale(str) == default_locale) {
             std::string valid_locales = "Locale must be nothing, or one of:";
             for (const auto &l : GetAllLocales()) {
                 valid_locales += " " + l;
@@ -48,3 +45,18 @@ extern const CLI::Validator locale_valid = CLI::Validator(
         return std::string();
     },
     "", "LocaleValidator");
+
+// StormLib's create stores a 512-byte sector as a shift of 0, which its own open
+// rejects as a bad format, so 1024 is the smallest size that can be read back. A
+// size that is not a power of two would otherwise fail inside StormLib with no more
+// than "Invalid parameter".
+extern const CLI::Validator sector_size_valid = CLI::Validator(
+    [](const std::string &str) {
+        // Parsed the way CLI11 parses the option itself, so hexadecimal input works
+        std::uint32_t size = 0;
+        if (!CLI::detail::lexical_cast(str, size) || size < 1024 || (size & (size - 1)) != 0) {
+            return std::string("Sector size must be a power of two of at least 1024");
+        }
+        return std::string();
+    },
+    "", "SectorSizeValidator");

@@ -242,7 +242,7 @@ complete -c mpqcli -n '__fish_seen_subcommand_from read' \
 complete -c mpqcli -n '__fish_seen_subcommand_from verify; and test (__mpqcli_positional_index -x --print) -eq 1' -F
 
 complete -c mpqcli -n '__fish_seen_subcommand_from verify' \
-    -s x -l print -d 'Print the digital signature (in hex)'
+    -s x -l print -d 'Print the digital signature as raw bytes'
 
 # compact
 #   compact <archive.mpq> [-l/--listfile]
