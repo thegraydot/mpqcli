@@ -11,6 +11,27 @@
 
 namespace mpqcli::testing {
 
+/// Returns the value of an environment variable, or an empty optional if it is unset
+///
+/// MSVC deprecates std::getenv, so Windows copies the value out with _dupenv_s instead.
+inline std::optional<std::string> EnvironmentVariable(const char *name) {
+#ifdef _WIN32
+    char *value = nullptr;
+    std::size_t length = 0;
+    if (_dupenv_s(&value, &length, name) != 0 || value == nullptr) {
+        return std::nullopt;
+    }
+    std::string result(value);
+    std::free(value);
+    return result;
+#else
+    if (const char *value = std::getenv(name)) {
+        return std::string(value);
+    }
+    return std::nullopt;
+#endif
+}
+
 /// Returns the path to one real-world archive, or an empty optional
 ///
 /// Looks for name in each place in turn:
@@ -28,8 +49,8 @@ inline std::optional<std::filesystem::path> IntegrationDataPath(const std::strin
 #ifdef MPQCLI_INTEGRATION_DATA
     directories.emplace_back(MPQCLI_INTEGRATION_DATA);
 #endif
-    if (const char *env = std::getenv("MPQCLI_INTEGRATION_DATA")) {
-        directories.emplace_back(env);
+    if (const auto env = EnvironmentVariable("MPQCLI_INTEGRATION_DATA")) {
+        directories.emplace_back(*env);
     }
     for (const auto &directory : directories) {
         const auto path = directory / name;

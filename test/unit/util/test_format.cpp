@@ -79,13 +79,16 @@ TEST_CASE("StormErrorString", "[format]") {
 #ifdef _WIN32
         // 32 is ERROR_SHARING_VIOLATION. Windows localises the text, so the test checks
         // where it came from rather than what it says: strerror(32) is "Broken pipe", and
-        // "Unknown error 32" is what is left when FormatMessage fails
+        // "Unknown error 32" is what is left when FormatMessage fails. MSVC deprecates
+        // strerror, so its text comes from strerror_s.
         const std::string prefix = "(32) ";
         const std::string text = StormErrorString(32U);
         REQUIRE(text.rfind(prefix, 0) == 0);
         const std::string words = text.substr(prefix.size());
         REQUIRE_FALSE(words.empty());
-        REQUIRE(words != std::strerror(32));
+        char errno_text[256] = {};
+        REQUIRE(strerror_s(errno_text, sizeof(errno_text), 32) == 0);
+        REQUIRE(words != errno_text);
         REQUIRE(words != "Unknown error 32");
         REQUIRE(words.back() != '\n');
         REQUIRE(words.back() != '.');
