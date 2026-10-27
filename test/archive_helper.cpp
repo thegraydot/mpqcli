@@ -54,7 +54,6 @@ std::string EntryProperty(const fs::path &archive, const std::string &name,
         }
     }
     FAIL("no entry named " << name << " in " << archive);
-    return {};
 }
 
 std::uint64_t EntryNumber(const fs::path &archive, const std::string &name,
