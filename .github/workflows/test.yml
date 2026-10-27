@@ -59,6 +59,14 @@ jobs:
       - run: make test_functional
 
   test_windows:
+    name: test_windows (${{ matrix.build_type }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Debug as well as Release: MSVC's Debug runtime adds checked iterators
+        # and CRT assertions that Release compiles out
+        build_type: [Debug, Release]
+
     runs-on: windows-2022
     steps:
       - name: Check out repository code
@@ -72,13 +80,13 @@ jobs:
         shell: bash
         run: |
           cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON -DMPQCLI_WERROR=ON
-          cmake --build build/dev --config Release --parallel
+          cmake --build build/dev --config ${{ matrix.build_type }} --parallel
 
       # Separate steps, so a failure names the layer that broke
       - name: Run unit tests
         shell: bash
-        run: ctest --test-dir build/dev --output-on-failure -C Release -L unit
+        run: ctest --test-dir build/dev --output-on-failure -C ${{ matrix.build_type }} -L unit
 
       - name: Run functional tests
         shell: bash
-        run: ctest --test-dir build/dev --output-on-failure -C Release -L functional
+        run: ctest --test-dir build/dev --output-on-failure -C ${{ matrix.build_type }} -L functional
