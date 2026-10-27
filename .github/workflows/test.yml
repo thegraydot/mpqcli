@@ -43,7 +43,7 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -70,7 +70,7 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: true
 
