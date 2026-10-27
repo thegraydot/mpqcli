@@ -24,7 +24,6 @@ body:
         - Linux
         - Windows
         - WSL (Windows Subsystem for Linux)
-        - macOS
         - Other
     validations:
       required: true
