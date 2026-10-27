@@ -9,14 +9,6 @@ updates:
     assignees:
       - "thomaslaurenson"
 
-  - package-ecosystem: pip
-    directory: /test
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 0
-    assignees:
-      - "thomaslaurenson"
-
   - package-ecosystem: docker
     directory: /
     schedule:

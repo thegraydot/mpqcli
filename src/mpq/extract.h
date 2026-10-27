@@ -15,7 +15,9 @@ namespace mpqcli {
 
 /// Lists every file the archive can name, once per locale it is stored under
 ///
-/// @throws ArchiveError if the archive's files cannot be enumerated
+/// An archive with no entries gives an empty list.
+///
+/// @throws StormError if StormLib cannot enumerate the archive's files
 std::vector<std::string>
 ListArchivedFiles(HANDLE archive, const std::optional<std::filesystem::path> &listfile_name,
                   const std::atomic<bool> &cancelled);

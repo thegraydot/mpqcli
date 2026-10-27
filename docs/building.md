@@ -42,23 +42,30 @@ This project also uses the [CLI11](https://github.com/CLIUtils/CLI11) command li
 
 ## Tests
 
-This project implements End-to-end (E2E) testing, sometimes referred to as system testing or integration testing. This methodology is used because it verifies application functionality by simulating actual usage by an end user. Testing includes creating a variety of MPQ archives, as well as dynamically downloading some small (~1-5MB) MPQ archives from the Internet Archive. The Python programming language coupled with the [pytest framework](https://github.com/pytest-dev/pytest) is used to implement testing, mainly due to ease of implementation.
+The tests are written with the [Catch2](https://github.com/catchorg/Catch2) framework. They come in two layers, each built as its own binary in `build/dev/bin`:
 
-To configure the testing environment you will need Python installed, as well as the required `pytest` package. On a Debian-based Linux system, the following will configure the environment:
+- **Unit tests** (`test/unit/`, built as `mpqcli_unit_tests`) call the core library directly, with one test file per source file in `src/`.
+- **Functional tests** (`test/functional/`, built as `mpqcli_functional_tests`) run the built `mpqcli` binary as a user would, using [subprocess.h](https://github.com/sheredom/subprocess.h). There is one test file per subcommand, checking its exit code and output.
 
-```bash
-$ sudo apt install python3-venv python3-pip
-$ python3 -m venv .venv
-$ source .venv/bin/activate
-$ pip3 install -r test/requirements.txt
-```
-
-The tests run the binary in `build/dev`, so build it there and then run the tests using:
+Catch2 and subprocess.h are submodules like the other dependencies, and the tests are built by default. Build, then run each layer:
 
 ```bash
 $ cmake -B build/dev
 $ cmake --build build/dev
-$ python3 -m pytest test -s
+$ ctest --test-dir build/dev -L unit
+$ ctest --test-dir build/dev -L functional
 ```
 
-`make test` does the same in one step.
+On Windows, add `-C Release` (or whichever configuration you built) to each `ctest` command. To build without the tests, configure with `-DMPQCLI_BUILD_TESTING=OFF`.
+
+With the Makefile, `make test` builds and runs the unit tests and `make test_functional` the functional tests; `make test_all` runs both.
+
+### Real archives
+
+A few functional tests read two genuine World of Warcraft patch archives, the only archives in the suite with a real Blizzard signature. They are not committed to the repository, and those tests are skipped until the archives are present. Fetch them with:
+
+```bash
+$ make fetch_integration_data
+```
+
+This needs [filenget](https://github.com/thomaslaurenson/filenget) on your `PATH`, and checks each download against the checksums in `test/integration_data.sha256`. The archives go in `test/data/integration/`. To keep them somewhere else, set `MPQCLI_INTEGRATION_DATA` to that directory, either in the environment or as a CMake cache variable.

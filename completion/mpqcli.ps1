@@ -147,8 +147,8 @@ Register-ArgumentCompleter -Native -CommandName 'mpqcli', 'mpqcli.exe' -ScriptBl
             '--locale' = 'Preferred locale for read file'
         }
         'verify' = [ordered]@{
-            '-x'      = 'Print the digital signature (in hex)'
-            '--print' = 'Print the digital signature (in hex)'
+            '-x'      = 'Print the digital signature as raw bytes'
+            '--print' = 'Print the digital signature as raw bytes'
         }
         'compact' = [ordered]@{
             '-l'         = 'File listing content of an MPQ archive'

@@ -39,6 +39,19 @@ bool SkipIfArchiveFile(const fs::path &file, const fs::path &archive_file, std::
     return true;
 }
 
+/// Doubles the archive's file table, reporting a failure on err
+bool GrowFileTable(HANDLE archive, std::ostream &err) {
+    const auto max_files = GetFileInfo<uint32_t>(archive, SFileMpqMaxFileCount);
+    const uint32_t new_max_files = NextPowerOfTwo(max_files + 1);
+    if (!SFileSetMaxFileCount(archive, new_max_files)) {
+        const auto error = SErrGetLastError();
+        err << "[!] Failed to increase new max file count to " << new_max_files << ": "
+            << StormErrorString(error) << std::endl;
+        return false;
+    }
+    return true;
+}
+
 } // namespace
 
 int AddFiles(HANDLE archive, const std::vector<fs::path> &files, const fs::path &base_path,
@@ -147,21 +160,6 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
     err << "[+] Adding file" << PrettyPrintLocale(locale, " for locale ") << ": "
         << archive_file_path << std::endl;
 
-    // Verify that we are not exceeding maxFile size of the archive, and if we do, increase it
-    int32_t number_of_files = GetFileInfo<int32_t>(archive, SFileMpqNumberOfFiles);
-    int32_t max_files = GetFileInfo<int32_t>(archive, SFileMpqMaxFileCount);
-
-    if (number_of_files + 1 > max_files) {
-        uint32_t new_max_files = NextPowerOfTwo(static_cast<uint32_t>(number_of_files + 1));
-        bool set_max_file_count = SFileSetMaxFileCount(archive, new_max_files);
-        if (!set_max_file_count) {
-            const auto error = SErrGetLastError();
-            err << "[!] Failed to increase new max file count to " << new_max_files << ": ("
-                << error << ") " << StormErrorString(error) << std::endl;
-            return 1;
-        }
-    }
-
     const std::uintmax_t raw_file_size = fs::file_size(local_file, ec);
     if (ec) {
         err << "[!] Failed to read file size: (" << ec.value() << ") " << ec.message() << ": "
@@ -188,14 +186,28 @@ int AddFile(HANDLE archive, const fs::path &local_file, const std::string &archi
         flags |= MPQ_FILE_REPLACEEXISTING;
     }
 
-    bool added_file =
-        SFileAddFileEx(archive, local_file.string().c_str(), archive_file_path.c_str(), flags,
-                       compression, compression_next);
+    const auto add = [&]() {
+        return SFileAddFileEx(archive, local_file.string().c_str(), archive_file_path.c_str(),
+                              flags, compression, compression_next);
+    };
+
+    // The table grows once StormLib reports it full, not when the file count reaches
+    // the maximum: while the archive is open StormLib holds back a slot for each special
+    // file it writes on close, and does not report how many, so a count comparison
+    // fires a few files too late. A full table fails before any data is written, so
+    // the add is safe to retry.
+    bool added_file = add();
+    if (!added_file && SErrGetLastError() == ERROR_DISK_FULL) {
+        if (!GrowFileTable(archive, err)) {
+            return 1;
+        }
+        added_file = add();
+    }
 
     if (!added_file) {
         const auto error = SErrGetLastError();
-        err << "[!] Failed to add: " << archive_file_path << ": (" << error << ") "
-            << StormErrorString(error) << std::endl;
+        err << "[!] Failed to add: " << archive_file_path << ": " << StormErrorString(error)
+            << std::endl;
         return 1;
     }
 

@@ -32,6 +32,15 @@ GCC_INSTALL_DIR  := $(shell f=$$(gcc -print-libgcc-file-name 2>/dev/null) && dir
 README           := README.md
 PACKAGE_URL      := https://github.com/thegraydot/mpqcli/pkgs/container/mpqcli
 
+# The real Blizzard patches a few functional tests read, which are never
+# committed. The default matches the MPQCLI_INTEGRATION_DATA cache variable in
+# CMakeLists.txt, so fetching them is all a test run needs. They are shared from
+# a Filen folder whose links decrypt client-side, so curl gets Filen's web app
+# rather than the files; filenget does the fetching.
+INTEGRATION_DATA ?= $(or $(MPQCLI_INTEGRATION_DATA),test/data/integration)
+INTEGRATION_LINK := https://drive.filen.io/f/cedf490b-aa38-406a-ad50-df35b1f0c5a9\#4t-jw8y2G9nK2igPN0tdVbty-lABHqDY
+FILENGET         ?= filenget
+
 # The version is declared once, in project(... VERSION X.Y.Z). The
 # cmake_minimum_required line also says VERSION and comes first, so it is skipped.
 VERSION_AWK      := /cmake_minimum_required/ { next } \
@@ -63,27 +72,27 @@ build: configure ## Build the project
 ##@ TEST
 
 .PHONY: test
-test: build test_mpqcli ## Run test suite (builds binary first)
+test: build ## Run Catch2 unit tests
+	ctest --test-dir build/dev --output-on-failure --parallel $(JOBS) -L unit
 
-.PHONY: test_create_venv
-test_create_venv: ## Create Python venv and install test dependencies
-	python3 -m venv ./.venv
-	. ./.venv/bin/activate && \
-	pip3 install -r test/requirements.txt
+.PHONY: test_verbose
+test_verbose: build ## Run unit tests with verbose Catch2 output
+	ctest --test-dir build/dev --verbose -L unit
 
-.PHONY: test_mpqcli
-test_mpqcli: ## Run pytest test suite
-	. ./.venv/bin/activate && \
-	python3 -m pytest test -s
+.PHONY: test_functional
+test_functional: build ## Run Catch2 functional tests against the built binary
+	ctest --test-dir build/dev --output-on-failure --parallel $(JOBS) -L functional
 
-.PHONY: test_clean
-test_clean: ## Remove test data directory
-	rm -rf test/data
+.PHONY: test_all
+test_all: build ## Run every test layer built into the current configure
+	ctest --test-dir build/dev --output-on-failure --parallel $(JOBS)
 
-.PHONY: test_lint
-test_lint: ## Run ruff linter on test directory
-	. ./.venv/bin/activate && \
-	ruff check ./test
+# The checksums pin the bytes the tests' expected values were taken from, so a
+# changed or truncated download fails here rather than as a puzzling test failure
+.PHONY: fetch_integration_data
+fetch_integration_data: ## Download the Blizzard patches some functional tests read (requires: filenget)
+	$(FILENGET) "$(INTEGRATION_DATA)" '$(INTEGRATION_LINK)'
+	cd "$(INTEGRATION_DATA)" && sha256sum --check "$(CURDIR)/test/integration_data.sha256"
 
 ##@ LINT
 
@@ -211,8 +220,10 @@ get_changelog: ## Print release notes for TAG to stdout (TAG=v1.0.0)
 check_all: check_format check_lint check_embed ## Run every static check
 
 .PHONY: ci
-ci: check_all test ## Run the checks CI runs
+ci: check_all test test_functional ## Run the checks CI runs
 
+# The fetched integration data is left alone: it is not build output, and only
+# a network fetch brings it back
 .PHONY: clean
-clean: test_clean docs_clean ## Remove all build, test, docs and release artefacts
+clean: docs_clean ## Remove all build, docs and release artefacts
 	rm -rf build dist install.sh install.ps1 checksums.txt checksums.txt.sigstore.json

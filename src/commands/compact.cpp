@@ -4,12 +4,13 @@
 
 #include "mpq/archive.h"
 #include "mpq/compact.h"
+#include "mpq/query.h"
 
 namespace mpqcli {
 
 void Compact(const CompactOptions &options, std::ostream &err) {
     Archive archive = Archive::Open(options.archive, 0);
-    CompactMpqArchive(archive.Handle(), options.listfile, err);
+    CompactMpqArchive(archive.Handle(), UsableListfile(options.listfile, err), err);
     archive.Close();
 }
 

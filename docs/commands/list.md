@@ -59,24 +59,21 @@ The `list` subcommand supports listing the following properties:
   * `r`: File has Sector CRC checksums for each sector. This is ignored if the file is not compressed or imploded.
   * `s`: Present on STANDARD.SNP\(signature).
   * `x`: File exists; this is reset if the file is deleted.
-  * `m`: Mask for a file being compressed.
-  * `n`: Use default flags for internal files.
-  * `f`: Fix key; This is obsolete.
 
 You can use the `-q` or `--property` argument with the `list` subcommand to print the given properties. Many properties can be given, and they will be printed in the order given.
 
 ```bash
 $ mpqcli list -d -a Patch_rt.mpq --property hash-index --property locale --property flags
 ...
-10893 enUS     ixmn  glue\ScorePv\pMain.pcx
-11173 enUS     ixmn  rez\gluAll.tbl
-11174 deDE     ixmn  rez\gluAll.tbl
-11175 esES     ixmn  rez\gluAll.tbl
-11176 frFR     ixmn  rez\gluAll.tbl
-11177 itIT     ixmn  rez\gluAll.tbl
-11178 ptBR     ixmn  rez\gluAll.tbl
-11726 enUS     cxmn  (attributes)
-11884 enUS     ixmn  glue\ScoreTd\pMain.pcx
+10893 enUS       ix  glue\ScorePv\pMain.pcx
+11173 enUS       ix  rez\gluAll.tbl
+11174 deDE       ix  rez\gluAll.tbl
+11175 esES       ix  rez\gluAll.tbl
+11176 frFR       ix  rez\gluAll.tbl
+11177 itIT       ix  rez\gluAll.tbl
+11178 ptBR       ix  rez\gluAll.tbl
+11726 enUS       cx  (attributes)
+11884 enUS       ix  glue\ScoreTd\pMain.pcx
 ...
 ```
 

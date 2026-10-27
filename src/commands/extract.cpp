@@ -12,11 +12,29 @@
 #include "errors.h"
 #include "mpq/archive.h"
 #include "mpq/extract.h"
+#include "mpq/query.h"
 #include "util/locales.h"
 
 namespace fs = std::filesystem;
 
 namespace mpqcli {
+
+namespace {
+
+/// Removes the output directory on the way out if this run made it and nothing landed in it
+struct OutputDirectory {
+    fs::path path;
+    bool made_here = false;
+
+    ~OutputDirectory() {
+        std::error_code ec;
+        if (made_here && fs::is_empty(path, ec)) {
+            fs::remove(path, ec);
+        }
+    }
+};
+
+} // namespace
 
 bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic<bool> &cancelled) {
     std::error_code ec;
@@ -40,7 +58,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     const std::vector<std::string> file_names =
         options.files.has_value()
             ? options.files.value()
-            : ListArchivedFiles(archive.Handle(), options.listfile, cancelled);
+            : ListArchivedFiles(archive.Handle(), UsableListfile(options.listfile, err), cancelled);
     if (file_names.empty()) {
         err << "[*] No files to extract" << std::endl;
         archive.Close();
@@ -56,6 +74,12 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
         }
     }
 
+    // Remembered so a run that extracts nothing can take away the directory it made.
+    // The guard does that on every way out, a thrown Interrupted included, which a
+    // clean-up beside the return would miss.
+    std::error_code exists_ec;
+    const bool output_existed = fs::exists(effective_output, exists_ec);
+
     fs::create_directory(effective_output, ec);
     if (ec) {
         std::error_code query_ec;
@@ -63,6 +87,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
             throw FileError("Failed to create output directory", effective_output, ec);
         }
     }
+    const OutputDirectory output_directory{effective_output, !output_existed};
 
     // ExtractFile can only check for symlink traversal where the OS can resolve
     // real paths; warn once up front on volumes where it cannot (RAM disks)
@@ -78,7 +103,7 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     archive.Close();
 
     if (result != 0) {
-        err << std::endl << "[!] Failed to extract all files." << std::endl;
+        err << "[!] Failed to extract all files." << std::endl;
     }
     return result == 0;
 }

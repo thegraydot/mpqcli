@@ -5,5 +5,6 @@
 
 extern const CLI::Validator game_profile_valid;
 extern const CLI::Validator locale_valid;
+extern const CLI::Validator sector_size_valid;
 
 #endif

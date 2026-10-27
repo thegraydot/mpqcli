@@ -179,7 +179,7 @@ _mpqcli_read() {
 _mpqcli_verify() {
     _arguments \
         '1:archive:_mpqcli_archives' \
-        '(-x --print)'{-x,--print}'[print the digital signature in hex]'
+        '(-x --print)'{-x,--print}'[print the digital signature as raw bytes]'
 }
 
 _mpqcli_compact() {

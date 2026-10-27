@@ -54,20 +54,19 @@ jobs:
       - run: make configure CMAKE_ARGS="-DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DMPQCLI_WERROR=ON"
       - run: make build
 
-      - name: Setup python
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r test/requirements.txt
-
-      - name: Run tests
-        run: python3 -m pytest test
+      # Separate steps, so a failure names the layer that broke
+      - run: make test
+      - run: make test_functional
 
   test_windows:
+    name: test_windows (${{ matrix.build_type }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Debug as well as Release: MSVC's Debug runtime adds checked iterators
+        # and CRT assertions that Release compiles out
+        build_type: [Debug, Release]
+
     runs-on: windows-2022
     steps:
       - name: Check out repository code
@@ -75,24 +74,19 @@ jobs:
         with:
           submodules: true
 
-      # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR stays off here
-      # until the tree is known to compile clean under /W4, which nothing has yet
-      # checked; it is on in the Linux jobs.
+      # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR holds MSVC to
+      # the same bar as the Linux jobs: /W4 /permissive- with warnings as errors.
       - name: Configure and build
         shell: bash
         run: |
-          cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON
-          cmake --build build/dev --config Release --parallel
+          cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON -DMPQCLI_WERROR=ON
+          cmake --build build/dev --config ${{ matrix.build_type }} --parallel
 
-      - name: Setup python
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.11
+      # Separate steps, so a failure names the layer that broke
+      - name: Run unit tests
+        shell: bash
+        run: ctest --test-dir build/dev --output-on-failure -C ${{ matrix.build_type }} -L unit
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r test/requirements.txt
-
-      - name: Run tests
-        run: python -m pytest test
+      - name: Run functional tests
+        shell: bash
+        run: ctest --test-dir build/dev --output-on-failure -C ${{ matrix.build_type }} -L functional

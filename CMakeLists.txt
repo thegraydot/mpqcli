@@ -6,6 +6,13 @@ project(mpqcli VERSION 0.13.0)
 # carry the project prefix; a bare BUILD_STATIC claims a name anyone might want.
 option(MPQCLI_BUILD_APP "Build the mpqcli binary" ON)
 option(MPQCLI_BUILD_STATIC "Build static binary" OFF)
+# On only when mpqcli is the top-level project, so a consumer that adds it with
+# add_subdirectory does not get its tests in their own CTest run
+option(MPQCLI_BUILD_TESTING "Build mpqcli tests" ${PROJECT_IS_TOP_LEVEL})
+# The real-world archives a few functional tests read. They are never committed;
+# a test whose archive is absent is skipped rather than failed.
+set(MPQCLI_INTEGRATION_DATA "${PROJECT_SOURCE_DIR}/test/data/integration" CACHE PATH
+    "Directory of real-world archives for the tests that need them")
 # Off by default, so a new compiler release adding a warning cannot stop a
 # developer working. The Linux CI test builds turn it on, and check_lint holds
 # the same bar: clang-tidy replays these flags and .clang-tidy treats every
@@ -72,6 +79,11 @@ set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
 mark_system(storm)
+# GCC 15 defaults to C23, which drops the K&R function definitions in the bundled
+# zlib. MSVC is left on its own default, which is not C23, so Windows is unchanged.
+if(NOT MSVC)
+    set_target_properties(storm PROPERTIES C_STANDARD 11)
+endif()
 
 # Only app/ parses arguments, so the core never sees CLI11
 if(MPQCLI_BUILD_APP)
@@ -107,10 +119,50 @@ add_library(mpqcli_hash_library STATIC
 target_include_directories(mpqcli_hash_library SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/extern")
 add_library(mpqcli::hash_library ALIAS mpqcli_hash_library)
 
+# Catch2 runs every test layer, and subprocess.h lets the functional layer spawn
+# the binary
+if(MPQCLI_BUILD_TESTING)
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/Catch2/CMakeLists.txt")
+        message(FATAL_ERROR
+"Missing dependency: Catch2
+mpqcli tests require the Catch2 testing framework.
+It is provided as a submodule of this repository.
+Did you forget to execute the following commands?
+   git submodule init
+   git submodule update")
+    endif()
+
+    if (NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/subprocess.h/subprocess.h")
+        message(FATAL_ERROR
+"Missing dependency: subprocess.h
+mpqcli functional tests require the subprocess.h library to spawn the binary.
+It is provided as a submodule of this repository.
+Did you forget to execute the following commands?
+   git submodule init
+   git submodule update")
+    endif()
+
+    # enable_testing() rather than include(CTest): include(CTest) also declares a
+    # global BUILD_TESTING cache variable, which switches on the self-tests of any
+    # submodule that defers to it. It must run before the add_subdirectory that
+    # registers tests, or CTest finds none.
+    enable_testing()
+
+    add_subdirectory(extern/Catch2)
+    mark_system(Catch2)
+
+    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/extern/Catch2/extras")
+    include(Catch)
+endif()
+
 # Unconditional: building the core without the app is what proves nothing in
 # src/ has picked up a dependency on app/.
 add_subdirectory(src)
 
 if(MPQCLI_BUILD_APP)
     add_subdirectory(app)
+endif()
+
+if(MPQCLI_BUILD_TESTING)
+    add_subdirectory(test)
 endif()
