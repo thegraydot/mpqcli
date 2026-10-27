@@ -79,6 +79,11 @@ set(STORM_USE_BUNDLED_LIBRARIES ON CACHE BOOL "" FORCE)
 
 add_subdirectory(extern/StormLib)
 mark_system(storm)
+# GCC 15 defaults to C23, which drops the K&R function definitions in the bundled
+# zlib. MSVC is left on its own default, which is not C23, so Windows is unchanged.
+if(NOT MSVC)
+    set_target_properties(storm PROPERTIES C_STANDARD 11)
+endif()
 
 # Only app/ parses arguments, so the core never sees CLI11
 if(MPQCLI_BUILD_APP)
