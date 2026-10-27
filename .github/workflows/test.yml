@@ -66,13 +66,12 @@ jobs:
         with:
           submodules: true
 
-      # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR stays off here
-      # until the tree is known to compile clean under /W4, which nothing has yet
-      # checked; it is on in the Linux jobs.
+      # Raw cmake: the Makefile needs a POSIX shell. MPQCLI_WERROR holds MSVC to
+      # the same bar as the Linux jobs: /W4 /permissive- with warnings as errors.
       - name: Configure and build
         shell: bash
         run: |
-          cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON
+          cmake -B build/dev -G "Visual Studio 17 2022" -A x64 -DMPQCLI_BUILD_APP=ON -DMPQCLI_WERROR=ON
           cmake --build build/dev --config Release --parallel
 
       # Separate steps, so a failure names the layer that broke
