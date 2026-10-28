@@ -15,6 +15,7 @@ on:
       - "test/**"
       - "CMakeLists.txt"
       - "Dockerfile"
+      - "scripts/run_valgrind_tests.sh"
       - ".dockerignore"
       - ".gpipe.yml"
 
@@ -27,8 +28,8 @@ concurrency:
 permissions:
   contents: read
 
-# No needs between the three: lint configures its own tree, test builds what it
-# runs, and nothing reads build's artefacts until a release
+# No needs between the jobs: lint configures its own tree, test and valgrind build what they
+# run, and nothing reads build's artefacts until a release
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml
@@ -36,3 +37,8 @@ jobs:
     uses: ./.github/workflows/test.yml
   build:
     uses: ./.github/workflows/build.yml
+  valgrind:
+    uses: ./.github/workflows/valgrind.yml
+    permissions:
+      contents: read
+      pull-requests: write
