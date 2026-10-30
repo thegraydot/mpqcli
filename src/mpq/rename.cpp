@@ -14,20 +14,21 @@ namespace mpqcli {
 int RenameFile(HANDLE archive, const std::string &old_archive_file_path,
                const std::string &new_archive_file_path, LCID locale, std::ostream &err) {
     SFileSetLocale(locale);
+    const std::string old_stored_path = StoredFileName(archive, old_archive_file_path, locale);
     const std::string new_stored_path = WindowsifyFilePath(new_archive_file_path);
     err << "[~] Renaming file" << PrettyPrintLocale(locale, " for locale ") << ": "
-        << old_archive_file_path << " -> " << new_stored_path << std::endl;
+        << old_stored_path << " -> " << new_stored_path << std::endl;
 
-    if (!FileExistsInArchiveForLocale(archive, old_archive_file_path, locale)) {
+    if (!FileExistsInArchiveForLocale(archive, old_stored_path, locale)) {
         err << "[!] Failed: File doesn't exist" << PrettyPrintLocale(locale, " for locale ", true)
-            << ": " << old_archive_file_path << std::endl;
+            << ": " << old_stored_path << std::endl;
         return 1;
     }
 
-    if (!SFileRenameFile(archive, old_archive_file_path.c_str(), new_stored_path.c_str())) {
+    if (!SFileRenameFile(archive, old_stored_path.c_str(), new_stored_path.c_str())) {
         err << "[!] Failed: File cannot be renamed"
-            << PrettyPrintLocale(locale, " for locale ", true) << ": " << old_archive_file_path
-            << " -> " << new_stored_path << std::endl;
+            << PrettyPrintLocale(locale, " for locale ", true) << ": " << old_stored_path << " -> "
+            << new_stored_path << std::endl;
         return 1;
     }
 

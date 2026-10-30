@@ -9,11 +9,14 @@
 #include "commands/extract.h"
 #include "created_archive.h"
 #include "errors.h"
+#include "raw_archive.h"
 #include "read_file.h"
 #include "sample_files.h"
+#include "util/locales.h"
 
 namespace fs = std::filesystem;
 
+using mpqcli::default_locale;
 using mpqcli::Extract;
 using mpqcli::ExtractOptions;
 using mpqcli::testing::CancelAfter;
@@ -21,6 +24,7 @@ using mpqcli::testing::CreatedArchive;
 using mpqcli::testing::CreateWithoutListfile;
 using mpqcli::testing::ReadFile;
 using mpqcli::testing::SampleFiles;
+using mpqcli::testing::WriteRawArchive;
 
 TEST_CASE("Extract", "[commands/extract]") {
     CreatedArchive created;
@@ -37,6 +41,17 @@ TEST_CASE("Extract", "[commands/extract]") {
             CAPTURE(name);
             REQUIRE(ReadFile(output / name) == content);
         }
+    }
+
+    SECTION("extracts every file of an archive that stores forward slashes") {
+        // Another tool may store a path with forward slashes, which only that spelling finds
+        options.archive = created.files.dir.Path() / "slashes.mpq";
+        WriteRawArchive(options.archive,
+                        {{"fwd/a.txt", default_locale}, {"bck\\b.txt", default_locale}});
+        const std::atomic<bool> cancelled{false};
+        REQUIRE(Extract(options, err, cancelled));
+        REQUIRE(ReadFile(output / "fwd" / "a.txt") == "fwd/a.txt");
+        REQUIRE(ReadFile(output / "bck" / "b.txt") == "bck\\b.txt");
     }
 
     SECTION("fails on a named file missing from the archive, leaving no output directory") {

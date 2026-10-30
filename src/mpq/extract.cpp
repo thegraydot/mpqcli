@@ -100,15 +100,16 @@ int ExtractFiles(HANDLE archive, const fs::path &output, const std::vector<std::
 int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_name, bool flat,
                 LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
-    if (!FileExistsInArchiveForLocale(archive, file_name.c_str(), preferred_locale) &&
-        !FileExistsInArchiveForLocale(archive, file_name.c_str(), default_locale)) {
+    const std::string stored_name = StoredFileName(archive, file_name, preferred_locale);
+    if (!FileExistsInArchiveForLocale(archive, stored_name, preferred_locale) &&
+        !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
         err << "[!] Failed: File doesn't exist"
-            << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << file_name
+            << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << stored_name
             << std::endl;
         return 1;
     }
 
-    const std::string file_name_string = ExtractedName(file_name, flat);
+    const std::string file_name_string = ExtractedName(stored_name, flat);
 
     std::error_code ec;
     fs::path output_path_base = fs::absolute(output, ec).lexically_normal();
@@ -158,11 +159,11 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
 
     std::string output_file_name{output_file_path_name.string()};
 
-    if (SFileExtractFile(archive, file_name.c_str(), output_file_name.c_str(), 0)) {
+    if (SFileExtractFile(archive, stored_name.c_str(), output_file_name.c_str(), 0)) {
         err << "[*] Extracted: " << file_name_string << std::endl;
     } else {
         const auto error = SErrGetLastError();
-        err << "[!] Failed: " << StormErrorString(error) << ": " << file_name << std::endl;
+        err << "[!] Failed: " << StormErrorString(error) << ": " << stored_name << std::endl;
         return 1;
     }
 

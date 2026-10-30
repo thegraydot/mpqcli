@@ -397,6 +397,22 @@ TEST_CASE("extract: a named nested file keeps its folder", "[extract]") {
     REQUIRE(ReadFile(output_dir / "texts" / "cats.txt") == "This is a file about cats.\n");
 }
 
+TEST_CASE("extract: a named nested file given with forward slashes", "[extract]") {
+    SampleArchive sample;
+    AddNestedCats(sample);
+    const auto output_dir = sample.files.dir.Path() / "extracted_nested";
+
+    auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(), sample.archive.string(),
+                                      "texts/cats.txt"});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToSet(result.stderr_output) ==
+            std::set<std::string>{"[*] Extracted: " + Native("texts\\cats.txt")});
+    REQUIRE(DirectoryEntries(output_dir) == std::set<std::string>{"texts"});
+    REQUIRE(ReadFile(output_dir / "texts" / "cats.txt") == "This is a file about cats.\n");
+}
+
 TEST_CASE("extract: a named nested file drops its folder with --flat", "[extract]") {
     const auto flag = GENERATE(as<std::string>{}, "-j", "--flat");
     CAPTURE(flag);

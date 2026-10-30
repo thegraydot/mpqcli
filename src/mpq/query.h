@@ -17,6 +17,14 @@ inline const std::vector<std::string> special_mpq_files = {"(listfile)", "(signa
 
 bool FileExistsInArchiveForLocale(HANDLE archive, const std::string &file_path, LCID locale);
 
+/// Returns the name the archive stores file_path under, looked up under locale
+///
+/// An MPQ normally stores paths with backslashes, and StormLib hashes / and \ as different
+/// characters, so a path written with forward slashes misses. The path is tried as given
+/// first, since an archive from another tool may store forward slashes itself, then with
+/// every / turned into \. A path found in neither form comes back as given.
+std::string StoredFileName(HANDLE archive, const std::string &file_path, LCID locale);
+
 /// Reports whether the archived copy of local_file is byte-for-byte current
 bool ArchivedFileMatches(HANDLE archive, HANDLE file, const std::filesystem::path &local_file,
                          std::string &match_reason);

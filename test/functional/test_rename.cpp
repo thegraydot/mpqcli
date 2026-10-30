@@ -300,6 +300,25 @@ TEST_CASE("rename: a nested entry by its backslash path", "[rename]") {
     REQUIRE(ReadEntry(archive, "top.txt") == std::set<std::string>{"nested file"});
 }
 
+TEST_CASE("rename: a nested entry by a forward-slash path", "[rename]") {
+    TempDir dir;
+    const auto source_dir = dir.Path() / "src";
+    WriteFile(source_dir / "root.txt", "root file");
+    WriteFile(source_dir / "sub" / "nested.txt", "nested file");
+    const auto archive = dir.Path() / "nested.mpq";
+    REQUIRE(Run(mpqcli_binary, {"create", archive.string(), source_dir.string()}).returncode == 0);
+
+    auto result = Run(mpqcli_binary, {"rename", archive.string(), "sub/nested.txt", "top.txt"});
+
+    // The message names the entry as the archive stores it
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{Renaming("sub\\nested.txt", "top.txt")});
+    REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  root.txt", "enUS  top.txt"});
+    REQUIRE(ReadEntry(archive, "top.txt") == std::set<std::string>{"nested file"});
+}
+
 TEST_CASE("rename: the default-locale variant when no locale is given", "[rename]") {
     ManyLocalesArchive locales;
 

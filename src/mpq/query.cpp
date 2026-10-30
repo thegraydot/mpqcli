@@ -1,5 +1,6 @@
 #include "mpq/query.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
@@ -30,6 +31,21 @@ bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_
         SFileCloseFile(file);
     }
     return file_exists;
+}
+
+std::string StoredFileName(HANDLE archive, const std::string &file_path, LCID locale) {
+    SFileSetLocale(locale);
+    if (SFileHasFile(archive, file_path.c_str())) {
+        return file_path;
+    }
+    // Replaced byte by byte rather than through WindowsifyFilePath: its filesystem::path
+    // re-encodes a name on Windows, and a lookup must hand StormLib the stored bytes
+    std::string backslashed = file_path;
+    std::replace(backslashed.begin(), backslashed.end(), '/', '\\');
+    if (backslashed != file_path && SFileHasFile(archive, backslashed.c_str())) {
+        return backslashed;
+    }
+    return file_path;
 }
 
 bool ArchivedFileMatches(HANDLE archive, HANDLE file, const fs::path &local_file,

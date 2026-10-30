@@ -221,6 +221,19 @@ TEST_CASE("read: takes a nested entry by its backslash path", "[read]") {
     REQUIRE(result.stdout_output == "nested file");
 }
 
+TEST_CASE("read: takes a nested entry by a forward-slash path", "[read]") {
+    TempDir dir;
+    const auto source_dir = dir.Path() / "src";
+    WriteFile(source_dir / "sub" / "nested.txt", "nested file");
+    const auto archive = dir.Path() / "nested.mpq";
+    REQUIRE(Run(mpqcli_binary, {"create", archive.string(), source_dir.string()}).returncode == 0);
+
+    auto result = Run(mpqcli_binary, {"read", archive.string(), "sub/nested.txt"});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output == "nested file");
+}
+
 TEST_CASE("read: hands back a file larger than one sector intact", "[read]") {
     TempDir dir;
     const auto source_dir = dir.Path() / "src";
