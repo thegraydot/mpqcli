@@ -18,10 +18,8 @@ std::string NormalizeFilePath(const fs::path &path) {
     std::string file_path = path.u8string();
 #ifndef _WIN32
     std::replace(file_path.begin(), file_path.end(), '\\', '/');
-    return file_path;
-#else
-    return file_path;
 #endif
+    return file_path;
 }
 
 std::string WindowsifyFilePath(const fs::path &path) {
