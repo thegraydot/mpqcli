@@ -262,6 +262,24 @@ TEST_CASE("remove: a nested entry by its backslash path", "[remove]") {
     REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  root.txt"});
 }
 
+TEST_CASE("remove: a nested entry by a forward-slash path", "[remove]") {
+    TempDir dir;
+    const auto source_dir = dir.Path() / "src";
+    WriteFile(source_dir / "root.txt", "root file");
+    WriteFile(source_dir / "sub" / "nested.txt", "nested file");
+    const auto archive = dir.Path() / "nested.mpq";
+    REQUIRE(Run(mpqcli_binary, {"create", archive.string(), source_dir.string()}).returncode == 0);
+
+    auto result = Run(mpqcli_binary, {"remove", archive.string(), "sub/nested.txt"});
+
+    // The message names the entry as the archive stores it
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{Removing("sub\\nested.txt")});
+    REQUIRE(ArchiveEntries(archive) == std::set<std::string>{"enUS  root.txt"});
+}
+
 TEST_CASE("remove: the default-locale variant when no locale is given", "[remove]") {
     ManyLocalesArchive locales;
 

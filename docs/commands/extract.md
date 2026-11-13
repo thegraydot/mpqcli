@@ -47,7 +47,7 @@ The listfile only applies when extracting every file, so it cannot be combined w
 
 ## Extract specific files
 
-Name one or more files after the archive to extract only those. A file nested in a directory needs its full path in the archive, and is extracted with its folders; add `--flat` to drop them. Similar to the examples above, you can use the `-o` argument to specify the output directory.
+Name one or more files after the archive to extract only those. A file nested in a directory needs its full path in the archive, with its directories separated by `\` or `/`, and is extracted with its folders; add `--flat` to drop them. Similar to the examples above, you can use the `-o` argument to specify the output directory.
 
 ```bash
 $ mpqcli extract "World of Warcraft_1.12.1.5875/Data/base.MPQ" \

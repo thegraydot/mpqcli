@@ -5,6 +5,9 @@ The archive is the first positional argument, followed by the current and new ar
 This operation does not cause MPQ fragmentation, and thus it is not necessary to
 [`compact`](compact.md) the archive.
 
+Directories in either path can be separated with `\` or `/`. The new path is stored with `\`,
+and messages show both paths as the archive stores them.
+
 ```bash
 $ mpqcli rename wow-patch.mpq old-name.txt new-name.txt
 [~] Renaming file: old-name.txt -> new-name.txt

@@ -16,7 +16,7 @@ $ mpqcli list wow-patch.mpq | grep -i \.exe | mpqcli extract wow-patch.mpq -
 [*] Extracted: WowError.exe
 ```
 
-Note that directories are specified with backslashes. The names reach `mpqcli extract` on stdin unchanged, so only the backslash in the `grep` pattern needs escaping. The following example extracts all `dat` files in the `arr` directory from the `StarDat.mpq` archive, keeping the folder.
+Note that `list` prints directories with backslashes, as the archive stores them. The names reach `mpqcli extract` on stdin unchanged, so only the backslash in the `grep` pattern needs escaping. The following example extracts all `dat` files in the `arr` directory from the `StarDat.mpq` archive, keeping the folder.
 
 ```bash
 $ mpqcli list -l scbw.txt StarDat.mpq | grep -i 'arr\\.*dat$' | sort | mpqcli extract StarDat.mpq -

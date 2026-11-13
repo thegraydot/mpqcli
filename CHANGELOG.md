@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.13.1 - 2026-11-14
+
+### Changed
+
+- Stop printing the m, n and f flags in the flags property, which carried no information
+- Show an error's number only when the text comes from the operating system
+
+### Fixed
+
+- Find files given with forward slashes in read, extract, remove and rename
+- Stop add from leaving files out when one run fills the archive's file table
+- Reject a create sector size below 1024 or not a power of two, which StormLib cannot read back
+- Accept locale names in any case, so dede is deDE rather than the locale ID 0xDEDE
+- Ignore an empty listfile with a warning instead of failing
+- List and extract an archive with no entries as empty instead of failing
+- Leave no empty output directory behind when extract writes nothing or is interrupted
+- Describe Windows system errors with the Windows message rather than an unrelated one
+- Describe verify --print as writing raw bytes, not hex, in the help, docs and completions
+
 ## 0.13.0 - 2026-10-16
 
 ### Added

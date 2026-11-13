@@ -13,19 +13,19 @@ namespace mpqcli {
 int RemoveFile(HANDLE archive, const std::string &archive_file_path, LCID locale,
                std::ostream &err) {
     SFileSetLocale(locale);
-    err << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": "
-        << archive_file_path << std::endl;
+    const std::string stored_path = StoredFileName(archive, archive_file_path, locale);
+    err << "[-] Removing file" << PrettyPrintLocale(locale, " for locale ") << ": " << stored_path
+        << std::endl;
 
-    if (!FileExistsInArchiveForLocale(archive, archive_file_path, locale)) {
+    if (!FileExistsInArchiveForLocale(archive, stored_path, locale)) {
         err << "[!] Failed: File doesn't exist" << PrettyPrintLocale(locale, " for locale ", true)
-            << ": " << archive_file_path << std::endl;
+            << ": " << stored_path << std::endl;
         return 1;
     }
 
-    if (!SFileRemoveFile(archive, archive_file_path.c_str(), 0)) {
+    if (!SFileRemoveFile(archive, stored_path.c_str(), 0)) {
         err << "[!] Failed: File cannot be removed"
-            << PrettyPrintLocale(locale, " for locale ", true) << ": " << archive_file_path
-            << std::endl;
+            << PrettyPrintLocale(locale, " for locale ", true) << ": " << stored_path << std::endl;
         return 1;
     }
 
