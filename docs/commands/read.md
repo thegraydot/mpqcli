@@ -37,6 +37,14 @@ $ mpqcli read wow-patch.mpq "WoW.exe" | xxd
 00000030: 4504 8080 0280 9002 8098 0281 d801 0585  E...............
 ```
 
+## Read a file in a directory
+
+Give the file's full path in the archive. Directories can be separated with `\`, as the archive stores them, or with `/`.
+
+```bash
+$ mpqcli read Patch_rt.mpq "rez/stat_txt.tbl"
+```
+
 ## Read one specific file with locale
 
 Use the `-e` or `--locale` argument to specify the locale of the file to read. If there is no file with the requested name and locale, the default locale will be used instead.

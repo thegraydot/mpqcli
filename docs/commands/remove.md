@@ -5,6 +5,9 @@ Remove one or more files from an existing MPQ archive.
 The archive is always the first positional argument, followed by one or more archive paths
 to remove. All removals happen in a single open/close cycle.
 
+Directories in an archive path can be separated with `\`, as the archive stores them, or with
+`/`. Messages show the path as the archive stores it.
+
 ## Remove a single file
 
 ```bash
