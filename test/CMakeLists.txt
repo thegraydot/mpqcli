@@ -24,6 +24,7 @@ add_executable(mpqcli_unit_tests
     unit/gamerules/test_rules.cpp
     unit/mpq/test_extract.cpp
     unit/mpq/test_flags.cpp
+    unit/mpq/test_list.cpp
     unit/mpq/test_query.cpp
     unit/test_errors.cpp
     unit/util/test_capacity.cpp

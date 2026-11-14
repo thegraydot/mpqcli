@@ -82,13 +82,17 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
             }
             seen_file_names.insert(find_data.cFileName);
 
-            // Multiple files can be stored with identical filenames under different locales
-            DWORD max_locales = 32; // Updated in place by SFileEnumLocales
-            std::vector<LCID> file_locale_vec(max_locales);
-            LCID *file_locales = file_locale_vec.data();
-
-            DWORD result =
-                SFileEnumLocales(archive, find_data.cFileName, file_locales, &max_locales, 0);
+            // Multiple files can be stored with identical filenames under different locales.
+            // SFileEnumLocales writes the real count back into max_locales and returns
+            // ERROR_INSUFFICIENT_BUFFER when the buffer is too small, so it is grown to fit.
+            DWORD max_locales = 32;
+            std::vector<LCID> file_locales;
+            DWORD result = ERROR_INSUFFICIENT_BUFFER;
+            while (result == ERROR_INSUFFICIENT_BUFFER) {
+                file_locales.resize(max_locales);
+                result = SFileEnumLocales(archive, find_data.cFileName, file_locales.data(),
+                                          &max_locales, 0);
+            }
 
             if (result == ERROR_INVALID_PARAMETER) {
                 // StormLib rejects a name it cannot resolve (IsPseudoFileName) before
@@ -100,11 +104,6 @@ void ListFiles(HANDLE archive, const std::optional<std::filesystem::path> &listf
             } else if (result == ERROR_INVALID_HANDLE || result == ERROR_NOT_SUPPORTED) {
                 err << "[!] Internal error for file: " << find_data.cFileName << std::endl;
                 continue;
-
-            } else if (result == ERROR_INSUFFICIENT_BUFFER) {
-                err << "[!] There are more than " << max_locales
-                    << " locales for the file: " << find_data.cFileName << ". Will only list the "
-                    << max_locales << " first files." << std::endl;
             }
 
             for (DWORD i = 0; i < max_locales; i++) {
