@@ -5,6 +5,7 @@
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <cstddef>
+#include <cstdio>
 #include <filesystem>
 #include <set>
 #include <string>
@@ -379,6 +380,32 @@ TEST_CASE("list: shows a file stored under several locales once per locale", "[l
         RequireLines(result.stdout_output, {"enUS       26  cats.txt", "041D       27  cats.txt",
                                             "deDE       33  cats.txt", "esES       31  cats.txt"});
     }
+}
+
+TEST_CASE("list: lists every locale of a name with more than 32 of them", "[list]") {
+    TempDir dir;
+    const auto file = dir.Path() / "a.txt";
+    const auto archive = dir.Path() / "locales.mpq";
+    WriteFile(file, "a");
+    REQUIRE(Run(mpqcli_binary, {"create", "--format-version", "1", archive.string(), file.string()})
+                .returncode == 0);
+
+    // The default locale and 33 others, none of them in the locale table, so each
+    // prints as its own four hexadecimal digits
+    std::set<std::string> expected = {"enUS  a.txt"};
+    for (int locale = 1; locale <= 33; locale++) {
+        char hex[5];
+        std::snprintf(hex, sizeof(hex), "%04X", locale);
+        REQUIRE(Run(mpqcli_binary, {"add", "--locale", hex, archive.string(), file.string()})
+                    .returncode == 0);
+        expected.insert(std::string(hex) + "  a.txt");
+    }
+
+    auto result = Run(mpqcli_binary, {"list", "-q", "locale", archive.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stderr_output.empty());
+    RequireLines(result.stdout_output, expected);
 }
 
 TEST_CASE("list: prints nested entries with the archive's backslash separator", "[list]") {

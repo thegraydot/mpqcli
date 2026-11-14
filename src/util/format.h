@@ -7,7 +7,11 @@
 
 namespace mpqcli {
 
+/// Formats a FILETIME as the local time, "YYYY-MM-DD HH:MM:SS"
+///
+/// Zero, and a time the platform cannot format, give an empty string.
 std::string FileTimeToLsTime(int64_t file_time);
+
 /// Describes a StormLib error code in words that are the same on every platform
 ///
 /// The code's value differs by platform, so it is left out. A code with no words of its

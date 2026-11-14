@@ -35,6 +35,7 @@ Run `make help` to list all available targets. Common ones:
 | `make test` | Run the unit tests |
 | `make test_functional` | Run the functional tests against the built binary |
 | `make test_all` | Run every test layer in build/dev |
+| `make test_asan` | Run every test layer under Address + UB sanitizers in build/asan |
 | `make fetch_integration_data` | Download the real archives a few functional tests read (needs filenget) |
 | `make check_all` | Run every static check (clang-format, clang-tidy, completion scripts) |
 | `make check_format` | Check formatting only (dry run) |

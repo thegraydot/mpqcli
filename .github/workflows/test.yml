@@ -58,6 +58,20 @@ jobs:
       - run: make test
       - run: make test_functional
 
+  # A dedicated job, not a step in the one above: sanitizers change code
+  # generation and roughly double runtime, so folding them into the main job
+  # slows every run and leaves a failure ambiguous between the instrumented and
+  # ordinary builds. test_asan configures build/asan itself.
+  test_asan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - run: make test_asan
+
   test_windows:
     name: test_windows (${{ matrix.build_type }})
     strategy:

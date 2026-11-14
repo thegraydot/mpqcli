@@ -1,6 +1,7 @@
 #ifndef RAW_ARCHIVE_H
 #define RAW_ARCHIVE_H
 
+#include <algorithm>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -19,9 +20,11 @@ namespace mpqcli::testing {
 /// std::runtime_error when StormLib refuses, since that is a broken fixture.
 inline void WriteRawArchive(const std::filesystem::path &path,
                             const std::vector<std::pair<std::string, LCID>> &entries) {
+    // Room for every entry and the (listfile)
+    const auto max_file_count = std::max<DWORD>(16, static_cast<DWORD>(entries.size()) + 1);
     HANDLE archive = nullptr;
-    if (!SFileCreateArchive(path.string().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ARCHIVE_V1, 16,
-                            &archive)) {
+    if (!SFileCreateArchive(path.string().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ARCHIVE_V1,
+                            max_file_count, &archive)) {
         throw std::runtime_error("WriteRawArchive: cannot create " + path.string());
     }
     for (const auto &[name, locale] : entries) {
