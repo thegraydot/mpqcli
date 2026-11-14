@@ -17,6 +17,17 @@ $ mpqcli extract wow-patch.mpq
 [*] Extracted: realmlist.wtf
 ```
 
+## Extract all files from an archive with several locales
+
+An archive can store the same file name more than once, under different locales. Extracting every file writes each name once: the variant under the `--locale` given, else the default (neutral) one, else the one with the lowest locale ID. The variants left out are named on stderr.
+
+```bash
+$ mpqcli extract --locale deDE patch.mpq
+[*] Extracted: (listfile)
+[*] Extracted: cats.txt
+[*] Left out other locales of cats.txt: enUS, esES
+```
+
 ## Extract all files to an output directory
 
 Extract files to a specific output directory, which will be created if it doesn't already exist. In this example, `patch-1.10` is the user-specified output directory.
