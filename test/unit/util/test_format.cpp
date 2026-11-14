@@ -55,6 +55,21 @@ TEST_CASE("FileTimeToLsTime", "[format]") {
         const int64_t file_time = LocalFileTime(2025, 7, 29, 14, 31, 5) + intervals_per_second - 1;
         REQUIRE(FileTimeToLsTime(file_time) == "2025-07-29 14:31:05");
     }
+
+    SECTION("prints nothing for a time past the year 9999") {
+        // Linux converts it, but the five-digit year overflows the buffer; Windows
+        // refuses to convert it
+        REQUIRE(FileTimeToLsTime(INT64_MAX).empty());
+    }
+
+    SECTION("prints a time before 1970 where the platform can convert it") {
+#ifdef _WIN32
+        // localtime_s rejects a time before 1970
+        REQUIRE(FileTimeToLsTime(1).empty());
+#else
+        REQUIRE(FileTimeToLsTime(LocalFileTime(1601, 1, 1, 0, 0, 0)) == "1601-01-01 00:00:00");
+#endif
+    }
 }
 
 TEST_CASE("StormErrorString", "[format]") {

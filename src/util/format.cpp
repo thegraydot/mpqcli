@@ -57,15 +57,24 @@ std::string FileTimeToLsTime(int64_t file_time) {
         return "";
     }
     constexpr int64_t epoch_diff = 11644473600LL;
-    int64_t unix_time = (file_time / 10000000) - epoch_diff;
+    const std::time_t unix_time = (file_time / 10000000) - epoch_diff;
+    // The time comes from the archive, so a conversion can fail: localtime_s
+    // rejects a time before 1970, and a year past 9999 overflows buf, which
+    // strftime then leaves unterminated
     char buf[20];
     struct tm tm_buf;
 #ifdef _WIN32
-    localtime_s(&tm_buf, &unix_time);
+    if (localtime_s(&tm_buf, &unix_time) != 0) {
+        return "";
+    }
 #else
-    localtime_r(&unix_time, &tm_buf);
+    if (localtime_r(&unix_time, &tm_buf) == nullptr) {
+        return "";
+    }
 #endif
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf);
+    if (strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_buf) == 0) {
+        return "";
+    }
     return std::string(buf);
 }
 
