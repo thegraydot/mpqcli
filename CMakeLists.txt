@@ -18,6 +18,9 @@ set(MPQCLI_INTEGRATION_DATA "${PROJECT_SOURCE_DIR}/test/data/integration" CACHE 
 # the same bar: clang-tidy replays these flags and .clang-tidy treats every
 # warning as an error.
 option(MPQCLI_WERROR "Treat compiler warnings as errors" OFF)
+# Off by default: ASan costs roughly 2x runtime and 3x memory. make test_asan
+# turns it on in build/asan, and test.yml runs that as a job of its own.
+option(MPQCLI_ASAN "Build with Address + UB sanitizers" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,6 +45,24 @@ endforeach()
 
 if(MSVC)
     add_compile_definitions(__STORMLIB_NO_STATIC_LINK__)
+endif()
+
+# Applied before any target is declared, so every module and test is instrumented
+if(MPQCLI_ASAN)
+    if(MSVC)
+        # MSVC has AddressSanitizer but no UndefinedBehaviorSanitizer, and links
+        # its runtime automatically, so there is no matching add_link_options.
+        add_compile_options(/fsanitize=address /Oy-)
+    else()
+        # -fno-sanitize-recover makes a UBSan finding fail the run; by default it
+        # prints the report and carries on, and the process exits 0
+        add_compile_options(-fsanitize=address,undefined -fno-sanitize-recover=undefined
+                            -fno-omit-frame-pointer -g)
+        add_link_options(-fsanitize=address,undefined)
+        # GCC has no macro that says UBSan is on, and __has_feature arrived
+        # only in GCC 14, so a test that must step around UBSan reads this
+        add_compile_definitions(MPQCLI_SANITIZE_UNDEFINED)
+    endif()
 endif()
 
 if(MPQCLI_BUILD_STATIC)
@@ -83,6 +104,14 @@ mark_system(storm)
 # zlib. MSVC is left on its own default, which is not C23, so Windows is unchanged.
 if(NOT MSVC)
     set_target_properties(storm PROPERTIES C_STANDARD 11)
+endif()
+# Two UBSan findings in StormLib, each check turned off on storm alone:
+# - alignment: it writes the (attributes) file times through a ULONGLONG
+#   pointer at a 4-byte offset, after the CRC32 array (SFileAttributes.cpp:300)
+# - shift-base: its bundled bzip2 1.0.5 sets bit 31 with 1 << 31 on an int
+#   (the SET_BH macro, bzip2/blocksort.c:205)
+if(MPQCLI_ASAN AND NOT MSVC)
+    target_compile_options(storm PRIVATE -fno-sanitize=alignment,shift-base)
 endif()
 
 # Only app/ parses arguments, so the core never sees CLI11

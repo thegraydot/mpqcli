@@ -24,6 +24,9 @@ CLANG_TIDY       ?= $(shell command -v clang-tidy-$(CLANG_VERSION) || echo clang
 # emits confident diagnostics from a broken AST, so it gets its own tree.
 LINT_DIR         ?= build/lint
 
+# Where test_asan has AddressSanitizer write its reports, one file per process
+ASAN_LOG_DIR     ?= build/asan/logs
+
 # Empty on a machine with no GCC, and configure_lint then passes no
 # --gcc-install-dir at all. The && is what keeps it empty: dirname of an empty
 # string is ".", which clang would take as the install directory.
@@ -56,7 +59,6 @@ help: ## Show this help message
 		/^[a-zA-Z_-]+:.*## / {printf "  %-22s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 ##@ BUILD
-
 .PHONY: configure
 configure: ## Configure the cmake build
 	cmake -B build/dev \
@@ -70,7 +72,6 @@ build: configure ## Build the project
 	cmake --build build/dev --parallel $(JOBS)
 
 ##@ TEST
-
 .PHONY: test
 test: build ## Run Catch2 unit tests
 	ctest --test-dir build/dev --output-on-failure --parallel $(JOBS) -L unit
@@ -87,15 +88,32 @@ test_functional: build ## Run Catch2 functional tests against the built binary
 test_all: build ## Run every test layer built into the current configure
 	ctest --test-dir build/dev --output-on-failure --parallel $(JOBS)
 
-# The checksums pin the bytes the tests' expected values were taken from, so a
-# changed or truncated download fails here rather than as a puzzling test failure
+.PHONY: configure_asan
+configure_asan: ## Configure build/asan with Address + UB sanitizers
+	cmake -B build/asan \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DMPQCLI_ASAN=ON \
+		-DMPQCLI_BUILD_TESTING=ON \
+		-DMPQCLI_BUILD_APP=ON \
+		$(CMAKE_ARGS)
+
+.PHONY: test_asan
+test_asan: configure_asan ## Build and run every test layer under sanitizers
+	cmake --build build/asan --parallel $(JOBS)
+	rm -rf $(ASAN_LOG_DIR) && mkdir -p $(ASAN_LOG_DIR)
+	ASAN_OPTIONS=exitcode=99:log_path=$(abspath $(ASAN_LOG_DIR))/asan \
+	UBSAN_OPTIONS=exitcode=99:print_stacktrace=1 \
+		ctest --test-dir build/asan --output-on-failure --parallel $(JOBS); \
+		status=$$?; \
+		if [ -n "$$(ls -A $(ASAN_LOG_DIR))" ]; then cat $(ASAN_LOG_DIR)/*; exit 1; fi; \
+		exit $$status
+
 .PHONY: fetch_integration_data
 fetch_integration_data: ## Download the Blizzard patches some functional tests read (requires: filenget)
 	$(FILENGET) "$(INTEGRATION_DATA)" '$(INTEGRATION_LINK)'
 	cd "$(INTEGRATION_DATA)" && sha256sum --check "$(CURDIR)/test/integration_data.sha256"
 
 ##@ LINT
-
 .PHONY: format
 format: ## Format all source files with clang-format
 	find $(CPP_DIRS) \( -name "*.cpp" -o -name "*.h" \) \
@@ -135,7 +153,6 @@ check_embed: ## Syntax-check the embedded completion scripts with every shell pr
 	  else echo "[*] pwsh not installed, skipped"; fi
 
 ##@ DOCS
-
 .PHONY: docs_mermaid
 docs_mermaid: ## Fetch mermaid.min.js and mermaid-init.js into the repo root (gitignored)
 	mdbook-mermaid install .
@@ -153,7 +170,6 @@ docs_clean: ## Remove the generated docs site and mermaid assets
 	rm -rf book mermaid.min.js mermaid-init.js
 
 ##@ DOCKER
-
 .PHONY: docker_build
 docker_build: ## Build the Docker image, tagged with the project version
 	docker build -t mpqcli:$(VERSION) .
@@ -163,7 +179,6 @@ docker_run: ## Run the Docker image
 	@docker run -it mpqcli:$(VERSION) version
 
 ##@ GENERATE
-
 # The docs site builds from the committed copy, so this is run deliberately and the
 # result committed rather than being made a prerequisite of docs_build
 .PHONY: gen_docs_changelog
@@ -188,7 +203,6 @@ gen_downloads: ## Update the package downloads badge in README.md from GitHub
 	echo "[*] Updated package downloads badge: $$BADGE ($$DOWNLOADS)"
 
 ##@ GET
-
 .PHONY: get_version
 get_version: ## Print the project version from CMakeLists.txt (fails if absent)
 	@awk '$(VERSION_AWK)' CMakeLists.txt
@@ -215,7 +229,6 @@ get_changelog: ## Print release notes for TAG to stdout (TAG=v1.0.0)
 	printf '%s\n' "$$notes"
 
 ##@ CI
-
 .PHONY: check_all
 check_all: check_format check_lint check_embed ## Run every static check
 
