@@ -67,7 +67,7 @@ TEST_CASE("FileTimeToLsTime", "[format]") {
         // localtime_s rejects a time before 1970
         REQUIRE(FileTimeToLsTime(1).empty());
 #else
-        REQUIRE(FileTimeToLsTime(LocalFileTime(1601, 1, 1, 0, 0, 0)) == "1601-01-01 00:00:00");
+        REQUIRE(FileTimeToLsTime(LocalFileTime(1969, 7, 20, 20, 17, 40)) == "1969-07-20 20:17:40");
 #endif
     }
 }
