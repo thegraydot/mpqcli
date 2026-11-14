@@ -1,0 +1,35 @@
+FROM ubuntu:24.04
+
+# Build dependencies, Valgrind and Python for the test suite. git is needed by
+# the build, which stamps the commit hash into the version string.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        git \
+        python3 \
+        python3-venv \
+        valgrind && \
+    rm -rf /var/lib/apt/lists/*
+
+# Run as a user with the host user's UID/GID (passed as build args), so the
+# Valgrind logs written to the mounted directory are owned by the host user.
+# The base image ships an "ubuntu" user holding UID/GID 1000, which is the most
+# common host UID, so it is removed first to free them.
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN userdel -r ubuntu 2>/dev/null || true && \
+    groupadd -g ${GROUP_ID} mpquser 2>/dev/null || true && \
+    useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash mpquser
+
+# Created up front because WORKDIR would create it owned by root, and the build
+# and venv are written into it
+RUN install -d -o ${USER_ID} -g ${GROUP_ID} /mpqcli
+WORKDIR /mpqcli
+COPY --chown=${USER_ID}:${GROUP_ID} . .
+USER mpquser
+
+# Builds the binary, sets up the test environment and runs the suite under
+# Valgrind. See scripts/run_valgrind_tests.sh.
+CMD ["scripts/run_valgrind_tests.sh"]
