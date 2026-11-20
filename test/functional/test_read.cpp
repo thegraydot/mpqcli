@@ -319,7 +319,8 @@ TEST_CASE("read: falls back to the default locale when the file has no such vari
 
     // Stdout stays the file's bytes alone; the fallback is reported on stderr
     REQUIRE(result.returncode == 0);
-    REQUIRE(result.stderr_output == "[*] cats.txt has no ptPT variant, using enUS\n");
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{"[*] cats.txt has no ptPT variant, using enUS"});
     REQUIRE(result.stdout_output == CatsContent(""));
 }
 
