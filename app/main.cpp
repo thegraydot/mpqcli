@@ -46,13 +46,19 @@ private:
 };
 #endif
 
-// The one piece of mutable global state: a signal handler takes no arguments and
-// has nowhere else to write, and it may touch nothing but a lock-free atomic
+// The only mutable global state: a signal handler takes no arguments and has nowhere
+// else to write, and it may touch nothing but lock-free atomics. interrupted is what
+// the core polls; interrupt_signal is which signal set it, so main can end by that
+// same signal. It starts as SIGINT, which is what main used before it was recorded.
 std::atomic<bool> interrupted{false};
+std::atomic<int> interrupt_signal{SIGINT};
 static_assert(decltype(interrupted)::is_always_lock_free,
               "a signal handler may only touch a lock-free atomic");
+static_assert(decltype(interrupt_signal)::is_always_lock_free,
+              "a signal handler may only touch a lock-free atomic");
 
-extern "C" void OnInterrupt(int) {
+extern "C" void OnInterrupt(int signal_number) {
+    interrupt_signal.store(signal_number, std::memory_order_relaxed);
     interrupted.store(true, std::memory_order_relaxed);
 }
 
@@ -108,10 +114,11 @@ int main(int argc, char **argv) {
         // shell reports for one instead
         return 130;
 #else
-        // Dying of the signal rather than returning a code is what lets the shell
-        // treat it as an interrupt
-        std::signal(SIGINT, SIG_DFL);
-        std::raise(SIGINT);
+        // Dying of the same signal rather than returning a code is what lets a shell or
+        // a supervisor see how mpqcli ended: 130 after SIGINT, 143 after SIGTERM
+        const int signal_number = interrupt_signal.load(std::memory_order_relaxed);
+        std::signal(signal_number, SIG_DFL);
+        std::raise(signal_number);
         return 1; // Not reached
 #endif
     } catch (const mpqcli::Error &e) {

@@ -32,3 +32,4 @@ Every subcommand exits with one of these codes, so a script can tell the outcome
 | `2` | An unexpected internal error. Please report it. |
 | `100` to `114` | The command line could not be parsed. The most common are `104` (a value of the wrong type), `105` (a value that is not allowed), `106` (a missing argument) and `109` (an extra argument). |
 | `130` | Interrupted with Ctrl+C. On Linux mpqcli ends by the signal itself, which a shell reports as `130`; on Windows it exits with `130`. |
+| `143` | Stopped with SIGTERM, on Linux. mpqcli ends by the signal itself, which a shell reports as `143`. |
