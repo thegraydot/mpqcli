@@ -20,3 +20,16 @@ The `mpqcli` program has the following subcommands:
 | [`read`](./commands/read.md) | Read a specific file to stdout |
 | [`verify`](./commands/verify.md) | Verify an MPQ archive signature |
 | [`compact`](./commands/compact.md) | Compact (defragment) an MPQ archive |
+
+## Exit codes
+
+Every subcommand exits with one of these codes, so a script can tell the outcomes apart. [Find the archives that fail verification](./advanced.md#find-the-archives-that-fail-verification) shows one in use.
+
+| Code | Meaning |
+|---|---|
+| `0` | Success. A file `add` skipped because it is already in the archive still counts as success. |
+| `1` | The command failed: for example, the archive could not be opened, a file is not in it, or `verify` found no valid signature. The reason is on stderr. |
+| `2` | An unexpected internal error. Please report it. |
+| `100` to `114` | The command line could not be parsed. The most common are `104` (a value of the wrong type), `105` (a value that is not allowed), `106` (a missing argument) and `109` (an extra argument). |
+| `130` | Interrupted with Ctrl+C. On Linux mpqcli ends by the signal itself, which a shell reports as `130`; on Windows it exits with `130`. |
+| `143` | Stopped with SIGTERM, on Linux. mpqcli ends by the signal itself, which a shell reports as `143`. |

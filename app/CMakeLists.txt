@@ -33,4 +33,9 @@ add_executable(mpqcli
     version.cpp
 )
 
+# MSVC merges a listed .manifest into the one its linker writes and embeds the result
+if(WIN32)
+    target_sources(mpqcli PRIVATE mpqcli.manifest)
+endif()
+
 target_link_libraries(mpqcli PRIVATE mpqcli::core CLI11::CLI11 mpqcli::warnings)

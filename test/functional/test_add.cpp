@@ -17,6 +17,7 @@
 #include "archive_helper.h"
 #include "compressible_text.h"
 #include "many_locales_archive.h"
+#include "read_file.h"
 #include "sample_archive.h"
 #include "sample_files.h"
 #include "subprocess_helper.h"
@@ -454,6 +455,35 @@ TEST_CASE("add: a directory keeps its structure", "[add]") {
             std::set<std::string>{"[+] Adding file: sub\\a.txt", "[+] Adding file: b.txt"});
     REQUIRE(ArchiveEntries(sample.archive) ==
             Plus(sample_entries, {"enUS  sub\\a.txt", "enUS  b.txt"}));
+}
+
+TEST_CASE("add: stores a non-ASCII name from a directory", "[add]") {
+    // "cafe" with an acute e, which the Windows runner's code page has, and two Japanese
+    // characters, which no single-byte code page has. Written as UTF-8 escapes, since
+    // MSVC reads a source file in the build machine's code page.
+    const auto name =
+        GENERATE(as<std::string>{}, "caf\xC3\xA9.txt", "\xE6\x97\xA5\xE6\x9C\xAC.txt");
+    CAPTURE(name);
+    SampleArchive sample;
+    // Inside an ASCII-named directory, so the name never crosses a command line and only
+    // mpqcli's own conversions are tested. u8path names the file right whatever the test
+    // binary's code page.
+    const auto add_dir = sample.files.dir.Path() / "add_dir";
+    WriteFile(add_dir / fs::u8path(name), "Non-ASCII file.");
+
+    auto result = Run(mpqcli_binary, {"add", sample.archive.string(), add_dir.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{"[+] Adding file: " + name});
+    REQUIRE(ArchiveEntries(sample.archive) == Plus(sample_entries, {"enUS  " + name}));
+
+    const auto output_dir = sample.files.dir.Path() / "out";
+    auto extracted =
+        Run(mpqcli_binary, {"extract", sample.archive.string(), "-o", output_dir.string()});
+
+    REQUIRE(extracted.returncode == 0);
+    REQUIRE(ReadFile(output_dir / fs::u8path(name)) == "Non-ASCII file.");
 }
 
 TEST_CASE("add: a directory with --path prefix", "[add]") {
