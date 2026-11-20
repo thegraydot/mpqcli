@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.3 - 2026-11-20
+
+### Fixed
+
+- Store, list, extract and read file names with non-ASCII characters correctly on Windows 10 version 1903 and later
+- Print non-ASCII file names correctly in the Windows console
+- Exit with 130 on Windows when interrupted, as on Linux, instead of 3
+- End by SIGTERM when stopped with SIGTERM, so a shell reports 143 rather than an interrupt's 130
+
 ## 0.13.2 - 2026-11-20
 
 ### Changed
