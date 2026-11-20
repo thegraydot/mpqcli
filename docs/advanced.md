@@ -47,3 +47,13 @@ PS> mpqcli.exe list wow-patch.mpq | Select-String -Pattern \.exe | `
 [*] Extracted: Repair.exe
 [*] Extracted: WowError.exe
 ```
+
+## Find the archives that fail verification
+
+`verify` exits `0` when an archive's signature is valid, and `1` when it is not or there is none, so a loop can act on the [exit code](./commands_list.md#exit-codes) alone. The verification result goes to stderr, which is discarded here, and the name of each archive that fails goes to `failed.txt`:
+
+```bash
+$ for f in *.mpq; do mpqcli verify "$f" 2>/dev/null || echo "$f"; done > failed.txt
+$ cat failed.txt
+unsigned.mpq
+```

@@ -102,11 +102,18 @@ int main(int argc, char **argv) {
         }
         return app.exit(e, context.out, context.err);
     } catch (const mpqcli::Interrupted &) {
-        // The user asked for this, so nothing is reported. Dying of the signal rather
-        // than returning a code is what lets the shell treat it as an interrupt.
+        // The user asked for this, so nothing is reported
+#ifdef _WIN32
+        // A re-raised SIGINT would end the process with 3 here, so return what a POSIX
+        // shell reports for one instead
+        return 130;
+#else
+        // Dying of the signal rather than returning a code is what lets the shell
+        // treat it as an interrupt
         std::signal(SIGINT, SIG_DFL);
         std::raise(SIGINT);
         return 1; // Not reached
+#endif
     } catch (const mpqcli::Error &e) {
         context.err << "[!] " << e.what() << std::endl;
         return 1;
