@@ -1,6 +1,8 @@
 #include "mpq/extract.h"
 
+#include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <filesystem>
 #include <map>
 #include <optional>
@@ -36,9 +38,9 @@ std::string ExtractedName(const std::string &file_name, bool flat) {
 
 } // namespace
 
-std::vector<std::string> ListArchivedFiles(HANDLE archive,
-                                           const std::optional<fs::path> &listfile_name,
-                                           const std::atomic<bool> &cancelled) {
+std::vector<ArchivedFile> ListArchivedFiles(HANDLE archive,
+                                            const std::optional<fs::path> &listfile_name,
+                                            const std::atomic<bool> &cancelled) {
     const std::string listfile_string =
         listfile_name.has_value() ? listfile_name->string() : std::string();
     const char *listfile = listfile_name.has_value() ? listfile_string.c_str() : nullptr;
@@ -54,7 +56,7 @@ std::vector<std::string> ListArchivedFiles(HANDLE archive,
         throw StormError("Failed to find first file in MPQ archive", error);
     }
 
-    std::vector<std::string> file_names;
+    std::vector<ArchivedFile> files;
     do {
         // Closed by hand rather than through ThrowIfCancelled, so the find handle
         // does not leak on the way out
@@ -62,11 +64,50 @@ std::vector<std::string> ListArchivedFiles(HANDLE archive,
             SFileFindClose(find_handle);
             throw Interrupted{};
         }
-        file_names.emplace_back(find_data.cFileName);
+        files.push_back({find_data.cFileName, find_data.lcLocale});
     } while (SFileFindNextFile(find_handle, &find_data));
 
     SFileFindClose(find_handle);
-    return file_names;
+    return files;
+}
+
+std::vector<FileToExtract> ChooseVariants(const std::vector<ArchivedFile> &files,
+                                          LCID preferred_locale) {
+    std::vector<std::string> names;
+    std::map<std::string, std::vector<LCID>> locales_by_name;
+    for (const auto &file : files) {
+        auto &locales = locales_by_name[file.name];
+        if (locales.empty()) {
+            names.push_back(file.name);
+        }
+        locales.push_back(file.locale);
+    }
+
+    // Compared without the platform StormLib packs into bits 16 to 23, as list
+    // prints them; the chosen locale keeps it, so the lookup finds that exact entry
+    const auto by_locale = [](LCID a, LCID b) { return SFILE_LOCALE(a) < SFILE_LOCALE(b); };
+    const auto stored_under = [](const std::vector<LCID> &locales, LCID wanted) {
+        return std::find_if(locales.begin(), locales.end(), [wanted](LCID locale) {
+            return SFILE_LOCALE(locale) == SFILE_LOCALE(wanted);
+        });
+    };
+
+    std::vector<FileToExtract> chosen;
+    for (const auto &name : names) {
+        auto locales = locales_by_name[name];
+        std::stable_sort(locales.begin(), locales.end(), by_locale);
+        auto pick = stored_under(locales, preferred_locale);
+        if (pick == locales.end()) {
+            pick = stored_under(locales, default_locale);
+        }
+        if (pick == locales.end()) {
+            pick = locales.begin();
+        }
+        const LCID locale = *pick;
+        locales.erase(pick);
+        chosen.push_back({name, locale, locales});
+    }
+    return chosen;
 }
 
 std::optional<std::pair<std::string, std::string>>
@@ -86,13 +127,19 @@ FindFlatCollision(const std::vector<std::string> &file_names) {
     return std::nullopt;
 }
 
-int ExtractFiles(HANDLE archive, const fs::path &output, const std::vector<std::string> &file_names,
-                 bool flat, LCID preferred_locale, std::ostream &err,
-                 const std::atomic<bool> &cancelled) {
+int ExtractFiles(HANDLE archive, const fs::path &output, const std::vector<FileToExtract> &files,
+                 bool flat, std::ostream &err, const std::atomic<bool> &cancelled) {
     int result = 0;
-    for (const auto &name : file_names) {
+    for (const auto &file : files) {
         ThrowIfCancelled(cancelled);
-        result |= ExtractFile(archive, output, name, flat, preferred_locale, err);
+        result |= ExtractFile(archive, output, file.name, flat, file.locale, err);
+        if (!file.left_out.empty()) {
+            err << "[*] Left out other locales of " << file.name << ": ";
+            for (std::size_t i = 0; i < file.left_out.size(); i++) {
+                err << (i == 0 ? "" : ", ") << LocaleToLang(SFILE_LOCALE(file.left_out[i]));
+            }
+            err << std::endl;
+        }
     }
     return result;
 }
@@ -101,12 +148,17 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
                 LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     const std::string stored_name = StoredFileName(archive, file_name, preferred_locale);
-    if (!FileExistsInArchiveForLocale(archive, stored_name, preferred_locale) &&
-        !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
+    const bool has_preferred = FileExistsInArchiveForLocale(archive, stored_name, preferred_locale);
+    if (!has_preferred && !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
         err << "[!] Failed: File doesn't exist"
             << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << stored_name
             << std::endl;
         return 1;
+    }
+    // Only a named file can fall back: extracting everything asks for each
+    // variant under the locale it is stored in
+    if (!has_preferred) {
+        ReportLocaleFallback(stored_name, preferred_locale, err);
     }
 
     const std::string file_name_string = ExtractedName(stored_name, flat);

@@ -53,18 +53,6 @@ std::set<std::string> ExtractedLines(const std::set<std::string> &names) {
     return lines;
 }
 
-// The lines of output that start with prefix, for output that also carries
-// lines the test does not pin
-std::set<std::string> LinesStartingWith(const std::string &output, const std::string &prefix) {
-    std::set<std::string> lines;
-    for (const auto &line : LinesToSet(output)) {
-        if (line.rfind(prefix, 0) == 0) {
-            lines.insert(line);
-        }
-    }
-    return lines;
-}
-
 // A nested entry's path as extract prints it: the archive's backslash turned
 // into the platform's own separator
 std::string Native(const std::string &archive_path) {
@@ -488,15 +476,15 @@ TEST_CASE("extract: --flat extracts one name stored under two locales", "[extrac
     auto result =
         Run(mpqcli_binary, {"extract", "--flat", "-o", output_dir.string(), archive.string()});
 
-    // cats.txt is listed once per locale, and both land on the same file without
-    // counting as a collision
+    // cats.txt is written once, from the default variant, which is no collision
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
-    const auto stderr_lines = LinesToVector(result.stderr_output);
-    REQUIRE(stderr_lines.size() == 3);
-    REQUIRE(std::count(stderr_lines.begin(), stderr_lines.end(), "[*] Extracted: cats.txt") == 2);
-    REQUIRE(LinesToSet(result.stderr_output) == ExtractedLines({"cats.txt", "(listfile)"}));
+    auto expected = ExtractedLines({"cats.txt", "(listfile)"});
+    expected.insert("[*] Left out other locales of cats.txt: deDE");
+    REQUIRE(LinesToVector(result.stderr_output).size() == 3);
+    REQUIRE(LinesToSet(result.stderr_output) == expected);
     REQUIRE(DirectoryEntries(output_dir) == std::set<std::string>{"cats.txt", "(listfile)"});
+    REQUIRE(ReadFile(output_dir / "cats.txt") == "Cats in the default locale.");
 }
 
 TEST_CASE("extract: --listfile cannot be combined with named files", "[extract]") {
@@ -608,7 +596,9 @@ TEST_CASE("extract: falls back to the default locale when the file has no such v
 
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
-    REQUIRE(LinesToSet(result.stderr_output) == std::set<std::string>{"[*] Extracted: cats.txt"});
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{"[*] cats.txt has no ptPT variant, using enUS",
+                                     "[*] Extracted: cats.txt"});
     REQUIRE(ReadFile(output_dir / "cats.txt") == CatsContent(""));
 }
 
@@ -640,18 +630,65 @@ TEST_CASE("extract: fails when neither the given nor the default locale has the 
     REQUIRE_FALSE(fs::exists(output_dir));
 }
 
+TEST_CASE("extract: writes a name stored only under another locale", "[extract]") {
+    OneLocaleArchive one;
+    const auto output_dir = one.dir.Path() / "extracted";
+
+    auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(), one.archive.string()});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    REQUIRE(LinesToSet(result.stderr_output) == ExtractedLines({"cats.txt", "(listfile)"}));
+    REQUIRE(ReadFile(output_dir / "cats.txt") == CatsContent(OneLocaleArchive::locale));
+}
+
+TEST_CASE("extract: writes the --locale variant of a name stored under two locales", "[extract]") {
+    ManyLocalesArchive locales;
+    const auto output_dir = locales.dir.Path() / "extracted";
+
+    auto result = Run(mpqcli_binary, {"extract", "-o", output_dir.string(),
+                                      locales.archive.string(), "--locale", "deDE"});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    auto expected = ExtractedLines({"cats.txt", "(listfile)"});
+    expected.insert("[*] Left out other locales of cats.txt: enUS, esES, 041D");
+    REQUIRE(LinesToSet(result.stderr_output) == expected);
+    REQUIRE(ReadFile(output_dir / "cats.txt") == CatsContent("deDE"));
+}
+
+TEST_CASE("extract: writes the default variant and names the others on stderr", "[extract]") {
+    ManyLocalesArchive locales;
+    const auto output_dir = locales.dir.Path() / "extracted";
+
+    auto result =
+        Run(mpqcli_binary, {"extract", "-o", output_dir.string(), locales.archive.string()});
+
+    // The others are named lowest locale first
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stdout_output.empty());
+    auto expected = ExtractedLines({"cats.txt", "(listfile)"});
+    expected.insert("[*] Left out other locales of cats.txt: deDE, esES, 041D");
+    REQUIRE(LinesToSet(result.stderr_output) == expected);
+    REQUIRE(ReadFile(output_dir / "cats.txt") == CatsContent(""));
+}
+
 TEST_CASE("extract: all files from an archive without a listfile", "[extract]") {
     // External listfile content (none when empty), the locale asked for (the
-    // default when empty), and the names that come out. Entries under another
-    // locale fail, so every row exits 1; unnamed entries land as File0000000N.xxx
+    // default when empty), and the names that come out. Each name is stored under
+    // one locale, so every entry comes out whatever the locale asked for; unnamed
+    // entries land as File0000000N.xxx
+    const std::set<std::string> unnamed = {"File00000000.xxx", "File00000001.xxx",
+                                           "File00000002.xxx"};
+    const std::set<std::string> named = {"capybaras.txt", "cats.txt", "dogs.txt"};
     const auto [listfile_content, locale, expected] =
-        GENERATE(table<std::string, std::string, std::set<std::string>>({
-            {"", "", {"File00000000.xxx"}},
-            {"", "041D", {"File00000000.xxx", "File00000002.xxx"}},
-            {"capybaras.txt\n", "", {"capybaras.txt"}},
-            {"cats.txt\n", "deDE", {"File00000000.xxx", "cats.txt"}},
-            {"cats.txt\ndogs.txt\ncapybaras.txt\n", "", {"capybaras.txt"}},
-            {"cats.txt\ndogs.txt\ncapybaras.txt\n", "041D", {"dogs.txt", "capybaras.txt"}},
+        GENERATE_COPY(table<std::string, std::string, std::set<std::string>>({
+            {"", "", unnamed},
+            {"", "041D", unnamed},
+            {"capybaras.txt\n", "", {"capybaras.txt", "File00000001.xxx", "File00000002.xxx"}},
+            {"cats.txt\n", "deDE", {"File00000000.xxx", "cats.txt", "File00000002.xxx"}},
+            {"cats.txt\ndogs.txt\ncapybaras.txt\n", "", named},
+            {"cats.txt\ndogs.txt\ncapybaras.txt\n", "041D", named},
         }));
     CAPTURE(listfile_content, locale);
     NoListfileArchive archive;
@@ -669,10 +706,9 @@ TEST_CASE("extract: all files from an archive without a listfile", "[extract]") 
 
     auto result = Run(mpqcli_binary, args);
 
-    REQUIRE(result.returncode == 1);
+    REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
-    REQUIRE(LinesStartingWith(result.stderr_output, "[*] Extracted: ") == ExtractedLines(expected));
-    REQUIRE_THAT(result.stderr_output, ContainsSubstring(failed_all));
+    REQUIRE(LinesToSet(result.stderr_output) == ExtractedLines(expected));
     REQUIRE(DirectoryEntries(output_dir) == expected);
     // Whatever the name it came out under, the content is the stored one
     const std::map<std::string, std::string> contents = {

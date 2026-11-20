@@ -47,7 +47,7 @@ $ mpqcli read Patch_rt.mpq "rez/stat_txt.tbl"
 
 ## Read one specific file with locale
 
-Use the `-e` or `--locale` argument to specify the locale of the file to read. If there is no file with the requested name and locale, the default locale will be used instead.
+Use the `-e` or `--locale` argument to specify the locale of the file to read. If there is no file with the requested name and locale, the default locale is used instead, and a line on stderr says so.
 
 ```bash
 $ mpqcli read Patch_rt.mpq "rez\stat_txt.tbl" --locale ptPT

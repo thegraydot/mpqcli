@@ -54,17 +54,28 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
     LCID lcid = options.locale.has_value() ? LangToLocale(options.locale.value()) : default_locale;
 
     // Every name is settled before the output directory is created, so a
-    // rejected --flat run leaves nothing on disk
-    const std::vector<std::string> file_names =
-        options.files.has_value()
-            ? options.files.value()
-            : ListArchivedFiles(archive.Handle(), UsableListfile(options.listfile, err), cancelled);
-    if (file_names.empty()) {
+    // rejected --flat run leaves nothing on disk. A named file is asked for under
+    // the given locale; extracting everything writes one variant of each name.
+    std::vector<FileToExtract> files;
+    if (options.files.has_value()) {
+        for (const auto &name : options.files.value()) {
+            files.push_back({name, lcid, {}});
+        }
+    } else {
+        files = ChooseVariants(
+            ListArchivedFiles(archive.Handle(), UsableListfile(options.listfile, err), cancelled),
+            lcid);
+    }
+    if (files.empty()) {
         err << "[*] No files to extract" << std::endl;
         archive.Close();
         return true;
     }
     if (options.flat) {
+        std::vector<std::string> file_names;
+        for (const auto &file : files) {
+            file_names.push_back(file.name);
+        }
         const auto collision = FindFlatCollision(file_names);
         if (collision.has_value()) {
             err << "[!] --flat would extract " << collision->first << " and " << collision->second
@@ -98,8 +109,8 @@ bool Extract(const ExtractOptions &options, std::ostream &err, const std::atomic
             << effective_output.string() << std::endl;
     }
 
-    const int result = ExtractFiles(archive.Handle(), effective_output, file_names, options.flat,
-                                    lcid, err, cancelled);
+    const int result =
+        ExtractFiles(archive.Handle(), effective_output, files, options.flat, err, cancelled);
     archive.Close();
 
     if (result != 0) {
