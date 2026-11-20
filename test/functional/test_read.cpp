@@ -324,6 +324,25 @@ TEST_CASE("read: falls back to the default locale when the file has no such vari
     REQUIRE(result.stdout_output == CatsContent(""));
 }
 
+TEST_CASE("read: reads a non-ASCII name given as an argument", "[read]") {
+    // The names add's non-ASCII test uses, for the same reason
+    const auto name =
+        GENERATE(as<std::string>{}, "caf\xC3\xA9.txt", "\xE6\x97\xA5\xE6\x9C\xAC.txt");
+    CAPTURE(name);
+    TempDir dir;
+    const auto input_dir = dir.Path() / "in";
+    WriteFile(input_dir / fs::u8path(name), "Non-ASCII file.");
+    const auto archive = dir.Path() / "names.mpq";
+    REQUIRE(Run(mpqcli_binary, {"create", archive.string(), input_dir.string()}).returncode == 0);
+
+    // The name reaches mpqcli through argv
+    auto result = Run(mpqcli_binary, {"read", archive.string(), name});
+
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stderr_output.empty());
+    REQUIRE(result.stdout_output == "Non-ASCII file.");
+}
+
 TEST_CASE("read: says nothing when enUS falls back to the neutral locale", "[read]") {
     ManyLocalesArchive locales;
 

@@ -9,7 +9,42 @@
 #include "commands.h"
 #include "errors.h"
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace {
+
+#ifdef _WIN32
+// The manifest makes UTF-8 the process code page, but a console keeps code pages of
+// its own, usually the OEM one, so names would print as mojibake. The console is
+// shared with the shell that started mpqcli, so what it had is put back on the way
+// out. Without a console both calls fail, which is harmless.
+class Utf8Console {
+public:
+    Utf8Console() : input_(GetConsoleCP()), output_(GetConsoleOutputCP()) {
+        SetConsoleCP(CP_UTF8);
+        SetConsoleOutputCP(CP_UTF8);
+    }
+    Utf8Console(const Utf8Console &) = delete;
+    Utf8Console &operator=(const Utf8Console &) = delete;
+    ~Utf8Console() {
+        if (input_ != 0) {
+            SetConsoleCP(input_);
+        }
+        if (output_ != 0) {
+            SetConsoleOutputCP(output_);
+        }
+    }
+
+private:
+    UINT input_;
+    UINT output_;
+};
+#endif
 
 // The one piece of mutable global state: a signal handler takes no arguments and
 // has nowhere else to write, and it may touch nothing but a lock-free atomic
@@ -24,6 +59,9 @@ extern "C" void OnInterrupt(int) {
 } // namespace
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+    const Utf8Console console;
+#endif
     Context context{std::cout, std::cerr, std::cin, interrupted};
 
     CLI::App app{

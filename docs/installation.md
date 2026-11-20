@@ -21,6 +21,8 @@ Both installers put `mpqcli` on the system path and may ask for elevation; pass 
 
 Check the [latest release with binaries](https://github.com/thegraydot/mpqcli/releases).
 
+On Windows, file names with characters outside ASCII, such as `café.txt`, need Windows 10 version 1903 or later. Earlier versions store and extract them with the wrong bytes.
+
 ## Docker image
 
 The Docker image for `mpqcli` is hosted on [GitHub Container Registry (GHCR)](https://ghcr.io). It provides a lightweight and portable way to use `mpqcli` without needing to build or download a binary.
