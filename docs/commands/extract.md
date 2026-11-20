@@ -76,7 +76,7 @@ $ mpqcli list wow-patch.mpq | grep -i '\.exe$' | mpqcli extract wow-patch.mpq -
 
 ## Extract one specific file with locale
 
-Use the `-e` or `--locale` argument to specify the locale of the file to extract. If there is no file with the requested name and locale, the default locale will be used instead.
+Use the `-e` or `--locale` argument to specify the locale of the file to extract. If there is no file with the requested name and locale, the default locale is used instead, and a line on stderr says so.
 
 ```bash
 $ mpqcli extract Patch_rt.mpq "rez\gluBNRes.res" --locale deDE

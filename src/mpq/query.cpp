@@ -12,6 +12,7 @@
 #include <StormLib.h>
 
 #include "util/hash.h"
+#include "util/locales.h"
 #include "util/path.h"
 
 namespace fs = std::filesystem;
@@ -31,6 +32,14 @@ bool FileExistsInArchiveForLocale(const HANDLE archive, const std::string &file_
         SFileCloseFile(file);
     }
     return file_exists;
+}
+
+void ReportLocaleFallback(const std::string &file_path, LCID locale, std::ostream &err) {
+    if (locale == LangToLocale("enUS")) {
+        return;
+    }
+    err << "[*] " << file_path << " has no " << LocaleToLang(locale) << " variant, using "
+        << LocaleToLang(default_locale) << std::endl;
 }
 
 std::string StoredFileName(HANDLE archive, const std::string &file_path, LCID locale) {

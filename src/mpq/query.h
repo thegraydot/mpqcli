@@ -17,6 +17,12 @@ inline const std::vector<std::string> special_mpq_files = {"(listfile)", "(signa
 
 bool FileExistsInArchiveForLocale(HANDLE archive, const std::string &file_path, LCID locale);
 
+/// Reports on err that file_path has no variant under locale, so the default one is used
+///
+/// Says nothing when locale is enUS: the default locale prints as enUS too, so the line
+/// would say enUS fell back to enUS.
+void ReportLocaleFallback(const std::string &file_path, LCID locale, std::ostream &err);
+
 /// Returns the name the archive stores file_path under, looked up under locale
 ///
 /// An MPQ normally stores paths with backslashes, and StormLib hashes / and \ as different

@@ -148,12 +148,17 @@ int ExtractFile(HANDLE archive, const fs::path &output, const std::string &file_
                 LCID preferred_locale, std::ostream &err) {
     SFileSetLocale(preferred_locale);
     const std::string stored_name = StoredFileName(archive, file_name, preferred_locale);
-    if (!FileExistsInArchiveForLocale(archive, stored_name, preferred_locale) &&
-        !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
+    const bool has_preferred = FileExistsInArchiveForLocale(archive, stored_name, preferred_locale);
+    if (!has_preferred && !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
         err << "[!] Failed: File doesn't exist"
             << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << stored_name
             << std::endl;
         return 1;
+    }
+    // Only a named file can fall back: extracting everything asks for each
+    // variant under the locale it is stored in
+    if (!has_preferred) {
+        ReportLocaleFallback(stored_name, preferred_locale, err);
     }
 
     const std::string file_name_string = ExtractedName(stored_name, flat);

@@ -596,7 +596,9 @@ TEST_CASE("extract: falls back to the default locale when the file has no such v
 
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stdout_output.empty());
-    REQUIRE(LinesToSet(result.stderr_output) == std::set<std::string>{"[*] Extracted: cats.txt"});
+    REQUIRE(LinesToVector(result.stderr_output) ==
+            std::vector<std::string>{"[*] cats.txt has no ptPT variant, using enUS",
+                                     "[*] Extracted: cats.txt"});
     REQUIRE(ReadFile(output_dir / "cats.txt") == CatsContent(""));
 }
 

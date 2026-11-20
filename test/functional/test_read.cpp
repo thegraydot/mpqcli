@@ -317,7 +317,19 @@ TEST_CASE("read: falls back to the default locale when the file has no such vari
     auto result =
         Run(mpqcli_binary, {"read", locales.archive.string(), "cats.txt", "--locale", "ptPT"});
 
-    // Silently: a known locale the entry lacks is not worth a warning
+    // Stdout stays the file's bytes alone; the fallback is reported on stderr
+    REQUIRE(result.returncode == 0);
+    REQUIRE(result.stderr_output == "[*] cats.txt has no ptPT variant, using enUS\n");
+    REQUIRE(result.stdout_output == CatsContent(""));
+}
+
+TEST_CASE("read: says nothing when enUS falls back to the neutral locale", "[read]") {
+    ManyLocalesArchive locales;
+
+    auto result =
+        Run(mpqcli_binary, {"read", locales.archive.string(), "cats.txt", "--locale", "enUS"});
+
+    // The neutral locale prints as enUS too, so a note would say enUS fell back to enUS
     REQUIRE(result.returncode == 0);
     REQUIRE(result.stderr_output.empty());
     REQUIRE(result.stdout_output == CatsContent(""));

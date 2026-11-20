@@ -16,12 +16,15 @@ std::unique_ptr<char[]> ReadArchivedFile(HANDLE archive, const char *file_name,
                                          std::ostream &err) {
     SFileSetLocale(preferred_locale);
     const std::string stored_name = StoredFileName(archive, file_name, preferred_locale);
-    if (!FileExistsInArchiveForLocale(archive, stored_name, preferred_locale) &&
-        !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
+    const bool has_preferred = FileExistsInArchiveForLocale(archive, stored_name, preferred_locale);
+    if (!has_preferred && !FileExistsInArchiveForLocale(archive, stored_name, default_locale)) {
         err << "[!] Failed: File doesn't exist"
             << PrettyPrintLocale(preferred_locale, " for locale ", true) << ": " << stored_name
             << std::endl;
         return nullptr;
+    }
+    if (!has_preferred) {
+        ReportLocaleFallback(stored_name, preferred_locale, err);
     }
 
     HANDLE file;
