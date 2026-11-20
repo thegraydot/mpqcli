@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.2 - 2026-11-20
+
+### Changed
+
+- Say on stderr when read or extract uses the default locale because the file has no copy in the one asked for
+
+### Fixed
+
+- Extract each name once when extracting every file, under the locale it is stored in, and name the left-out locales on stderr
+- Extract files stored only under a non-default locale when extracting every file, instead of failing
+- List every locale of a name stored under more than 32, instead of reading past a buffer
+- Show an empty time in list for a file time that cannot be converted, instead of reading past a buffer
+
 ## 0.13.1 - 2026-11-14
 
 ### Changed
