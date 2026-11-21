@@ -18,7 +18,7 @@ jobs:
       # Default depth. Nothing here reads git history: get_changelog reads
       # CHANGELOG.md from the working tree, and gh release create uses the API.
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Resolve release version from the tag
         id: version
